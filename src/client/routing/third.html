@@ -1,0 +1,14 @@
+<h2>Hello from the third page!</h2>
+
+<is-land on:interaction import="/examples/island-counter.js">
+    <island-counter defer-hydration>
+        <template shadowroot="open">
+            <h2>Island counter</h2>
+            <div>The count is: <span>0</span>.</div>
+            <button id="decrement" disabled>-</button>
+            <button id="increment" disabled>+</button>
+        </template>
+    </island-counter>
+</is-land>
+
+<script src="/lib/is-land.js" type="module"></script>
