@@ -28,8 +28,18 @@ type HydrateSource = ElementSource | AttrSource;
 
 export function live(selector: string, type: HydrateType = HTMLElement, source: HydrateSource = element) {
   const hydrateDecorator = hydrate(selector, type, source);
+  const bindDecorator = bind(selector, source);
   
   // Note: This is called *once per `@live()` usage in a class definition*, not *once per instantiated object*.
+  return (target: any, propertyKey: string) => {
+    // Compose the `@hydrate()` and `@bind()` decorators.
+    hydrateDecorator(target, propertyKey);
+    bindDecorator(target, propertyKey);
+  };
+}
+
+export function bind(selector: string, source: HydrateSource = element) {
+  // Note: This is called *once per `@bind()` usage in a class definition*, not *once per instantiated object*.
   return (target: any, propertyKey: string) => {
     // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
     // For some reason this apparently passes an `instanceof HydratableElement` check?
@@ -37,9 +47,6 @@ export function live(selector: string, type: HydrateType = HTMLElement, source: 
     if (!(target instanceof HydratableElement)) {
       throw new Error(`Can only define \`@property\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
     }
-
-    // Compose the `@hydrate()` decorator.
-    hydrateDecorator(target, propertyKey);
 
     const setter = getSetter(source);
     Object.defineProperty(target, propertyKey, {
@@ -317,8 +324,8 @@ export abstract class HydratableElement extends HTMLElement {
   protected update() { /* Empty body by default */ };
 
   private eventBindings = [] as EventBinding[];
-  protected bind(selector: string, event: string, cb: (evt: Event) => void): void {
-    if (this.hydrated) throw new Error('Already hydrated, too late to bind.');
+  protected listen(selector: string, event: string, cb: (evt: Event) => void): void {
+    if (this.hydrated) throw new Error('Already hydrated, too late to bind a new listener.');
     const el = this.shadowRoot!.querySelector(selector)!;
     this.eventBindings.push({ el, event, cb });
   }

@@ -1,10 +1,10 @@
-import { HydratableElement, hydrate, attr, property } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, attr, bind } from '../lib/hydrator.js';
 
 class AttrCounter extends HydratableElement {
-  @hydrate('span', HTMLSpanElement)
-  private counter!: HTMLSpanElement;
-
-  @property @hydrate(':host', Number, attr('count'))
+  // Can't use `@live()` because we want to hydrate from the host attribute but bind
+  // outputs to the `<span />` tag.
+  @hydrate(':host', Number, attr('count'))
+  @bind('span')
   private count!: number;
 
   @hydrate('#increment', HTMLButtonElement)
@@ -25,14 +25,6 @@ class AttrCounter extends HydratableElement {
     this.increment.removeEventListener('click', this.onIncrement);
 
     super.disconnectedCallback();
-  }
-
-  protected override hydrate(): void {
-    this.update();
-  }
-
-  protected override update(): void {
-    this.counter.textContent = this.count.toString();
   }
 
   private onIncrement = (() => {

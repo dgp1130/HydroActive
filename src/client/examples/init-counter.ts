@@ -9,8 +9,8 @@ class InitCounter extends HydratableElement {
     private counter = init(this, 'span', HTMLSpanElement);
   
     protected override hydrate(): void {
-        this.bind('#increment', 'click', () => this.count++);
-        this.bind('#decrement', 'click', () => this.count--);
+        this.listen('#increment', 'click', () => this.count++);
+        this.listen('#decrement', 'click', () => this.count--);
     }
 
     protected override update(): void {

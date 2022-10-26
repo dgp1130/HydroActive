@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, live, property } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, live } from '../lib/hydrator.js';
 
 class DeferredInnerCounter extends HydratableElement {
   @live('span', Number)
@@ -25,10 +25,10 @@ class DeferredOuterCounter extends HydratableElement {
     // Inner counter is accessible and hydrated.
     this.innerCounter.increment();
 
-    this.bind('#increment', 'click', () => this.innerCounter.increment());
+    this.listen('#increment', 'click', () => this.innerCounter.increment());
     (this.shadowRoot!.querySelector('#increment')! as HTMLButtonElement).disabled = false;
 
-    this.bind('#decrement', 'click', () => this.innerCounter.decrement());
+    this.listen('#decrement', 'click', () => this.innerCounter.decrement());
     (this.shadowRoot!.querySelector('#decrement')! as HTMLButtonElement).disabled = false;
   }
 }
