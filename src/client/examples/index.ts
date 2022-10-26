@@ -1,3 +1,4 @@
+import './live-counter.js';
 import './prop-counter.js';
 import './idom-counter.js';
 import './hydrating-counter.js';

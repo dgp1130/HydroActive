@@ -26,6 +26,58 @@ export function attr(name: string): AttrSource {
 
 type HydrateSource = ElementSource | AttrSource;
 
+export function live(selector: string, type: HydrateType = HTMLElement, source: HydrateSource = element) {
+  const hydrateDecorator = hydrate(selector, type, source);
+  
+  // Note: This is called *once per `@live()` usage in a class definition*, not *once per instantiated object*.
+  return (target: any, propertyKey: string) => {
+    // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
+    // For some reason this apparently passes an `instanceof HydratableElement` check?
+    // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
+    if (!(target instanceof HydratableElement)) {
+      throw new Error(`Can only define \`@property\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
+    }
+
+    // Compose the `@hydrate()` decorator.
+    hydrateDecorator(target, propertyKey);
+
+    const setter = getSetter(source);
+    Object.defineProperty(target, propertyKey, {
+      get: function(): unknown {
+        return (propertyMap.get(this) ?? {})[propertyKey];
+      },
+      set: function(value: unknown): void {
+        if (!propertyMap.has(this)) propertyMap.set(this, {});
+        (propertyMap.get(this) as any)[propertyKey] = value;
+
+        const el = query(this, selector);
+        const content = safeToString(value);
+        setter(el, content);
+      },
+    });
+  };
+}
+
+function safeToString(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  } else if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'bigint') {
+    return value.toString();
+  } else {
+    throw new Error(`Cannot serialize non-primitive type \`${typeof value}\` with value:\n${value}`);
+  }
+}
+
+type HydrateSetter = (el: HTMLElement, content: string) => void;
+
+function getSetter(source: HydrateSource): HydrateSetter {
+  switch (source.kind) {
+    case 'element': return (el, content) => { el.textContent = content; };
+    case 'attr': return (el, content) => { el.setAttribute(source.name, content); };
+    default: assertNever(source);
+  }
+}
+
 export function hydrate(
   selector: string,
   type: HydrateType = HTMLElement,
