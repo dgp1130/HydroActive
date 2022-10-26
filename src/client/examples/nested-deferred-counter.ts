@@ -1,21 +1,14 @@
-import { HydratableElement, hydrate, property } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, live, property } from '../lib/hydrator.js';
 
 class DeferredInnerCounter extends HydratableElement {
-  @property @hydrate('span', Number)
+  @live('span', Number)
   private count!: number;
-
-  @hydrate('span', HTMLSpanElement)
-  private counter!: HTMLSpanElement;
 
   public increment(): void {
     this.count++;
   }
   public decrement(): void {
     this.count--;
-  }
-
-  protected override update(): void {
-    this.counter.textContent = this.count.toString();
   }
 }
 customElements.define('deferred-inner-counter', DeferredInnerCounter);

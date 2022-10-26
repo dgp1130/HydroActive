@@ -1,10 +1,7 @@
-import { HydratableElement, hydrate, property } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, live } from '../lib/hydrator.js';
 
 class HydratingCounter extends HydratableElement {
-  @hydrate('span', HTMLSpanElement)
-  private counter!: HTMLSpanElement;
-
-  @property @hydrate('span', Number)
+  @live('span', Number)
   private count!: number;
 
   @hydrate('#increment', HTMLButtonElement)
@@ -34,10 +31,6 @@ class HydratingCounter extends HydratableElement {
     const label = document.createElement('div');
     label.textContent = 'Hi, I\'m CSR\'d! These buttons are also disabled until their event listeners are loaded.';
     this.shadowRoot!.append(label);
-  }
-
-  protected override update(): void {
-    this.counter.textContent = this.count.toString();
   }
 
   private onIncrement = (() => {

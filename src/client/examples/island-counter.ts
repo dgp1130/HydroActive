@@ -1,10 +1,7 @@
-import { HydratableElement, hydrate, property } from '../lib/hydrator.js';
+import { HydratableElement, live } from '../lib/hydrator.js';
 
 class IslandCounter extends HydratableElement {
-  @hydrate('span', HTMLSpanElement)
-  private counter!: HTMLSpanElement;
-
-  @property @hydrate('span', Number)
+  @live('span', Number)
   private count!: number;
 
   protected override hydrate(): void {
@@ -13,10 +10,6 @@ class IslandCounter extends HydratableElement {
 
     this.bind('#increment', 'click', () => this.count++);
     (this.shadowRoot!.querySelector('#increment')! as HTMLButtonElement).disabled = false;
-  }
-
-  protected override update(): void {
-    this.counter.textContent = this.count.toString();
   }
 }
 
