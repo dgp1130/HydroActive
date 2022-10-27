@@ -48,25 +48,16 @@
             </template>
         </prop-counter>
 
-        <idom-counter>
-            <template shadowroot="open">
-                <h2>Using incremental DOM.</h2>
-                <div>The count is: <span>20</span>.</div>
-                <button id="decrement">-</button>
-                <button id="increment">+</button>
-            </template>
-        </idom-counter>
-
         <hydrating-counter>
             <template shadowroot="open">
                 <h2>Using one-time hydration.</h2>
-                <div>The count is: <span>25</span>.</div>
+                <div>The count is: <span>20</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
             </template>
         </hydrating-counter>
 
-        <attr-counter count="30">
+        <attr-counter count="25">
             <template shadowroot="open">
                 <h2>Hydrating from host attributes</h2>
                 <div>The count is: <span>-</span>.</div>
@@ -80,7 +71,7 @@
                 <h2>Nested counter</h2>
                 <inner-counter style="display: block;">
                     <template shadowroot="open">
-                        The count is: <span>35</span>.
+                        The count is: <span>30</span>.
                     </template>
                 </inner-counter>
                 <button id="decrement">-</button>
@@ -91,7 +82,7 @@
         <listen-counter>
             <template shadowroot="open">
                 <h2>Listen counter</h2>
-                <div>The count is: <span>40</span>.</div>
+                <div>The count is: <span>35</span>.</div>
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
             </template>
@@ -100,7 +91,7 @@
         <init-counter>
             <template shadowroot="open">
                 <h2>Initialized counter</h2>
-                <div>The count is: <span>45</span>.</div>
+                <div>The count is: <span>40</span>.</div>
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
             </template>
@@ -109,7 +100,7 @@
         <deferred-counter defer-hydration>
             <template shadowroot="open">
                 <h2>Deferred counter</h2>
-                <div>The count is: <span>50</span>.</div>
+                <div>The count is: <span>45</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
             </template>
@@ -120,7 +111,7 @@
             <island-counter defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter</h2>
-                    <div>The count is: <span>60</span>.</div>
+                    <div>The count is: <span>50</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
@@ -131,7 +122,7 @@
             <island-counter defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter 2</h2>
-                    <div>The count is: <span>65</span>.</div>
+                    <div>The count is: <span>55</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
@@ -144,7 +135,7 @@
                     <h2>Deferred and nested counter</h2>
                     <deferred-inner-counter defer-hydration>
                         <template shadowroot="open">
-                            <div>The count is: <span>70</span>.</div>
+                            <div>The count is: <span>60</span>.</div>
                         </template>
                     </deferred-inner-counter>
                     <button id="decrement" disabled>-</button>

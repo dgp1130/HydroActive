@@ -162,28 +162,6 @@ export function property(target: any, propertyKey: string): void {
   });
 }
 
-export function idom<El extends HydratableElement>(updater: (el: El) => void) {
-  return (target: any, propertyKey: string) => {
-    // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
-    // For some reason this apparently passes an `instanceof HydratableElement` check?
-    // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
-    if (!(target instanceof HydratableElement)) {
-      throw new Error(`Can only define \`@idom\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
-    }
-
-    Object.defineProperty(target, propertyKey, {
-      get: function(): unknown {
-        return (propertyMap.get(this) ?? {})[propertyKey];
-      },
-      set: function(value: unknown): void {
-        if (!propertyMap.has(this)) propertyMap.set(this, {});
-        (propertyMap.get(this) as any)[propertyKey] = value;
-        scheduleUpdate(this as El /* TODO: unsafe */, updater);
-      },
-    });
-  }
-}
-
 const scheduledComponents = new WeakSet<HydratableElement>();
 async function scheduleUpdate<El extends HydratableElement>(
   target: El,
