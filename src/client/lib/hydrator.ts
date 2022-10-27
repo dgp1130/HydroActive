@@ -109,37 +109,6 @@ interface InitMetadata {
   source: HydrateSource;
 }
 
-type InstanceOf<Type extends HydrateType> =
-  Type extends NumberConstructor
-    ? number
-    : Type extends StringConstructor
-      ? string
-      : Type extends new () => infer Result
-        ? Result
-        : never;
-
-const initMap = new WeakMap<object /* host */, Map<symbol, InitMetadata>>();
-export function init<Type extends HydrateType>(
-  self: HydratableElement,
-  selector: string,
-  type: Type,
-  source: HydrateSource = element,
-): InstanceOf<Type> {
-  if (!initMap.has(self)) {
-    initMap.set(self, new Map<symbol, InitMetadata>);
-  }
-  const placeholderMap = initMap.get(self)!;
-
-  const placeholder = Symbol('uninitialized');
-  const coerce = getCoercer(type);
-  const meta = { selector, coerce, source } as InitMetadata;
-
-  placeholderMap.set(placeholder, meta);
-
-  // Lie about the return type.
-  return placeholder as unknown as InstanceOf<Type>;
-}
-
 const propertyMap = new WeakMap<object /* host */, Record<string /* prop */, unknown /* value */>>();
 // Note: This is called *once per `@property` usage in a class definition*, not *once per instantiated object*.
 export function property(target: any, propertyKey: string): void {
@@ -252,26 +221,6 @@ export abstract class HydratableElement extends HTMLElement {
 
       if (value instanceof Element) {
         childElements.push(value);
-      }
-    }
-
-    // Initialize `init()` properties.
-    const placeholderMap = initMap.get(this) ?? new Map<symbol, InitMetadata>();
-    for (const proto of prototypeChain(this)) {
-      for (const prop in Object.getOwnPropertyDescriptors(proto)) {
-        const possiblePlaceholder = (this as any)[prop];
-        const initMeta = placeholderMap.get(possiblePlaceholder);
-        if (!initMeta) continue;
-
-        const { selector, coerce, source } = initMeta;
-        const el = query(this, selector);
-        const content = getSource(el, source);
-        const value = coerce(content);
-        (this as any)[prop] = value;
-
-        if (value instanceof Element) {
-          childElements.push(value);
-        }
       }
     }
 
