@@ -45,10 +45,19 @@
             </template>
         </prop-counter>
 
+        <listen-counter>
+            <template shadowroot="open">
+                <h2>Listen counter</h2>
+                <div>The count is: <span>20</span>.</div>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
+            </template>
+        </listen-counter>
+
         <hydrating-counter>
             <template shadowroot="open">
                 <h2>Using one-time hydration.</h2>
-                <div>The count is: <span>20</span>.</div>
+                <div>The count is: <span>25</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
             </template>
@@ -68,22 +77,13 @@
                 <h2>Nested counter</h2>
                 <inner-counter style="display: block;">
                     <template shadowroot="open">
-                        The count is: <span>30</span>.
+                        The count is: <span>35</span>.
                     </template>
                 </inner-counter>
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
             </template>
         </nested-counter>
-
-        <listen-counter>
-            <template shadowroot="open">
-                <h2>Listen counter</h2>
-                <div>The count is: <span>35</span>.</div>
-                <button id="decrement">-</button>
-                <button id="increment">+</button>
-            </template>
-        </listen-counter>
 
         <deferred-counter defer-hydration>
             <template shadowroot="open">
