@@ -179,15 +179,19 @@ export abstract class HydratableElement extends HTMLElement {
 
     // Bind event listeners from previous hydration, whether that just happened
     // or happened the previous time this component has connected to the DOM.
-    for (const { el, event, cb } of this.eventBindings) {
-      el.addEventListener(event, cb);
+    for (const { elements, event, cb } of this.eventBindings) {
+      for (const element of elements) {
+        element.addEventListener(event, cb);
+      }
     }
   }
 
   disconnectedCallback(): void {
     // Unbind event listeners found during user hydration.
-    for (const { el, event, cb } of this.eventBindings) {
-      el.removeEventListener(event, cb);
+    for (const { elements, event, cb } of this.eventBindings) {
+      for (const element of elements) {
+        element.removeEventListener(event, cb);
+      }
     }
   }
 
@@ -200,8 +204,10 @@ export abstract class HydratableElement extends HTMLElement {
     this.requestHydration();
 
     // Bind event listeners from previous hydration.
-    for (const { el, event, cb } of this.eventBindings) {
-      el.addEventListener(event, cb);
+    for (const { elements, event, cb } of this.eventBindings) {
+      for (const element of elements) {
+        element.addEventListener(event, cb);
+      }
     }
   }
 
@@ -253,13 +259,13 @@ export abstract class HydratableElement extends HTMLElement {
   private eventBindings = [] as EventBinding[];
   protected listen(selector: string, event: string, cb: (evt: Event) => void): void {
     if (this.hydrated) throw new Error('Already hydrated, too late to bind a new listener.');
-    const el = this.shadowRoot!.querySelector(selector)!;
-    this.eventBindings.push({ el, event, cb });
+    const elements = Array.from(this.shadowRoot!.querySelectorAll(selector));
+    this.eventBindings.push({ elements, event, cb });
   }
 }
 
 interface EventBinding {
-  el: Element;
+  elements: Element[];
   event: string;
   cb: (evt: Event) => void;
 }
