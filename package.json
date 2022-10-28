@@ -7,7 +7,7 @@
     "start": "npm run -s build && npm run -s serve",
     "build": "npm run -s build-ts && npm run -s build-html",
     "build-ts": "tsc && ln -f -s ../../node_modules dist/client/",
-    "build-html": "cp src/client/*.html dist/client/ && mkdir -p dist/routing/ && cp src/client/routing/*.html dist/client/routing/",
+    "build-html": "cp src/client/*.html dist/client/",
     "serve": "node dist/server.js",
     "clean": "rm -rf dist/"
   },
