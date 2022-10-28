@@ -5,11 +5,11 @@ class IslandCounter extends HydratableElement {
   private count!: number;
 
   protected override hydrate(): void {
-    this.listen('#decrement', 'click', () => this.count--);
-    (this.shadowRoot!.querySelector('#decrement')! as HTMLButtonElement).disabled = false;
+    const decrement = this.listen('button#decrement', 'click', () => this.count--);
+    decrement.disabled = false;
 
-    this.listen('#increment', 'click', () => this.count++);
-    (this.shadowRoot!.querySelector('#increment')! as HTMLButtonElement).disabled = false;
+    const increment = this.listen('button#increment', 'click', () => this.count++);
+    increment.disabled = false;
   }
 }
 
