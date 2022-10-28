@@ -75,9 +75,9 @@
         <outer-counter>
             <template shadowroot="open">
                 <h2>Nested counter</h2>
-                <inner-counter style="display: block;">
+                <inner-counter>
                     <template shadowroot="open">
-                        The count is: <span>35</span>.
+                        <div>The count is: <span>35</span>.</div>
                     </template>
                 </inner-counter>
                 <button id="decrement">-</button>
