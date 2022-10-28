@@ -14,15 +14,16 @@ class DeferredInnerCounter extends HydratableElement {
 customElements.define('deferred-inner-counter', DeferredInnerCounter);
 
 class DeferredOuterCounter extends HydratableElement {
-  // Because this inner component is referenced by `@hydrate`, it gets hydrated first!
-  // Currently no attempt is made to discover other deferred components in the tree,
-  // which could be unintuitive for some folks. Maybe it would make sense to walk the
-  // shadow DOM and direct light DOM children?
   @hydrate('deferred-inner-counter', DeferredInnerCounter)
   private innerCounter!: DeferredInnerCounter;
 
   protected override hydrate(): void {
-    // Inner counter is accessible and hydrated.
+    // Child elements are hydrated first, so this is already loaded and works!
+    // Note that `HydratableElement` cannot force the custom element classes to be
+    // loaded for all its children, so if `deferred-outer-counter` is defined *before*
+    // `deferred-inner-counter`, you're gonna have a bad time. `@hydrate()` naturally
+    // requires this anyways because it needs a reference to the child component class
+    // which forces it to be defined first.
     this.innerCounter.increment();
 
     const increment = this.query('button#increment');

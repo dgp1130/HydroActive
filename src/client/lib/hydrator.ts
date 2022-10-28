@@ -209,7 +209,12 @@ export abstract class HydratableElement extends HTMLElement {
     // Only hydrate once at most.
     if (this.hydrated) return;
 
-    const childElements = [] as Element[];
+    // Force children to hydrate before hydrating this element.
+    const deferredShadowChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
+    const deferredLightChildren = this.querySelectorAll('[defer-hydration]');
+    for (const child of [ ...deferredShadowChildren, ...deferredLightChildren ]) {
+      child.removeAttribute('defer-hydration');
+    }
 
     // Initialize `@hydrate` properties.
     const metaList = Reflect.getMetadata(hydrateKey, this) ?? [] as HydrateMetadata[];
@@ -218,14 +223,6 @@ export abstract class HydratableElement extends HTMLElement {
       const content = getSource(el, source);
       const value = coerce(content);
       (this as any)[prop] = value;
-
-      if (value instanceof Element) {
-        childElements.push(value);
-      }
-    }
-
-    for (const child of childElements) {
-      child.removeAttribute('defer-hydration');
     }
 
     // Invoke one-time user hydration logic.
