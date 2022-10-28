@@ -6,11 +6,11 @@ import { HydratableElement, hydrate, property } from '../lib/hydrator.js';
 // TODO: MutationObserver of light DOM? Maybe out of scope?
 class PropCounter extends HydratableElement {
   // Easy: Replicate Lit properties which automatically call `this.update()` when set.
-  @property @hydrate('span', Number)
+  @property @hydrate('#initial', Number)
   private count!: number;
 
-  @hydrate('span', HTMLSpanElement)
-  private counter!: HTMLSpanElement;
+  @hydrate('#current', HTMLSpanElement)
+  private currentLabel!: HTMLSpanElement;
 
   @hydrate('#increment', HTMLButtonElement)
   private increment!: HTMLButtonElement;
@@ -33,7 +33,7 @@ class PropCounter extends HydratableElement {
   }
 
   protected override update(): void {
-    this.counter.textContent = this.count.toString();
+    this.currentLabel.textContent = this.count % 2 === 0 ? 'even' : 'odd';
   }
 
   private onIncrement = (() => {
