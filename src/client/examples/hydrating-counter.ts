@@ -5,10 +5,12 @@ class HydratingCounter extends HydratableElement {
   private count!: number;
 
   protected override hydrate(): void {
-    const decrement = this.listen('button#decrement', 'click', () => { this.count--; });
+    const decrement = this.query('button#decrement');
+    this.listen(decrement, 'click', () => { this.count--; });
     decrement.disabled = false;
 
-    const increment = this.listen('button#increment', 'click', () => { this.count++; });
+    const increment = this.query('button#increment');
+    this.listen(increment, 'click', () => { this.count++; });
     increment.disabled = false;
 
     const label = document.createElement('div');

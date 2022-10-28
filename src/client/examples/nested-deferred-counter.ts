@@ -25,14 +25,12 @@ class DeferredOuterCounter extends HydratableElement {
     // Inner counter is accessible and hydrated.
     this.innerCounter.increment();
 
-    const increment = this.listen('button#increment', 'click', () => {
-      this.innerCounter.increment();
-    });
+    const increment = this.query('button#increment');
+    this.listen(increment, 'click', () => { this.innerCounter.increment(); });
     increment.disabled = false;
 
-    const decrement = this.listen('button#decrement', 'click', () => {
-      this.innerCounter.decrement();
-    });
+    const decrement = this.query('button#decrement');
+    this.listen(decrement, 'click', () => { this.innerCounter.decrement(); });
     decrement.disabled = false;
   }
 }

@@ -10,7 +10,8 @@ class Tweet extends HydratableElement {
     private content!: string;
 
     protected override hydrate(): void {
-        this.listen('button', 'click', () => {
+        const editButton = this.query('button');
+        this.listen(editButton, 'click', () => {
             const editableTweet = document.createElement('my-editable-tweet');
             editableTweet.tweetId = this.tweetId;
             editableTweet.content = this.content;

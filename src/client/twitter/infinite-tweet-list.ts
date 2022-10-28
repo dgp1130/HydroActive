@@ -7,7 +7,8 @@ class InfiniteTweetList extends HydratableElement {
     private list!: HTMLUListElement;
 
     protected override hydrate(): void {
-        this.listen('button', 'click', async () => {
+        const loadMoreButton = this.query('button');
+        this.listen(loadMoreButton, 'click', async () => {
             // Pick a random tweet using our superior ranking algorithm.
             const randomId = Math.floor(Math.random() * 10_000);
             const tweetUrl = new URL('/tweet', location.href);
