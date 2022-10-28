@@ -9,7 +9,33 @@ interface HydrateMetadata {
   source: HydrateSource,
 }
 
-type HydrateType = typeof String | typeof Number | (new () => HTMLElement);
+type HydrateType<Source extends HydrateSource, El extends Element = never> =
+  | Source extends ElementSource
+    ? ElementConverter<El>
+    : Source extends AttrSource
+      ? AttributeConverter
+      : unknown;
+
+type ElementConverter<El extends Element> =
+  // It is allowed to use `String` or `Number` and these are supported built-ins.
+  // However, including them in this union results in
+  // `(value: any) => string | (el: El) => unknown`.
+  // This breaks type inference, since it resolves to `(value: any) => unknown`
+  // so explicitly authored lambdas can't infer `El`.
+  // | StringConstructor
+  // | NumberConstructor
+  | (new () => HTMLElement)
+  | ((el: El) => unknown);
+
+type AttributeConverter =
+  // It is allowed to use `String` or `Number` and these are supported built-ins.
+  // However, including them in this union results in
+  // `(value: any) => string | (el: El) => unknown`.
+  // This breaks type inference, since it resolves to `(value: any) => unknown`
+  // so explicitly authored lambdas can't infer `El`.
+  // | StringConstructor
+  // | NumberConstructor
+  | ((attr: string) => unknown);
 
 interface ElementSource {
   kind: 'element',
@@ -26,21 +52,31 @@ export function attr(name: string): AttrSource {
 
 type HydrateSource = ElementSource | AttrSource;
 
-export function live(selector: string, type: HydrateType = HTMLElement, source: HydrateSource = element) {
+export function live<
+  Selector extends string,
+  Source extends HydrateSource = ElementSource
+>(
+  selector: Selector,
+  type: HydrateType<Source, QueriedElement<Selector>> = HTMLElement as any,
+  source: Source = element as Source,
+): PropertyDecorator {
   const hydrateDecorator = hydrate(selector, type, source);
   const bindDecorator = bind(selector, source);
   
   // Note: This is called *once per `@live()` usage in a class definition*, not *once per instantiated object*.
-  return (target: any, propertyKey: string) => {
+  return (target: any, propertyKey: string | symbol) => {
     // Compose the `@hydrate()` and `@bind()` decorators.
     hydrateDecorator(target, propertyKey);
     bindDecorator(target, propertyKey);
   };
 }
 
-export function bind(selector: string, source: HydrateSource = element) {
+export function bind(
+  selector: string,
+  source: HydrateSource = element,
+): PropertyDecorator {
   // Note: This is called *once per `@bind()` usage in a class definition*, not *once per instantiated object*.
-  return (target: any, propertyKey: string) => {
+  return (target: any, propertyKey: string | symbol): void => {
     // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
     // For some reason this apparently passes an `instanceof HydratableElement` check?
     // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
@@ -85,16 +121,19 @@ function getSetter(source: HydrateSource): HydrateSetter {
   }
 }
 
-export function hydrate(
-  selector: string,
-  type: HydrateType = HTMLElement,
-  source: HydrateSource = element,
-) {
-  return (target: any, propertyKey: string) => {
+export function hydrate<
+  Selector extends string,
+  Source extends HydrateSource = ElementSource
+>(
+  selector: Selector,
+  type: HydrateType<Source, QueriedElement<Selector>> = HTMLElement as any,
+  source: Source = element as Source,
+): PropertyDecorator {
+  return (target: any, propertyKey: string | symbol): void => {
     let metaList = Reflect.getMetadata(hydrateKey, target);
     if (!metaList) {
-        metaList = [];
-        Reflect.defineMetadata(hydrateKey, metaList, target);
+      metaList = [];
+      Reflect.defineMetadata(hydrateKey, metaList, target);
     }
 
     const coerce = getCoercer(type);
@@ -109,9 +148,10 @@ interface InitMetadata {
   source: HydrateSource;
 }
 
-const propertyMap = new WeakMap<object /* host */, Record<string /* prop */, unknown /* value */>>();
+const propertyMap = new WeakMap<object /* host */, Record<string | symbol /* prop */, unknown /* value */>>();
 // Note: This is called *once per `@property` usage in a class definition*, not *once per instantiated object*.
-export function property(target: any, propertyKey: string): void {
+export const property: PropertyDecorator =
+    (target: any, propertyKey: string | symbol): void => {
   // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
   // For some reason this apparently passes an `instanceof HydratableElement` check?
   // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
@@ -129,7 +169,7 @@ export function property(target: any, propertyKey: string): void {
       scheduleUpdate(this);
     },
   });
-}
+};
 
 const scheduledComponents = new WeakSet<HydratableElement>();
 async function scheduleUpdate<El extends HydratableElement>(
@@ -286,12 +326,15 @@ interface EventBinding {
 function getSource(el: Element, source: HydrateSource): HydrateContent {
   switch (source.kind) {
     case 'element': return el;
-    case 'attr': return el.getAttribute(source.name) ?? undefined;
+    case 'attr':
+      const attr = el.getAttribute(source.name);
+      if (!attr) throw new Error(`No attribute \`${source.name}\` on element.`);
+      return attr;
     default: assertNever(source);
   }
 }
 
-type HydrateContent = Element | string | undefined;
+type HydrateContent = Element | string;
 type Coercer<T> = (content: HydrateContent) => T;
 
 function coerceToString(content: HydrateContent): string | undefined {
@@ -305,7 +348,10 @@ function coerceToNumber(content: HydrateContent): number | undefined {
   const str = content instanceof Element ? content.textContent! : content;
   return Number(str); // TODO: `undefined`?
 }
-function assertElement(content: HydrateContent, type: HydrateType): Element {
+function assertElement(
+  content: HydrateContent,
+  type: HydrateType<HydrateSource, Element>,
+): Element {
   if (!(content instanceof Element)) {
     throw new Error(`Expected an element of type ${type}, but got a \`string\`. Are you reading from an attribute but expecting an element?`);
   }
@@ -318,14 +364,26 @@ function assertElement(content: HydrateContent, type: HydrateType): Element {
   return content;
 }
 
-function getCoercer(type: HydrateType): Coercer<unknown> {
+function getCoercer<Source extends HydrateSource, El extends Element>(
+  type: HydrateType<Source, El>,
+): Coercer<unknown> {
   if (type === String) {
     return coerceToString;
   } else if (type === Number) {
     return coerceToNumber;
+  } else if (classExtends(type as Class, HTMLElement)) {
+    return (content) => assertElement(content, type as (el: Element) => unknown);
   } else {
-    return (content) => assertElement(content, type);
+    return type as Coercer<unknown>;
   }
+}
+
+type Class = new (...args: unknown[]) => unknown;
+function classExtends(child: Class, parent: Class): boolean {
+  for (const prototype of prototypeChain(child)) {
+    if (prototype === parent) return true;
+  }
+  return false;
 }
 
 function assertNever(value: never): never {
