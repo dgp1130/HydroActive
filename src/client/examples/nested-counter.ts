@@ -17,32 +17,12 @@ class NestedCounter extends HydratableElement {
   @hydrate('inner-counter', InnerCounter)
   private innerCounter!: InnerCounter;
 
-  @hydrate('#increment', HTMLButtonElement)
-  private increment!: HTMLButtonElement;
+  protected override hydrate(): void {
+    const decrement = this.query('button#decrement');
+    this.listen(decrement, 'click', () => { this.innerCounter.decrement(); });
 
-  @hydrate('#decrement', HTMLButtonElement)
-  private decrement!: HTMLButtonElement;
-
-  public override connectedCallback(): void {
-    super.connectedCallback();
-
-    this.decrement.addEventListener('click', this.onDecrement);
-    this.increment.addEventListener('click', this.onIncrement);
+    const increment = this.query('button#increment');
+    this.listen(increment, 'click', () => { this.innerCounter.increment(); });
   }
-
-  public override disconnectedCallback(): void {
-    this.decrement.removeEventListener('click', this.onDecrement);
-    this.increment.removeEventListener('click', this.onIncrement);
-
-    super.disconnectedCallback();
-  }
-
-  private onIncrement = (() => {
-    this.innerCounter.increment();
-  }).bind(this);
-
-  private onDecrement = (() => {
-    this.innerCounter.decrement();
-  }).bind(this);
 }
 customElements.define('nested-counter', NestedCounter);

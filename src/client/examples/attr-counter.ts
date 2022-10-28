@@ -7,41 +7,19 @@ class AttrCounter extends HydratableElement {
   @bind('span')
   private count!: number;
 
-  @hydrate('#increment', HTMLButtonElement)
-  private increment!: HTMLButtonElement;
-
-  @hydrate('#decrement', HTMLButtonElement)
-  private decrement!: HTMLButtonElement;
-
-  public override connectedCallback(): void {
-    super.connectedCallback();
-
-    this.decrement.addEventListener('click', this.onDecrement);
-    this.increment.addEventListener('click', this.onIncrement);
-  }
-
-  public override disconnectedCallback(): void {
-    this.decrement.removeEventListener('click', this.onDecrement);
-    this.increment.removeEventListener('click', this.onIncrement);
-
-    super.disconnectedCallback();
-  }
-
   protected override hydrate(): void {
+    const decrement = this.query('button#decrement');
+    this.listen(decrement, 'click', () => { this.count--; });
+    const increment = this.query('button#increment');
+    this.listen(increment, 'click', () => { this.count++; });
+
     getCount(this.counterId).then((count) => {
       this.count = count;
-      this.decrement.disabled = false;
-      this.increment.disabled = false;
+
+      decrement.disabled = false;
+      increment.disabled = false;
     });
   }
-
-  private onIncrement = (() => {
-    this.count++;
-  }).bind(this);
-
-  private onDecrement = (() => {
-    this.count--;
-  }).bind(this);
 }
 
 customElements.define('attr-counter', AttrCounter);
