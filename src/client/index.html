@@ -72,7 +72,7 @@
             </template>
         </attr-counter>
 
-        <nested-counter>
+        <outer-counter>
             <template shadowroot="open">
                 <h2>Nested counter</h2>
                 <inner-counter style="display: block;">
@@ -83,7 +83,7 @@
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
             </template>
-        </nested-counter>
+        </outer-counter>
 
         <deferred-counter defer-hydration>
             <template shadowroot="open">

@@ -13,7 +13,7 @@ class InnerCounter extends HydratableElement {
 }
 customElements.define('inner-counter', InnerCounter);
 
-class NestedCounter extends HydratableElement {
+class OuterCounter extends HydratableElement {
   @hydrate('inner-counter', InnerCounter)
   private innerCounter!: InnerCounter;
 
@@ -25,4 +25,4 @@ class NestedCounter extends HydratableElement {
     this.listen(increment, 'click', () => { this.innerCounter.increment(); });
   }
 }
-customElements.define('nested-counter', NestedCounter);
+customElements.define('outer-counter', OuterCounter);
