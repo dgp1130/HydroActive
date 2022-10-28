@@ -1,9 +1,9 @@
 import { HydratableElement, hydrate, attr, bind } from '../lib/hydrator.js';
 
 class AttrCounter extends HydratableElement {
-  // Can't use `@live()` because we want to hydrate from the host attribute but bind
-  // outputs to the `<span />` tag.
-  @hydrate(':host', Number, attr('count'))
+  @hydrate(':host', Number, attr('counter-id'))
+  private counterId!: number;
+
   @bind('span')
   private count!: number;
 
@@ -27,6 +27,14 @@ class AttrCounter extends HydratableElement {
     super.disconnectedCallback();
   }
 
+  protected override hydrate(): void {
+    getCount(this.counterId).then((count) => {
+      this.count = count;
+      this.decrement.disabled = false;
+      this.increment.disabled = false;
+    });
+  }
+
   private onIncrement = (() => {
     this.count++;
   }).bind(this);
@@ -37,3 +45,9 @@ class AttrCounter extends HydratableElement {
 }
 
 customElements.define('attr-counter', AttrCounter);
+
+function getCount(_counterId: number): Promise<number> {
+  return new Promise<number>((resolve) => {
+    setTimeout(() => { resolve(25); }, 3_000);
+  });
+}
