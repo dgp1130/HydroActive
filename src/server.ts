@@ -129,8 +129,7 @@ function renderImportMap(): string {
             "lit-element": "/node_modules/lit-element/lit-element.js",
             "lit-element/": "/node_modules/lit-element/",
             "lit-html": "/node_modules/lit-html/lit-html.js",
-            "lit-html/": "/node_modules/lit-html/",
-            "reflect-metadata": "/node_modules/reflect-metadata/Reflect.js"
+            "lit-html/": "/node_modules/lit-html/"
         }
     }
 </script>

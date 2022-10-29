@@ -1,7 +1,4 @@
-import 'reflect-metadata';
 import { Context, listenForContext, peekContext, provideContext, Timeout } from './context.js';
-
-const hydrateKey = Symbol('hydrate');
 
 interface HydrateMetadata {
   prop: string;
@@ -122,6 +119,12 @@ function getSetter(source: HydrateSource): HydrateSetter {
   }
 }
 
+/**
+ * Map of `HydratableElement` subclasses (not instances) to the set of `@hydrate()`
+ * metadata containing information on how to hydrate each property.
+ */
+const hydrateMap = new WeakMap<Class<HydratableElement>, Set<HydrateMetadata>>();
+
 export function hydrate<
   Selector extends string,
   Source extends HydrateSource = ElementSource
@@ -131,15 +134,20 @@ export function hydrate<
   source: Source = element as Source,
 ): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol): void => {
-    let metaList = Reflect.getMetadata(hydrateKey, target);
-    if (!metaList) {
-      metaList = [];
-      Reflect.defineMetadata(hydrateKey, metaList, target);
+    // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
+    // For some reason this apparently passes an `instanceof HydratableElement` check?
+    // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
+    if (!(target instanceof HydratableElement)) {
+      throw new Error(`Can only define \`@hydrate\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
     }
+    const clazz = target.constructor as unknown as Class<HydratableElement>;
+
+    const metaSet = hydrateMap.get(clazz) ?? new Set<HydrateMetadata>();
+    hydrateMap.set(clazz, metaSet);
 
     const coerce = getCoercer(type);
     const meta = { prop: propertyKey, selector, coerce, source } as HydrateMetadata;
-    metaList.push(meta);
+    metaSet.add(meta);
   };
 }
 
@@ -343,9 +351,11 @@ export abstract class HydratableElement extends HTMLElement {
       child.removeAttribute('defer-hydration');
     }
 
+    const clazz = this.constructor as Class<HydratableElement>;
+
     // Initialize `@hydrate` properties.
-    const metaList = Reflect.getMetadata(hydrateKey, this) ?? [] as HydrateMetadata[];
-    for (const { prop, selector, coerce, source } of metaList) {
+    const metaSet = hydrateMap.get(clazz) ?? new Set<HydrateMetadata>();
+    for (const { prop, selector, coerce, source } of metaSet) {
       const el = query(this, selector);
       const content = getSource(el, source);
       const value = coerce(content);
@@ -353,7 +363,6 @@ export abstract class HydratableElement extends HTMLElement {
     }
 
     // Bind `@context()` properties.
-    const clazz = this.constructor as Class<HydratableElement>;
     const ctxBindings = ctxRegistrationMap.get(clazz)
         ?? new Set<RegisteredContext<unknown>>();
     for (const { ctx, property, timeout } of ctxBindings) {
