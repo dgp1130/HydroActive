@@ -65,7 +65,7 @@ export function live<
   const bindDecorator = bind(selector, source);
   
   // Note: This is called *once per `@live()` usage in a class definition*, not *once per instantiated object*.
-  return (target: any, propertyKey: string | symbol) => {
+  return (target: Object, propertyKey: string | symbol) => {
     // Compose the `@hydrate()` and `@bind()` decorators.
     hydrateDecorator(target, propertyKey);
     bindDecorator(target, propertyKey);
@@ -77,7 +77,7 @@ export function bind(
   source: HydrateSource = element,
 ): PropertyDecorator {
   // Note: This is called *once per `@bind()` usage in a class definition*, not *once per instantiated object*.
-  return (target: any, propertyKey: string | symbol): void => {
+  return (target: Object, propertyKey: string | symbol): void => {
     // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
     // For some reason this apparently passes an `instanceof HydratableElement` check?
     // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
@@ -130,7 +130,7 @@ export function hydrate<
   type: HydrateType<Source, QueriedElement<Selector>> = HTMLElement as any,
   source: Source = element as Source,
 ): PropertyDecorator {
-  return (target: any, propertyKey: string | symbol): void => {
+  return (target: Object, propertyKey: string | symbol): void => {
     let metaList = Reflect.getMetadata(hydrateKey, target);
     if (!metaList) {
       metaList = [];
@@ -146,7 +146,7 @@ export function hydrate<
 const propertyMap = new WeakMap<object /* host */, Record<string | symbol /* prop */, unknown /* value */>>();
 // Note: This is called *once per `@property` usage in a class definition*, not *once per instantiated object*.
 export const property: PropertyDecorator =
-    (target: any, propertyKey: string | symbol): void => {
+    (target: Object, propertyKey: string | symbol): void => {
   // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
   // For some reason this apparently passes an `instanceof HydratableElement` check?
   // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
