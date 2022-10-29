@@ -3,9 +3,6 @@
     <head>
         <title>Hydrator Deference</title>
         <meta charset="utf8">
-
-        <script src="/examples/deference.js" type="module"></script>
-        <script src="/lib/is-land.js" type="module"></script>
     </head>
     <body>
         <h1>Deferred Hydration Examples</h1>
@@ -20,6 +17,7 @@
                 <div>The count is: <span>5</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
+                <script src="/examples/deferred-counter.js" type="module"></script>
             </template>
         </deferred-counter>
         <button onclick="javascript:document.querySelector('deferred-counter').removeAttribute('defer-hydration'); this.disabled = true;">Load</button>
@@ -34,6 +32,7 @@
                 </deferred-inner-counter>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
+                <script src="/examples/nested-deferred-counter.js" type="module"></script>
             </template>
         </deferred-outer-counter>
         <button onclick="javascript:document.querySelector('deferred-outer-counter').removeAttribute('defer-hydration'); this.disabled = true;">Load</button>
@@ -48,6 +47,7 @@
                 </template>
             </island-counter>
         </is-land>
+        <script src="/lib/is-land.js" type="module"></script>
 
         <is-land on:interaction import="/examples/island-counter.js">
             <island-counter defer-hydration>
@@ -59,5 +59,6 @@
                 </template>
             </island-counter>
         </is-land>
+        <script src="/lib/is-land.js" type="module"></script>
     </body>
 </html>
