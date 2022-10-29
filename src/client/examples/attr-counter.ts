@@ -24,6 +24,12 @@ class AttrCounter extends HydratableElement {
 
 customElements.define('attr-counter', AttrCounter);
 
+declare global {
+  interface HTMLElementTagNameMap {
+    'attr-counter': AttrCounter;
+  }
+}
+
 function getCount(_counterId: number): Promise<number> {
   return new Promise<number>((resolve) => {
     setTimeout(() => { resolve(30); }, 3_000);

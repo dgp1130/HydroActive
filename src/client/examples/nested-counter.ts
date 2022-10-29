@@ -12,6 +12,11 @@ class InnerCounter extends HydratableElement {
   }
 }
 customElements.define('inner-counter', InnerCounter);
+declare global {
+  interface HTMLElementTagNameMap {
+    'inner-counter': InnerCounter;
+  }
+}
 
 class OuterCounter extends HydratableElement {
   @hydrate('inner-counter', InnerCounter)
@@ -34,3 +39,8 @@ class OuterCounter extends HydratableElement {
   }
 }
 customElements.define('outer-counter', OuterCounter);
+declare global {
+  interface HTMLElementTagNameMap {
+    'outer-counter': OuterCounter;
+  }
+}

@@ -12,3 +12,9 @@ class BindCounter extends HydratableElement {
 }
 
 customElements.define('bind-counter', BindCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'bind-counter': BindCounter;
+  }
+}

@@ -46,3 +46,9 @@ class PropCounter extends HydratableElement {
 }
 
 customElements.define('prop-counter', PropCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'prop-counter': PropCounter;
+  }
+}

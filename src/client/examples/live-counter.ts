@@ -10,3 +10,9 @@ class LiveCounter extends HydratableElement {
 }
 
 customElements.define('live-counter', LiveCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'live-counter': LiveCounter;
+  }
+}

@@ -12,6 +12,11 @@ class DeferredInnerCounter extends HydratableElement {
   }
 }
 customElements.define('deferred-inner-counter', DeferredInnerCounter);
+declare global {
+  interface HTMLElementTagNameMap {
+    'deferred-inner-counter': DeferredInnerCounter;
+  }
+}
 
 class DeferredOuterCounter extends HydratableElement {
   @hydrate('deferred-inner-counter', DeferredInnerCounter)
@@ -36,3 +41,8 @@ class DeferredOuterCounter extends HydratableElement {
   }
 }
 customElements.define('deferred-outer-counter', DeferredOuterCounter);
+declare global {
+  interface HTMLElementTagNameMap {
+    'deferred-outer-counter': DeferredOuterCounter;
+  }
+}

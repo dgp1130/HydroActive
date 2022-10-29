@@ -16,3 +16,9 @@ class DeferredCounter extends HydratableElement {
 }
 
 customElements.define('deferred-counter', DeferredCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'deferred-counter': DeferredCounter;
+  }
+}

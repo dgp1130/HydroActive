@@ -16,3 +16,9 @@ class IslandCounter extends HydratableElement {
 }
 
 customElements.define('island-counter', IslandCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'island-counter': IslandCounter;
+  }
+}

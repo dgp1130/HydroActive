@@ -20,3 +20,9 @@ class ListenCounter extends HydratableElement {
 }
 
 customElements.define('listen-counter', ListenCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'listen-counter': ListenCounter;
+  }
+}

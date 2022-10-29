@@ -20,3 +20,9 @@ class HydratingCounter extends HydratableElement {
 }
 
 customElements.define('hydrating-counter', HydratingCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'hydrating-counter': HydratingCounter;
+  }
+}
