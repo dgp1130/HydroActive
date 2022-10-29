@@ -20,7 +20,7 @@ export type Context<_T> = {
 };
 
 /** Creates a new context with the given name. */
-export function createContext<T>(name: ContextName): Context<T> {
+export function create<T>(name: ContextName): Context<T> {
   return { name };
 }
 
@@ -37,7 +37,7 @@ interface ContextListener<T> {
  * Provides the given context with the supplied value at the element's location in the
  * DOM hierarchy.
  */
-export function provideContext<T>(el: Element, ctx: Context<T>, value: T): void {
+export function provide<T>(el: Element, ctx: Context<T>, value: T): void {
   // Get and insert a context entry for the given element.
   const elMap = providedCtxMap.get(el) ?? new Map();
   providedCtxMap.set(el, elMap);
@@ -55,7 +55,7 @@ export function provideContext<T>(el: Element, ctx: Context<T>, value: T): void 
 type ContextResult<T> = { success: true, value: T } | { success: false };
 
 /** Safely reads the context available to a given element and returns the value. */
-export function peekContext<T>(el: Element, ctx: Context<T>): ContextResult<T> {
+export function peek<T>(el: Element, ctx: Context<T>): ContextResult<T> {
   // Check if the current element has provided any contexts.
   const elMap = providedCtxMap.get(el);
   if (!elMap) return next();
@@ -70,7 +70,7 @@ export function peekContext<T>(el: Element, ctx: Context<T>): ContextResult<T> {
   function next(): ContextResult<T> {
     if (el.parentElement === null) return { success: false };
 
-    return peekContext(el.parentElement, ctx);
+    return peek(el.parentElement, ctx);
   }
 }
 
@@ -78,8 +78,8 @@ export function peekContext<T>(el: Element, ctx: Context<T>): ContextResult<T> {
  * Reads the context available to a given and returns the value or throws if not
  * provided.
  */
-export function getContext<T>(el: Element, ctx: Context<T>): T {
-  const result = peekContext(el, ctx);
+export function get<T>(el: Element, ctx: Context<T>): T {
+  const result = peek(el, ctx);
   if (result.success) return result.value;
 
   throw new Error(`No parent element provided context: \`${ctx.name.toString()}\`.`);
@@ -90,18 +90,18 @@ export function getContext<T>(el: Element, ctx: Context<T>): T {
  * not present, returns a `Promise` which waits for the value to be provided. `timeout`
  * specifies a timeout strategy, after which the `Promise` will reject.
  */
-export function waitForContext<T>(
+export function wait<T>(
   el: Element,
   ctx: Context<T>,
   timeout: Timeout = 'task',
 ): Promise<T> {
   // If the context is already provided, return it.
-  const result = peekContext(el, ctx);
+  const result = peek(el, ctx);
   if (result.success) return Promise.resolve(result.value);
 
   // Wait for the context to be provided.
   const waiterPromise = new Promise<T>((resolve) => {
-    const stopListening = listenForContext(el, ctx, (value) => {
+    const stopListening = listen(el, ctx, (value) => {
       resolve(value);
       stopListening();
     });
@@ -146,13 +146,13 @@ function getTimeout(timeout: Timeout): Promise<void> {
  * Invokes the given callback any time the specified context changes. Returns a "stop
  * listening" which, when invoked, removes the listener and cleans up internal state.
  */
-export function listenForContext<T>(
+export function listen<T>(
   el: Element,
   ctx: Context<T>,
   cb: (value: T) => void,
 ): () => void {
   // Check if there is existing context and emit it.
-  const result = peekContext(el, ctx);
+  const result = peek(el, ctx);
   if (result.success) cb(result.value);
 
   // Create a listener for the requested context.

@@ -1,8 +1,8 @@
-import { createContext } from '../lib/context.js';
+import * as ctx from '../lib/context.js';
 import { attr, bind, context, HydratableElement, hydrate, provide } from '../lib/hydrator.js';
 
 /** Context to be provided and received with the current count. */
-const countCtx = createContext<number>(Symbol('count'));
+const countCtx = ctx.create<number>(Symbol('count'));
 
 /** Parent component which provide the current count via context. */
 class CountProvider extends HydratableElement {

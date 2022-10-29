@@ -1,4 +1,5 @@
-import { Context, listenForContext, peekContext, provideContext, Timeout } from './context.js';
+import * as ctx from './context.js';
+import { Timeout, Context } from './context.js';
 
 interface HydrateMetadata {
   prop: string;
@@ -245,7 +246,7 @@ const provideMap = new WeakMap<
   HydratableElement,
   Map<string | symbol /* property */, unknown /* value */>
 >();
-export function provide<T>(ctx: Context<T>): PropertyDecorator {
+export function provide<T>(context: Context<T>): PropertyDecorator {
   return (target: Object, property: string | symbol): void => {
     // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
     // For some reason this apparently passes an `instanceof HydratableElement` check?
@@ -267,7 +268,7 @@ export function provide<T>(ctx: Context<T>): PropertyDecorator {
         providerMap.set(property, value);
 
         // Side effect: Provide this value as context to all descendants of the element.
-        provideContext(this, ctx, value);
+        ctx.provide(this, context, value);
       },
     });
   }
@@ -292,7 +293,7 @@ export abstract class HydratableElement extends HTMLElement {
 
     // Bind context listeners.
     for (const binding of this.contextBindings) {
-      const stopListening = listenForContext(this, binding.ctx, (value) => {
+      const stopListening = ctx.listen(this, binding.ctx, (value) => {
         (this as any)[binding.property] = value;
       });
       binding.stopListening = stopListening;
@@ -365,21 +366,21 @@ export abstract class HydratableElement extends HTMLElement {
     // Bind `@context()` properties.
     const ctxBindings = ctxRegistrationMap.get(clazz)
         ?? new Set<RegisteredContext<unknown>>();
-    for (const { ctx, property, timeout } of ctxBindings) {
+    for (const { ctx: context, property, timeout } of ctxBindings) {
       // Set the property if context already exists.
-      const currentCtxResult = peekContext(this, ctx);
+      const currentCtxResult = ctx.peek(this, context);
       if (currentCtxResult.success) (this as any)[property] = currentCtxResult.value;
 
       // Start listening for any changes to the context.
       let receivedContext = false;
-      const stopListening = listenForContext(this, ctx, (value) => {
+      const stopListening = ctx.listen(this, context, (value) => {
         (this as any)[property] = value;
         receivedContext = true;
       });
 
       // Recording the context binding so it can be paused and restarted when the
       // component is disconnected and reconnected to the DOM.
-      this.contextBindings.push({ ctx, property, stopListening });
+      this.contextBindings.push({ ctx: context, property, stopListening });
 
       // Start a timeout to emit an error if context is not provided in time.
       getTimeout(timeout ?? 'task').then(() => {
@@ -387,7 +388,7 @@ export abstract class HydratableElement extends HTMLElement {
 
         stopListening();
         console.error(`\`@context()\` for context \`${
-            ctx.name.toString()}\` was not provided before the timeout.`);
+            context.name.toString()}\` was not provided before the timeout.`);
       });
     }
 
