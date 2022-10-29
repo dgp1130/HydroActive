@@ -143,12 +143,6 @@ export function hydrate<
   };
 }
 
-interface InitMetadata {
-  selector: string;
-  coerce: Coercer<unknown>;
-  source: HydrateSource;
-}
-
 const propertyMap = new WeakMap<object /* host */, Record<string | symbol /* prop */, unknown /* value */>>();
 // Note: This is called *once per `@property` usage in a class definition*, not *once per instantiated object*.
 export const property: PropertyDecorator =
