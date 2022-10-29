@@ -39,6 +39,19 @@
             </template>
         </state-host-counter>
 
+        <higher-order>
+            <template shadowroot="open">
+                <h2>Higher-order component</h2>
+                <slot></slot>
+            </template>
+            
+            <lower-order>
+                <template shadowroot="open">
+                    <div>Hello from the lower-order component!</div>
+                </template>
+            </lower-order>
+        </higher-order>
+
         <count-provider count="15">
             <template shadowroot="open">
                 <h2>Context counter</h2>
@@ -46,6 +59,7 @@
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
             </template>
+
             <count-context-display>
                 <template shadowroot="open">
                     <div>The count is: <span>-</span></div>
