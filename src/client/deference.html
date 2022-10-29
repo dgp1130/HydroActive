@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hydrator Deference</title>
+        <meta charset="utf8">
+
+        <script src="/examples/deference.js" type="module"></script>
+        <script src="/lib/is-land.js" type="module"></script>
+    </head>
+    <body>
+        <h1>Deferred Hydration Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <deferred-counter defer-hydration>
+            <template shadowroot="open">
+                <h2>Deferred counter</h2>
+                <div>The count is: <span>50</span>.</div>
+                <button id="decrement" disabled>-</button>
+                <button id="increment" disabled>+</button>
+            </template>
+        </deferred-counter>
+        <button onclick="javascript:document.querySelector('deferred-counter').removeAttribute('defer-hydration'); this.disabled = true;">Load</button>
+
+        <is-land on:interaction import="/examples/island-counter.js">
+            <island-counter defer-hydration>
+                <template shadowroot="open">
+                    <h2>Island counter</h2>
+                    <div>The count is: <span>55</span>.</div>
+                    <button id="decrement" disabled>-</button>
+                    <button id="increment" disabled>+</button>
+                </template>
+            </island-counter>
+        </is-land>
+
+        <is-land on:interaction import="/examples/island-counter.js">
+            <island-counter defer-hydration>
+                <template shadowroot="open">
+                    <h2>Island counter 2</h2>
+                    <div>The count is: <span>60</span>.</div>
+                    <button id="decrement" disabled>-</button>
+                    <button id="increment" disabled>+</button>
+                </template>
+            </island-counter>
+        </is-land>
+
+        <is-land on:interaction>
+            <deferred-outer-counter defer-hydration>
+                <template shadowroot="open">
+                    <h2>Deferred and nested counter</h2>
+                    <deferred-inner-counter defer-hydration>
+                        <template shadowroot="open">
+                            <div>The count is: <span>65</span>.</div>
+                        </template>
+                    </deferred-inner-counter>
+                    <button id="decrement" disabled>-</button>
+                    <button id="increment" disabled>+</button>
+                </template>
+            </deferred-outer-counter>
+        </is-land>
+    </body>
+</html>

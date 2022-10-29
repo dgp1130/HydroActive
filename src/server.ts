@@ -18,11 +18,17 @@ function renderInfiniteTweetList(initialTweets: Tweet[]): string {
         <my-infinite-tweet-list>
             <template shadowroot="open">
                 <style>
+                    :host {
+                        display: block;
+                        margin-top: 15px;
+                    }
+
                     ul {
                         list-style: none;
                         margin-block-start: 0;
                         margin-block-end: 0;
                         padding-inline-start: 0;
+                        margin-bottom: 15px;
                     }
                 </style>
 
@@ -75,6 +81,12 @@ app.get('/twitter/', (_req, res) => {
         ${renderImportMap()}
     </head>
     <body>
+        <h1>Twitter</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
         ${renderInfiniteTweetList(tweets)}
     </body>
 </html>

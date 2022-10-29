@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hydrator Composition</title>
+        <meta charset="utf8">
+
+        <script src="/examples/composition.js" type="module"></script>
+    </head>
+    <body>
+        <h1>Composition Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <outer-counter>
+            <template shadowroot="open">
+                <h2>Nested counter</h2>
+                <inner-counter>
+                    <template shadowroot="open">
+                        <div>The count is: <span>35</span>.</div>
+                    </template>
+                </inner-counter>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
+            </template>
+        </outer-counter>
+
+        <state-host-counter>
+            <template shadowroot="open">
+                <h2>State host counter</h2>
+                <counter-display>
+                    <template shadowroot="open">
+                        <div>The count is: <span>40</span>.</div>
+                    </template>
+                </counter-display>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
+            </template>
+        </state-host-counter>
+
+        <count-provider count="45">
+            <template shadowroot="open">
+                <h2>Context counter</h2>
+                <slot></slot>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
+            </template>
+            <count-context-display>
+                <template shadowroot="open">
+                    <div>The count is: <span>-</span></div>
+                </template>
+            </count-context-display>
+        </count-provider>
+    </body>
+</html>

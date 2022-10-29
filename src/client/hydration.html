@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hydrator Hydration</title>
+        <meta charset="utf8">
+
+        <script src="/examples/hydration.js" type="module"></script>
+    </head>
+    <body>
+        <h1>Hydration Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <hydrating-counter>
+            <template shadowroot="open">
+                <h2>Using one-time hydration.</h2>
+                <div>The count is: <span>25</span>.</div>
+                <button id="decrement" disabled>-</button>
+                <button id="increment" disabled>+</button>
+            </template>
+        </hydrating-counter>
+
+        <attr-counter counter-id="1234">
+            <template shadowroot="open">
+                <h2>Hydrating from host attributes</h2>
+                <div>The count is: <span>Loading...</span>.</div>
+                <button id="decrement" disabled>-</button>
+                <button id="increment" disabled>+</button>
+            </template>
+        </attr-counter>
+    </body>
+</html>
