@@ -1,0 +1,8 @@
+* Context
+  * Community protocol
+    * Hydration timing doesn't really work
+    * No way to await future provided context
+    * Should we define global state to represent pending context requests?
+  * New implementation
+    * Requires everyone to agree on the single implementation.
+    * Imperative API means it can be used outside Hydrator.

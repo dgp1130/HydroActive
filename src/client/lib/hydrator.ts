@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { Context, listenForContext, peekContext, provideContext, Timeout } from './context.js';
 
 const hydrateKey = Symbol('hydrate');
 
@@ -200,17 +201,81 @@ function query(el: HydratableElement, selector: string): HTMLElement {
   return el.shadowRoot!.querySelector(selector)!;
 }
 
-function* prototypeChain(obj: object): Generator<object, void, void> {
-  yield obj;
-  const proto = Object.getPrototypeOf(obj);
-  if (proto !== null) yield* prototypeChain(proto);
+interface RegisteredContext<T> {
+  ctx: Context<T>;
+  property: string | symbol;
+  timeout?: Timeout;
+}
+
+/**
+ * Map of `HydratableElement` subclasses (not instances) to their registered
+ * `@context()` invocations.
+ */
+const ctxRegistrationMap = new WeakMap<
+  Class<HydratableElement>,
+  Set<RegisteredContext<unknown>>
+>();
+
+/** Decorator to register a given property to receive a value from context. */
+export function context<T>(ctx: Context<T>, timeout?: Timeout): PropertyDecorator {
+  return (target: Object, property: string | symbol): void => {
+    // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
+    // For some reason this apparently passes an `instanceof HydratableElement` check?
+    // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
+    if (!(target instanceof HydratableElement)) {
+      throw new Error(`Can only define \`@context\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
+    }
+    const clazz = target.constructor as unknown as Class<HydratableElement>;
+
+    // Add it to the registration map.
+    const registeredCtxs = ctxRegistrationMap.get(clazz)
+        ?? new Set<RegisteredContext<unknown>>();
+    ctxRegistrationMap.set(clazz, registeredCtxs);
+    registeredCtxs.add({ ctx, property, timeout });
+  }
+}
+
+/**
+ * Map of `HydratableElement` instances to a map of their `@context()` properties
+ * mapped to their current value.
+ */
+const provideMap = new WeakMap<
+  HydratableElement,
+  Map<string | symbol /* property */, unknown /* value */>
+>();
+export function provide<T>(ctx: Context<T>): PropertyDecorator {
+  return (target: Object, property: string | symbol): void => {
+    // `target` is actually the prototype of the `HydratableElement` subclass (`MyCounter.prototype`).
+    // For some reason this apparently passes an `instanceof HydratableElement` check?
+    // https://twitter.com/develwoutacause/status/1554656153497243648?s=20&t=xkluFM0LUyzrh_YRUXLOfQ
+    if (!(target instanceof HydratableElement)) {
+      throw new Error(`Can only define \`@context\` on \`HydratableElement\`, but got \`${target.constructor.name}\`.`);
+    }
+
+    // Define the `@context()` property to proxy its value in the global map.
+    // The setter implements a side effect of providing the value as context.
+    Object.defineProperty(target, property, {
+      get: function(): T {
+        return (provideMap.get(this) ?? new Map<string, unknown>()).get(property) as T;
+      },
+      set: function(value: T): void {
+        // Update existing value in the global map.
+        const providerMap = provideMap.get(this) ?? new Map<string, unknown>();
+        provideMap.set(this, providerMap);
+        providerMap.set(property, value);
+
+        // Side effect: Provide this value as context to all descendants of the element.
+        provideContext(this, ctx, value);
+      },
+    });
+  }
 }
 
 export abstract class HydratableElement extends HTMLElement {
   public hydrated = false;
+  private contextBindings: ContextBinding<unknown>[] = [];
+  private eventBindings = [] as EventBinding[];
 
-  // TODO: Can't put event listeners in `connectedCallback()` because `defer-hydration`
-  // may defer until later.
   connectedCallback(): void {
     if (!this.hasAttribute('defer-hydration')) {
       // Immediately hydrate.
@@ -222,12 +287,28 @@ export abstract class HydratableElement extends HTMLElement {
     for (const { target, event, cb, options } of this.eventBindings) {
       target.addEventListener(event, cb, options);
     }
+
+    // Bind context listeners.
+    for (const binding of this.contextBindings) {
+      const stopListening = listenForContext(this, binding.ctx, (value) => {
+        (this as any)[binding.property] = value;
+      });
+      binding.stopListening = stopListening;
+    }
   }
 
   disconnectedCallback(): void {
     // Unbind event listeners found during user hydration.
     for (const { target, event, cb, options } of this.eventBindings) {
       target.removeEventListener(event, cb, options);
+    }
+
+    // Unbind context listeners.
+    for (const binding of this.contextBindings) {
+      if (!binding.stopListening) throw new Error(`No \`stopListening\` property for context \`${binding.ctx.name.toString()}\`.`);
+
+      binding.stopListening();
+      binding.stopListening = undefined;
     }
   }
 
@@ -236,16 +317,28 @@ export abstract class HydratableElement extends HTMLElement {
     // Ignore anything that isn't a removal of `defer-hydration`.
     if (name !== 'defer-hydration' || newValue !== null) return;
 
+    // Ignore removal of `defer-hydration` when disconnected, because we don't support
+    // hydration when disconnected from the DOM. Hydration will be triggered by
+    // `connectedCallback()` when the element is attached.
+    if (!this.isConnected) return;
+
     // Synchronously hydrate.
     this.requestHydration();
 
     // Bind event listeners from previous hydration.
-    for (const { target, event, cb, options } of this.eventBindings) {
-      target.addEventListener(event, cb, options);
+    if (this.isConnected) {
+      for (const { target, event, cb, options } of this.eventBindings) {
+        target.addEventListener(event, cb, options);
+      }
     }
   }
 
   private requestHydration(): void {
+    // We disallow disconnected hydrations because it's never done in the context of
+    // `Hydrator`, it's value is questionable at best, the contract for user code is
+    // confusing, and the interplay with `@context()` timeout is confusing.
+    if (!this.isConnected) throw new Error(`Can't hydrate unless connected to the DOM.`);
+
     // Only hydrate once at most.
     if (this.hydrated) return;
 
@@ -263,6 +356,36 @@ export abstract class HydratableElement extends HTMLElement {
       const content = getSource(el, source);
       const value = coerce(content);
       (this as any)[prop] = value;
+    }
+
+    // Bind `@context()` properties.
+    const clazz = this.constructor as Class<HydratableElement>;
+    const ctxBindings = ctxRegistrationMap.get(clazz)
+        ?? new Set<RegisteredContext<unknown>>();
+    for (const { ctx, property, timeout } of ctxBindings) {
+      // Set the property if context already exists.
+      const currentCtxResult = peekContext(this, ctx);
+      if (currentCtxResult.success) (this as any)[property] = currentCtxResult.value;
+
+      // Start listening for any changes to the context.
+      let receivedContext = false;
+      const stopListening = listenForContext(this, ctx, (value) => {
+        (this as any)[property] = value;
+        receivedContext = true;
+      });
+
+      // Recording the context binding so it can be paused and restarted when the
+      // component is disconnected and reconnected to the DOM.
+      this.contextBindings.push({ ctx, property, stopListening });
+
+      // Start a timeout to emit an error if context is not provided in time.
+      getTimeout(timeout ?? 'task').then(() => {
+        if (receivedContext) return; // Context was provided, no issues.
+
+        stopListening();
+        console.error(`\`@context()\` for context \`${
+            ctx.name.toString()}\` was not provided before the timeout.`);
+      });
     }
 
     // Invoke one-time user hydration logic.
@@ -303,7 +426,6 @@ export abstract class HydratableElement extends HTMLElement {
     return Array.from(els);
   }
 
-  private eventBindings = [] as EventBinding[];
   protected listen(
     target: EventTarget,
     event: string,
@@ -321,6 +443,12 @@ interface EventBinding {
   event: string;
   cb: (evt: Event) => void;
   options?: boolean | AddEventListenerOptions;
+}
+
+interface ContextBinding<T> {
+  ctx: Context<T>,
+  property: string | symbol;
+  stopListening?: () => void;
 }
 
 function getSource(el: Element, source: HydrateSource): HydrateContent {
@@ -371,21 +499,42 @@ function getCoercer<Source extends HydrateSource, El extends Element>(
     return coerceToString;
   } else if (type === Number) {
     return coerceToNumber;
-  } else if (classExtends(type as Class, HTMLElement)) {
+  } else if (classExtends(type as Class<unknown>, HTMLElement)) {
     return (content) => assertElement(content, type as (el: Element) => unknown);
   } else {
     return type as Coercer<unknown>;
   }
 }
 
-type Class = new (...args: unknown[]) => unknown;
-function classExtends(child: Class, parent: Class): boolean {
+type Class<T> = new (...args: unknown[]) => T;
+function classExtends(child: Class<unknown>, parent: Class<unknown>): boolean {
   for (const prototype of prototypeChain(child)) {
     if (prototype === parent) return true;
   }
   return false;
 }
 
+function* prototypeChain(obj: object): Generator<object, void, void> {
+  yield obj;
+  const proto = Object.getPrototypeOf(obj);
+  if (proto !== null) yield* prototypeChain(proto);
+}
+
 function assertNever(value: never): never {
   throw new Error(`Unexpected call to \`assertNever()\` with value: ${value}`);
+}
+
+function getTimeout(timeout: Timeout): Promise<void> {
+  switch (timeout) {
+    case 'task':
+      return new Promise<void>((resolve) => {
+        queueMicrotask(() => { resolve(); });
+      });
+    case 'forever':
+      return new Promise<void>(() => {});
+    default:
+      return new Promise<void>((resolve) => {
+        setTimeout(() => { resolve(); }, timeout);
+      });
+  }
 }

@@ -98,10 +98,24 @@
             </template>
         </state-host-counter>
 
+        <count-provider count="45">
+            <template shadowroot="open">
+                <h2>Context counter</h2>
+                <slot></slot>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
+            </template>
+            <count-context-display>
+                <template shadowroot="open">
+                    <div>The count is: <span>-</span></div>
+                </template>
+            </count-context-display>
+        </count-provider>
+
         <deferred-counter defer-hydration>
             <template shadowroot="open">
                 <h2>Deferred counter</h2>
-                <div>The count is: <span>45</span>.</div>
+                <div>The count is: <span>50</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
             </template>
@@ -112,7 +126,7 @@
             <island-counter defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter</h2>
-                    <div>The count is: <span>50</span>.</div>
+                    <div>The count is: <span>55</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
@@ -123,7 +137,7 @@
             <island-counter defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter 2</h2>
-                    <div>The count is: <span>55</span>.</div>
+                    <div>The count is: <span>60</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
@@ -136,7 +150,7 @@
                     <h2>Deferred and nested counter</h2>
                     <deferred-inner-counter defer-hydration>
                         <template shadowroot="open">
-                            <div>The count is: <span>60</span>.</div>
+                            <div>The count is: <span>65</span>.</div>
                         </template>
                     </deferred-inner-counter>
                     <button id="decrement" disabled>-</button>
