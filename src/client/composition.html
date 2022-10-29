@@ -52,7 +52,22 @@
             </lower-order>
         </higher-order>
 
-        <count-provider count="15">
+        <event-handler>
+            <template shadowroot="open">
+                <h2>Event handler</h2>
+                <div>The count is: <span>15</span>.</div>
+                <slot></slot>
+            </template>
+
+            <event-dispatcher>
+                <template shadowroot="open">
+                    <button id="decrement">-</button>
+                    <button id="increment">+</button>
+                </template>
+            </event-dispatcher>
+        </event-handler>
+
+        <count-provider count="20">
             <template shadowroot="open">
                 <h2>Context counter</h2>
                 <slot></slot>
