@@ -1,14 +1,19 @@
 {
-  "name": "hydrate",
+  "name": "hydrator",
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "main": "index.js",
+  "exports": {
+    "./context": "./context.js"
+  },
   "scripts": {
     "start": "npm run -s build && npm run -s serve",
-    "build": "npm run -s build-ts && npm run -s build-html",
-    "build-ts": "tsc && ln -f -s ../../node_modules dist/client/",
-    "build-html": "cp src/client/*.html dist/client/",
-    "serve": "node dist/server.js",
+    "build": "npm run -s build-ts && npm run -s build-html && npm run -s build-package",
+    "build-ts": "tsc && ln -f -s ../node_modules dist/",
+    "build-html": "cp src/examples/*.html dist/examples/",
+    "build-package": "cp package.json dist/package.json",
+    "serve": "node dist/examples/server.js",
     "clean": "rm -rf dist/"
   },
   "license": "MIT",

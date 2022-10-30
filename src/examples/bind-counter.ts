@@ -1,4 +1,4 @@
-import { bind, HydratableElement, hydrate } from '../lib/hydrator.js';
+import { bind, HydratableElement, hydrate } from 'hydrator';
 
 class BindCounter extends HydratableElement {
   // `@hydrate()` and `@bind()` together are equivalent to `@live('span', Number)`!

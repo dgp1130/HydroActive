@@ -3,7 +3,13 @@ import express, { Request } from 'express';
 
 const app = express();
 
-app.use(express.static('dist/client/', {
+// Internal redirect `/` to `/examples/index.html`.
+app.use('/$', (req, _res, next) => {
+    req.url = '/examples/index.html';
+    next();
+});
+
+app.use(express.static('dist/', {
     cacheControl: true,
     maxAge: 30_000 /* milliseconds */,
 }));
@@ -39,7 +45,7 @@ function renderInfiniteTweetList(initialTweets: Tweet[]): string {
                 </ul>
                 <button>Load more</button>
             </template>
-            <script src="/twitter/infinite-tweet-list.js" type="module"></script>
+            <script src="/examples/twitter/infinite-tweet-list.js" type="module"></script>
         </my-infinite-tweet-list>
     `.trim();
 }
@@ -57,7 +63,7 @@ function renderTweet({ id, content }: Tweet): string {
         <span>${content}</span>
         <button>Edit</button>
     </template>
-    <script src="/twitter/tweet.js" type="module" async></script>
+    <script src="/examples//twitter/tweet.js" type="module" async></script>
 </my-tweet>
     `.trim();
 }
@@ -69,7 +75,7 @@ function randomTweet(): Tweet {
     return { id, content };
 }
 
-app.get('/twitter/', (_req, res) => {
+app.get('/examples/twitter/', (_req, res) => {
     const tweets = Array(5).fill(0).map(() => randomTweet());
 
     res.contentType('text/html').end(`
@@ -134,6 +140,8 @@ function renderImportMap(): string {
 <script type="importmap">
     {
         "imports": {
+            "hydrator": "/index.js",
+            "hydrator/": "/",
             "lit": "/node_modules/lit/index.js",
             "lit/": "/node_modules/lit/",
             "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js",

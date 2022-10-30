@@ -1,6 +1,6 @@
 import { LitElement, TemplateResult, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { parseDomFragment } from '../lib/dom.js';
+import { parseDomFragment } from '../html-fragments/dom.js';
 
 @customElement('my-editable-tweet')
 class EditableTweet extends LitElement {

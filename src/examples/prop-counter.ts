@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, property } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, property } from 'hydrator';
 
 // TODO: What about when the script executes before the element?
 // Do we care if modules are defer-only?

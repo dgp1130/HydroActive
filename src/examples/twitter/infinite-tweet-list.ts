@@ -1,6 +1,6 @@
+import { HydratableElement, hydrate } from 'hydrator';
 import { html, render, TemplateResult } from 'lit';
-import { parseDomFragment } from '../lib/dom.js';
-import { HydratableElement, hydrate } from '../lib/hydrator.js';
+import { parseDomFragment } from '../html-fragments/dom.js';
 
 class InfiniteTweetList extends HydratableElement {
     @hydrate('ul', HTMLUListElement)

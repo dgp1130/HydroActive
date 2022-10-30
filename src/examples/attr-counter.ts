@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, attr, bind } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, attr, bind } from 'hydrator';
 
 class AttrCounter extends HydratableElement {
   @hydrate(':host', Number, attr('counter-id'))

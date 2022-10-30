@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, live } from '../lib/hydrator.js';
+import { HydratableElement, hydrate, live } from 'hydrator';
 
 class InnerCounter extends HydratableElement {
   @live('span', Number)
