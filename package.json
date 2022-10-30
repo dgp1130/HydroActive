@@ -8,12 +8,13 @@
     "./context": "./context.js"
   },
   "scripts": {
-    "start": "npm run -s build && npm run -s serve",
+    "start": "npm run -s clean && npm run -s build && npm run -s serve",
     "build": "npm run -s build-ts && npm run -s build-html && npm run -s build-package",
     "build-ts": "tsc && ln -f -s ../node_modules dist/",
     "build-html": "cp src/examples/*.html dist/examples/",
     "build-package": "cp package.json dist/package.json",
     "serve": "node dist/examples/server.js",
+    "test": "npm run -s build-ts",
     "clean": "rm -rf dist/"
   },
   "license": "MIT",
