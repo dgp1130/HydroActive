@@ -1,5 +1,6 @@
 import * as ctx from './context.js';
 import { Timeout, Context } from './context.js';
+import { QueriedElement } from './selector.js';
 
 interface HydrateMetadata {
   prop: string;

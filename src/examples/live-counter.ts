@@ -1,18 +1,17 @@
-import { HydratableElement, live } from 'hydrator';
+import { component } from 'hydrator';
 
-class LiveCounter extends HydratableElement {
-  @live('span', Number)
-  private count!: number;
+const LiveCounter = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
 
-  protected override hydrate(): void {
-    setInterval(() => { this.count++; }, 1_000);
-  }
-}
+  setInterval(() => {
+    setCount(count() + 1);
+  }, 1_000);
+});
 
 customElements.define('live-counter', LiveCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'live-counter': LiveCounter;
+    'live-counter': InstanceType<typeof LiveCounter>;
   }
 }

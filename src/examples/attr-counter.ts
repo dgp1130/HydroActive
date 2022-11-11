@@ -1,37 +1,35 @@
-import { HydratableElement, hydrate, attr, bind } from 'hydrator';
+import { attr, component } from 'hydrator';
+import { createSignal } from 'hydrator/signal.js';
 
-class AttrCounter extends HydratableElement {
-  @hydrate(':host', Number, attr('counter-id'))
-  private counterId!: number;
+const AttrCounter = component(($) => {
+  const id = $.hydrate(':host', Number, attr('counter-id'));
 
-  @bind('span')
-  private count!: number;
+  const decrement = $.query('button#decrement');
+  const increment = $.query('button#increment');
 
-  protected override hydrate(): void {
-    const decrement = this.query('button#decrement');
-    this.listen(decrement, 'click', () => { this.count--; });
-    const increment = this.query('button#increment');
-    this.listen(increment, 'click', () => { this.count++; });
-
-    getCount(this.counterId).then((count) => {
-      this.count = count;
-
-      decrement.disabled = false;
-      increment.disabled = false;
-    });
-  }
-}
+  // TODO: Is it a good idea to call these functions asynchronously?
+  getCount(id).then((initialCount) => {
+    const [ count, setCount ] = createSignal(initialCount);
+    $.bind('span', count);
+  
+    $.listen(decrement, 'click', () => { setCount(count() - 1); });
+    decrement.disabled = false;
+  
+    $.listen(increment, 'click', () => { setCount(count() + 1); });
+    increment.disabled = false;
+  });
+});
 
 customElements.define('attr-counter', AttrCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'attr-counter': AttrCounter;
+    'attr-counter': InstanceType<typeof AttrCounter>;
   }
 }
 
 function getCount(_counterId: number): Promise<number> {
   return new Promise<number>((resolve) => {
-    setTimeout(() => { resolve(10); }, 3_000);
+    setTimeout(() => { resolve(35); }, 3_000);
   });
 }

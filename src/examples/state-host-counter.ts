@@ -1,48 +1,45 @@
-import { property, HydratableElement, live, hydrate } from 'hydrator';
+import { component } from 'hydrator';
+import { createSignal } from 'hydrator/signal.js';
 
-/**
- * A component which hydrates and renders the current count. It is effectively
- * a stateless component.
- */
-class CounterDisplay extends HydratableElement {
-  @live('span', Number)
-  public count!: number;
-}
+const CounterDisplay = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
+
+  return {
+    // Expose the hydrated count.
+    get count() { return count(); },
+
+    // Allow parent components to decide when and how the count changes.
+    set count(value) { setCount(value); },
+  };
+});
 
 customElements.define('counter-display', CounterDisplay);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'counter-display': CounterDisplay;
+    'counter-display': InstanceType<typeof CounterDisplay>;
   }
 }
 
-/**
- * A component which hydrates from a child component prop and manages the state,
- * passing down to the child component's props on change.
- */
-class StateHostCounter extends HydratableElement {
-  @property
-  @hydrate('counter-display', (el) => el.count)
-  private count!: number;
+const StateHostCounter = component(($) => {
+  // Initialize the outer component with state hydrated from the inner component.
+  const counterDisplay = $.query('counter-display');
+  const [ count, setCount ] = createSignal(counterDisplay.count);
 
-  @hydrate('counter-display', CounterDisplay)
-  private counterDisplay!: CounterDisplay;
+  $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
+  $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
 
-  protected override hydrate(): void {
-    this.listen(this.query('button#decrement'), 'click', () => { this.count--; });
-    this.listen(this.query('button#increment'), 'click', () => { this.count++; });
-  }
-
-  protected override update(): void {
-    this.counterDisplay.count = this.count;
-  }
-}
+  return {
+    update(): void {
+      counterDisplay.count = count();
+    },
+  };
+});
 
 customElements.define('state-host-counter', StateHostCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'state-host-counter': StateHostCounter;
+    'state-host-counter': InstanceType<typeof StateHostCounter>;
   }
 }

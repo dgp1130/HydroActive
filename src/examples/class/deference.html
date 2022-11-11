@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Hydrator Deference</title>
+        <title>Class-based Deferred Hydration Examples</title>
         <meta charset="utf8">
 
         <script type="importmap">
@@ -14,59 +14,59 @@
         </script>
     </head>
     <body>
-        <h1>Deferred Hydration Examples</h1>
+        <h1>Class-based Deferred Hydration Examples</h1>
 
         <header>
             <a href="/">Home</a>
         </header>
 
-        <deferred-counter defer-hydration>
+        <deferred-counter-class defer-hydration>
             <template shadowroot="open">
                 <h2>Deferred counter</h2>
                 <div>The count is: <span>5</span>.</div>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
-                <script src="/examples/deferred-counter.js" type="module"></script>
+                <script src="/examples/class/deferred-counter.js" type="module"></script>
             </template>
-        </deferred-counter>
+        </deferred-counter-class>
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">Load</button>
 
-        <deferred-outer-counter defer-hydration>
+        <deferred-outer-counter-class defer-hydration>
             <template shadowroot="open">
                 <h2>Deferred and nested counter</h2>
-                <deferred-inner-counter defer-hydration>
+                <deferred-inner-counter-class defer-hydration>
                     <template shadowroot="open">
                         <div>The count is: <span>10</span>.</div>
                     </template>
-                </deferred-inner-counter>
+                </deferred-inner-counter-class>
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
-                <script src="/examples/nested-deferred-counter.js" type="module"></script>
+                <script src="/examples/class/nested-deferred-counter.js" type="module"></script>
             </template>
-        </deferred-outer-counter>
+        </deferred-outer-counter-class>
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">Load</button>
 
-        <is-land on:interaction import="/examples/island-counter.js" style="display: block;">
-            <island-counter defer-hydration>
+        <is-land on:interaction import="/examples/class/island-counter.js" style="display: block;">
+            <island-counter-class defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter</h2>
                     <div>The count is: <span>15</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
-            </island-counter>
+            </island-counter-class>
         </is-land>
         <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
 
-        <is-land on:interaction import="/examples/island-counter.js" style="display: block;">
-            <island-counter defer-hydration>
+        <is-land on:interaction import="/examples/class/island-counter.js" style="display: block;">
+            <island-counter-class defer-hydration>
                 <template shadowroot="open">
                     <h2>Island counter 2</h2>
                     <div>The count is: <span>20</span>.</div>
                     <button id="decrement" disabled>-</button>
                     <button id="increment" disabled>+</button>
                 </template>
-            </island-counter>
+            </island-counter-class>
         </is-land>
         <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
     </body>

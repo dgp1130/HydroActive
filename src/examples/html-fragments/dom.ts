@@ -36,7 +36,6 @@ export async function parseDomFragment(res: Response):
         simpleContentType as DOMParserSupportedType,
         { includeShadowRoots: true },
     ]);
-    // TODO: Update original repo with this fix.
     const adopted = document.adoptNode(fragment.body);
     replaceScripts(adopted);
 

@@ -62,38 +62,131 @@ this by providing a number of useful decorators and lifecycle hooks. One example
 be:
 
 ```typescript
-import { HydratableElement, live } from 'hydrator';
+import { component } from 'hydrator';
 
-/**
- * `HydratableElement` extends `HTMLElement` and provides additional decorator and
- * lifecycle functionality.
- */
-class MyCounter extends HydratableElement {
-  // `@live()` automatically hydrates this property by doing
-  // `this.shadowRoot!.querySelector('span')!.textContent` and parsing the result as a
-  // `Number`.
-  @live('span', Number)
-  private count!: number;
+// `component()` creates a web component based on the given hydrate function. The
+// callback is invoked on hydration and provides a `$` variable with additional
+// functionality to provide interactivity to the pre-rendered component.
+const MyCounter = component(($) => {
+  // `$.live()` automatically hydrates this property by doing
+  // `this.shadowRoot!.querySelector('span')!.textContent!` and parsing the result as a
+  // `Number`. Returns a `Signal` to provide reactive reads and writes.
+  const [ count, setCount ] = $.live('span', Number);
 
-  // Lifecycle method called exactly once when the component hydrates. Usually this
-  // happens on first `connectedCallback()`, but can be deferred via `defer-hydration`.
-  protected override hydrate(): void {
-    // Ergonomic wrapper to read an element from the shadow DOM and assert it exists.
-    // Also types the result based on the query, this has type `HTMLButtonElement`.
-    const incrementBtn = this.query('button');
+  // Ergonomic wrapper to read an element from the shadow DOM and assert it exists.
+  // Also types the result based on the query, this has type `HTMLButtonElement`.
+  const incrementBtn = $.query('button#increment');
 
-    // Ergonomic wrapper to bind event listeners. Automatically removes and readds the
-    // listeners when the element is disconnected from / reconnected with the DOM.
-    this.listen(incrementBtn, 'click', () => {
-      // `@live()` automatically adds a setter to dynamically update the rendered
-      // `<span />` whenever its value changes.
-      this.count++;
-    });
-  }
-}
+  // Ergonomic wrapper to bind event listeners. Automatically removes and readds the
+  // listener when the element is disconnected from / reconnected with the DOM.
+  $.listen(incrementBtn, 'click', () => {
+    // `setCount()` automatically updates the underlying DOM with the new value.
+    setCount(count() + 1);
+  });
+});
 ```
 
 See [examples](/src/examples/) for more cool features. The HTML pages contained
 pre-rendered HTML (remember, how they get rendered by the server is an implementation
 detail). The TypeScript files house the component's implementations and demonstrate
 different forms of reactivity and use cases.
+
+## Class vs Functional design
+
+Some notable trade-offs between the two authoring formats:
+
+*   Class syntax duplicates type information in the decorator and the property type.
+    *   If a tag name changes and a `@live()` is missed, class syntax will fail at
+        runtime.
+    *   If a tag name changes and a `$.live()` is missed, the returned type will no
+        longer be accurate and likely (but not always) lead to clear type errors.
+*   Class syntax effectively requires `!` on the property definition.
+*   Class syntax provides access to `HTMLElement` life cycle hooks like
+    `connectedCallback()` where users can easily shoot themselves in the foot.
+*   Decorated properties are often marked "unused" by the IDE, because it doesn't
+    understand how they are bound.
+*   `query()` and `listen()` are practically identical in the two designs.
+*   Many class decorators don't make sense together (such as `@live()` and `@bind()`),
+    but the IDE doesn't understand this. However, `$` functions return distinct types
+    and are harder to misuse in this manner.
+*   Functional approach requires a separate reactivity system in signals. Whereas the
+    class approach can make do with setters.
+*   Functional approach decouples reactivity (via signals) from its components, while
+    the class approach couples the two together (via setters).
+*   Class approach requires TS decorators. Hopefully this will be compatible with the
+    JS decorator proposal.
+*   Returning object in functional approach feels like it's hacking in the class
+    approach in the middle of the functional approach.
+*   When to use `$.hydrate()` vs `$.query()` is not clear. The former asserts for a
+    specific type, which is occasionally useful but easy to forget. Class approach uses
+    `@hydrate()` as a declarative decorator while `this.query()` is imperative.
+*   `update()` just _feels_ more intuitive in the class syntax.
+*   Functional approach requires returning the custom element definition and "moving"
+    its properties over, which feels very hacky.
+*   Functional approach does a better job of encapsulating problem space, user code is
+    _mostly_ isolated from the actual custom elements definition. On the flip side, this
+    makes it harder to learn and more magical.
+*   Class approach leaks a lot of implementation details about the custom element
+    definition.
+*   `$.host` is basically an opt-out of the functional API and leaks the core
+    implementation details of the underlying component. Reminds me of Protractor's
+    `browser.driver` in all the wrong ways.
+*   `$.host` is accessible during hydration before returned properties have been moved
+    over.
+*   `$.host` doesn't include properties from the returned object. Pretty sure that's
+    impossible since it requires inferring the type of a parameter based on the return
+    type, which doesn't make much sense.
+*   Might want `$.dispatch()` in functional approach to avoid an unnecessary `$.host`
+    reference, but the class approach notably doesn't _need_ this because
+    `this.dispatchEvent()` just _is_ that function.
+*   `$.bind()` is more composable than `@bind()` and can work with computed properties
+    without duplicating state.
+*   Functional approach can't really hide the `customElements.define()` because we need
+    to add it to `HTMLElementTagNameMap` anyways. In fairness, the class approach
+    requires this too, though it doesn't try to abstract away any of those
+    implementation details.
+*   Occasionally need to make a signal with no clear initial value. Seems like an
+    anti-pattern which can be hard to avoid.
+*   Defining public component properties is _much_ more idiomatic in the class based
+    approach.
+*   Weird that signals don't directly compose each other in the functional approach.
+    Since we can't assume all components are built with Hydrator or use signals, we also
+    can't assume other components can use them. Requires unboxing and re-boxing data in
+    unintuitive and likely non-performant ways.
+    *   Maybe it's worth having an API which assumes the other element is built with
+        Hydrator. Just need to make sure there are alternative approaches when that's
+        not true.
+*   Functional approach requires more boilerplate to expose data with manual getters and
+    setters. In the class approach, `public` just works.
+*   Functional approach is much more conducive with the imperative context API. However
+    it still benefits greatly from signal integration.
+*   Functional approach is more conducive to deferred hydration, as their aren't any
+    available lifecycle hooks to break it such as `connectedCallback()`.
+*   Class decorators _require_ usage of the class field scope, meaning some variables
+    may exist longer than they need to, particularly those only needed during hydration.
+    Functional approach closures naturally scope more narrowly.
+*   Not sure what `$` _represents_ in the functional approach and don't have a good name
+    for it.
+*   Functional `update()` function and `$.effect()` are basically the same thing?
+*   `$.use()` vs `$.effect()` are confusing to choose between.
+*   Should `$.use()` *require* a `Disposer`? If you don't have one, should you just run
+    that code directly in the `component()` callback?
+*   `$.use()` and `$.effect()` create side effects bound to the _component_ lifecycle,
+    not the _signal's_ lifecycle. Signals cannot be garbage collected when used by these
+    functions, even if they are not referenced elsewhere. Maybe that's ok? But it seems
+    weird that these effects are done at the bottom of the usage graph at the individual
+    signals rather than the top of the usage graph like the others.
+*   `$.live()` / `$.hydrate()` / `$.bind()` all seem to work when called asynchronously
+    _after_ hydration. Is that ok?
+    *   `$.bind()` kinda needs this to be compatible with async contexts.
+    *   `$.hydrate()` makes logical sense, but has a bad name. Maybe `$.init()` would be
+        better?
+    *   `$.live()` is just the two combined, so it _can_ work, but I feel like it
+        shouldn't. Binding late seems like a bad idea, even if it accepts a `Promise`.
+
+### Problems which are the same in both and unrelated to the authoring format
+
+*   Hydration timing is the same, and generally works the same way.
+*   Due to hydration timing, context becomes awkward since child components usually
+    hydrate before parent components.
+*   Hydration is still synchronous due to the way `defer-hydration` works.

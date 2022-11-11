@@ -1,46 +1,40 @@
-import { HydratableElement, hydrate, live } from 'hydrator';
+import { component } from 'hydrator';
 
-class InnerCounter extends HydratableElement {
-  @live('span', Number)
-  private count!: number;
+const InnerCounter = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
 
-  public increment(): void {
-    this.count++;
-  }
-  public decrement(): void {
-    this.count--;
-  }
-}
+  return {
+    decrement(): void {
+      setCount(count() - 1);
+    },
+
+    increment(): void {
+      setCount(count() + 1);
+    },
+  };
+});
+
 customElements.define('inner-counter', InnerCounter);
+
 declare global {
   interface HTMLElementTagNameMap {
-    'inner-counter': InnerCounter;
+    'inner-counter': InstanceType<typeof InnerCounter>;
   }
 }
 
-class OuterCounter extends HydratableElement {
-  @hydrate('inner-counter', InnerCounter)
-  private innerCounter!: InnerCounter;
+const OuterCounter = component(($) => {
+  const innerCounter = $.hydrate('inner-counter');
 
-  protected override hydrate(): void {
-    // Child elements are hydrated first, so this is already loaded and works!
-    // Note that `HydratableElement` cannot force the custom element classes to be
-    // loaded for all its children, so if `outer-counter` is defined *before*
-    // `inner-counter`, you're gonna have a bad time. `@hydrate()` naturally requires
-    // this anyways because it needs a reference to the child component class which
-    // forces it to be defined first.
-    this.innerCounter.increment();
+  innerCounter.increment(); // Should be a valid reference at hydration time.
 
-    const decrement = this.query('button#decrement');
-    this.listen(decrement, 'click', () => { this.innerCounter.decrement(); });
+  $.listen($.query('#decrement'), 'click', () => { innerCounter.decrement(); });
+  $.listen($.query('#increment'), 'click', () => { innerCounter.increment(); });
+});
 
-    const increment = this.query('button#increment');
-    this.listen(increment, 'click', () => { this.innerCounter.increment(); });
-  }
-}
 customElements.define('outer-counter', OuterCounter);
+
 declare global {
   interface HTMLElementTagNameMap {
-    'outer-counter': OuterCounter;
+    'outer-counter': InstanceType<typeof OuterCounter>;
   }
 }

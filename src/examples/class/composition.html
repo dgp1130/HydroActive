@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Hydrator Composition</title>
+        <title>Class-based Composition Examples</title>
         <meta charset="utf8">
 
         <script type="importmap">
@@ -14,72 +14,72 @@
         </script>
     </head>
     <body>
-        <h1>Composition Examples</h1>
+        <h1>Class-based Composition Examples</h1>
 
         <header>
             <a href="/">Home</a>
         </header>
 
-        <outer-counter>
+        <outer-counter-class>
             <template shadowroot="open">
                 <h2>Nested counter</h2>
-                <inner-counter>
+                <inner-counter-class>
                     <template shadowroot="open">
                         <div>The count is: <span>5</span>.</div>
                     </template>
-                </inner-counter>
+                </inner-counter-class>
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
-                <script src="/examples/nested-counter.js" type="module"></script>
+                <script src="/examples/class/nested-counter.js" type="module"></script>
             </template>
-        </outer-counter>
+        </outer-counter-class>
 
-        <state-host-counter>
+        <state-host-counter-class>
             <template shadowroot="open">
                 <h2>State host counter</h2>
-                <counter-display>
+                <counter-display-class>
                     <template shadowroot="open">
                         <div>The count is: <span>10</span>.</div>
                     </template>
-                </counter-display>
+                </counter-display-class>
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
-                <script src="/examples/state-host-counter.js" type="module"></script>
+                <script src="/examples/class/state-host-counter.js" type="module"></script>
             </template>
-        </state-host-counter>
+        </state-host-counter-class>
 
         <!-- No actual JS implementation, DSD just works! -->
-        <higher-order>
+        <higher-order-class>
             <template shadowroot="open">
                 <h2>Higher-order component</h2>
                 <slot></slot>
             </template>
             
-            <lower-order>
+            <lower-order-class>
                 <template shadowroot="open">
                     <div>Hello from the lower-order component!</div>
                 </template>
-            </lower-order>
-        </higher-order>
+            </lower-order-class>
+        </higher-order-class>
 
-        <event-handler>
+        <event-handler-class>
             <template shadowroot="open">
                 <h2>Event handler</h2>
                 <div>The count is: <span>15</span>.</div>
                 <slot></slot>
             </template>
 
-            <event-dispatcher>
+            <event-dispatcher-class>
                 <template shadowroot="open">
                     <button id="decrement">-</button>
                     <button id="increment">+</button>
                 </template>
-            </event-dispatcher>
+            </event-dispatcher-class>
 
-            <script src="/examples/event-counter.js" type="module"></script>
-        </event-handler>
+            <script src="/examples/class/event-counter.js" type="module"></script>
+        </event-handler-class>
 
-        <context-provider count="20">
+        <count-provider-class count="20">
             <template shadowroot="open">
                 <h2>Context counter</h2>
                 <slot></slot>
@@ -88,14 +88,14 @@
             </template>
 
             <div>
-                <context-receiver>
+                <count-context-display-class>
                     <template shadowroot="open">
                         <div>The count is: <span>-</span></div>
                     </template>
-                </context-receiver>
+                </count-context-display-class>
             </div>
 
-            <script src="/examples/context-counter.js" type="module"></script>
-        </context-provider>
+            <script src="/examples/class/context-counter.js" type="module"></script>
+        </count-provider-class>
     </body>
 </html>

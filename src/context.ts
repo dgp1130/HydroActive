@@ -52,6 +52,17 @@ export function provide<T>(el: Element, ctx: Context<T>, value: T): void {
   }
 }
 
+/**
+ * Stops providing the given context from the element. If the element was not providing
+ * the specified context, nothing happens.
+ */
+export function remove(el: Element, ctx: Context<unknown>): void {
+  const elMap = providedCtxMap.get(el);
+  if (!elMap) return;
+
+  elMap.delete(ctx.name);
+}
+
 type ContextResult<T> = { success: true, value: T } | { success: false };
 
 /** Safely reads the context available to a given element and returns the value. */
@@ -109,7 +120,9 @@ export function wait<T>(
 
   // Fail the request after the given timeout.
   const timeoutPromise = getTimeout(timeout).then(() => {
-    throw new Error(`Request for \`${ctx.name.toString()}\` context was never provided.`);
+    throw new Error(`Request for \`${
+      ctx.name.toString()}\` context was not provided to \`${
+      el.tagName.toLowerCase()}\` before the timeout.`);
   });
 
   // Either return the context or fail from the timeout, whichever happens first.
@@ -145,22 +158,47 @@ function getTimeout(timeout: Timeout): Promise<void> {
 /**
  * Invokes the given callback any time the specified context changes. Returns a "stop
  * listening" which, when invoked, removes the listener and cleans up internal state.
+ * 
+ * If a timeout option is provided and no context is already set nor is provided within
+ * that timeout, then an uncaught exception is thrown and the listener is removed. By
+ * default this function will wait forever and never throw.
  */
 export function listen<T>(
   el: Element,
   ctx: Context<T>,
   cb: (value: T) => void,
+  timeout: Timeout = 'forever',
 ): () => void {
-  // Check if there is existing context and emit it.
-  const result = peek(el, ctx);
-  if (result.success) cb(result.value);
-
   // Create a listener for the requested context.
   const listeners = listenerMap.get(ctx.name) ?? new Set();
   listenerMap.set(ctx.name, listeners);
-  const listener: ContextListener<T> = { element: el, handler: cb };
+  const listener: ContextListener<T> = {
+    element: el,
+    handler: (value) => {
+      receivedContext = true;
+      return cb(value);
+    },
+  };
 
   // Start listening and return a function to stop listening.
   listeners.add(listener as ContextListener<unknown>);
-  return () => listeners.delete(listener as ContextListener<unknown>);
+  const unlisten = () => listeners.delete(listener as ContextListener<unknown>);
+
+  // Check if there is existing context and emit it.
+  const result = peek(el, ctx);
+  let receivedContext = result.success;
+  if (result.success) {
+    cb(result.value);
+  } else {
+    getTimeout(timeout).then(() => {
+      if (!receivedContext) {
+        unlisten();
+        throw new Error(`Request for \`${
+          ctx.name.toString()}\` context was not provided to \`${
+          el.tagName.toLowerCase()}\` before the timeout.`);
+      }
+    });
+  }
+
+  return unlisten;
 }

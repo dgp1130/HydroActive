@@ -1,20 +1,21 @@
-import { bind, HydratableElement, hydrate } from 'hydrator';
+import { component } from 'hydrator';
+import { createSignal } from 'hydrator/signal.js';
 
-class BindCounter extends HydratableElement {
-  // `@hydrate()` and `@bind()` together are equivalent to `@live('span', Number)`!
-  @hydrate('span', Number)
-  @bind('span')
-  private count!: number;
+const BindCounter = component(($) => {
+  // `$.live()` is equivalent to initializing a signal with `$.hydrate()` and then
+  // `$.bind()`-ing it back to the DOM.
+  const [ count, setCount ] = createSignal($.hydrate('span', Number));
+  $.bind('span', count);
 
-  protected override hydrate(): void {
-    setInterval(() => { this.count++; }, 1_000);
-  }
-}
+  setInterval(() => {
+    setCount(count() + 1);
+  }, 1_000);
+});
 
 customElements.define('bind-counter', BindCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'bind-counter': BindCounter;
+    'bind-counter': InstanceType<typeof BindCounter>;
   }
 }

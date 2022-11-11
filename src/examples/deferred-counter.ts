@@ -1,24 +1,21 @@
-import { HydratableElement, live } from 'hydrator';
+import { component } from 'hydrator';
 
-class DeferredCounter extends HydratableElement {
-  @live('span', Number)
-  private count!: number;
+const DeferredCounter = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
 
-  protected override hydrate(): void {
-    const decrement = this.query('button#decrement');
-    this.listen(decrement, 'click', () => this.count--);
-    decrement.disabled = false;
+  const decrement = $.query('button#decrement');
+  $.listen(decrement, 'click', () => { setCount(count() - 1); });
+  decrement.disabled = false;
 
-    const increment = this.query('button#increment');
-    this.listen(increment, 'click', () => this.count++);
-    increment.disabled = false;
-  }
-}
+  const increment = $.query('button#increment');
+  $.listen(increment, 'click', () => { setCount(count() + 1); });
+  increment.disabled = false;
+});
 
 customElements.define('deferred-counter', DeferredCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'deferred-counter': DeferredCounter;
+    'deferred-counter': InstanceType<typeof DeferredCounter>;
   }
 }

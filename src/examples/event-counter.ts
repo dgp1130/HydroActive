@@ -1,44 +1,34 @@
-import { HydratableElement, live } from 'hydrator';
+import { component } from 'hydrator';
 
-/** Holds two buttons and dispatches events whenever they are clicked. */
-class EventDispatcher extends HydratableElement {
-  protected override hydrate(): void {
-    this.listen(this.query('#decrement'), 'click', () => {
-      this.dispatchEvent(new Event('count-decrement', { bubbles: true }));
-    });
+const EventDispatcher = component(($) => {
+  $.listen($.query('#decrement'), 'click', () => {
+    $.dispatch(new Event('count-decrement', { bubbles: true }));
+  });
 
-    this.listen(this.query('#increment'), 'click', () => {
-      this.dispatchEvent(new Event('count-increment', { bubbles: true }));
-    });
-  }
-}
+  $.listen($.query('#increment'), 'click', () => {
+    $.dispatch(new Event('count-increment', { bubbles: true }));
+  });
+});
 
 customElements.define('event-dispatcher', EventDispatcher);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'event-dispatcher': EventDispatcher;
+    'event-dispatcher': InstanceType<typeof EventDispatcher>;
   }
 }
 
-/**
- * Holds the current count and updates the value based on a descendent node
- * dispatching the `count-increment` and `count-decrement` events.
- */
-class EventHandler extends HydratableElement {
-  @live('span', Number)
-  private count!: number;
+const EventHandler = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
 
-  protected override hydrate(): void {
-    this.listen(this, 'count-decrement', () => { this.count--; });
-    this.listen(this, 'count-increment', () => { this.count++; });
-  }
-}
+  $.listen($.host, 'count-decrement', () => { setCount(count() - 1); });
+  $.listen($.host, 'count-increment', () => { setCount(count() + 1); });
+});
 
 customElements.define('event-handler', EventHandler);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'event-handler': EventHandler;
+    'event-handler': InstanceType<typeof EventHandler>;
   }
 }

@@ -1,1 +1,1 @@
-export * from './hydrator.js';
+export * from './functional.js';

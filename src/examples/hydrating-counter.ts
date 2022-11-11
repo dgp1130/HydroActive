@@ -1,28 +1,25 @@
-import { HydratableElement, live } from 'hydrator';
+import { component } from 'hydrator';
 
-class HydratingCounter extends HydratableElement {
-  @live('span', Number)
-  private count!: number;
+const HydratingCounter = component(($) => {
+  const [ count, setCount ] = $.live('span', Number);
 
-  protected override hydrate(): void {
-    const decrement = this.query('button#decrement');
-    this.listen(decrement, 'click', () => { this.count--; });
-    decrement.disabled = false;
+  const decrement = $.query('button#decrement');
+  $.listen(decrement, 'click', () => { setCount(count() - 1); });
+  decrement.disabled = false;
 
-    const increment = this.query('button#increment');
-    this.listen(increment, 'click', () => { this.count++; });
-    increment.disabled = false;
+  const increment = $.query('button#increment');
+  $.listen(increment, 'click', () => { setCount(count() + 1); });
+  increment.disabled = false;
 
-    const label = document.createElement('div');
-    label.textContent = 'Hi, I\'m CSR\'d! These buttons are also disabled until their event listeners are loaded.';
-    this.shadowRoot!.append(label);
-  }
-}
+  const label = document.createElement('div');
+  label.textContent = 'Hi, I\'m CSR\'d! These buttons are also disabled until their event listeners are loaded.';
+  $.host.shadowRoot!.append(label);
+});
 
 customElements.define('hydrating-counter', HydratingCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'hydrating-counter': HydratingCounter;
+    'hydrating-counter': InstanceType<typeof HydratingCounter>;
   }
 }

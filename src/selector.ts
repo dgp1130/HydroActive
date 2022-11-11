@@ -6,11 +6,10 @@
 //
 // Parses the query string at compile time to extract the tag name, look up the element type, and return it.
 
-// Type definition (implementation is just `root.querySelector{,All}(query)`).
-declare function querySelector<Query extends string>(root: HTMLElement, query: Query): QueriedElement<Query> | null;
-declare function querySelectorAll<Query extends string>(root: HTMLElement, query: Query): NodeListOf<QueriedElement<Query>>;
-
-type QueriedElement<Query extends string> = Union<ElementsOf<TagNames<Selectors<Query>>>>;
+export type QueriedElement<Query extends string, Host extends Element = Element> =
+    Query extends ':host'
+        ? Host
+        : Union<ElementsOf<TagNames<Selectors<Query>>>>;
 
 // Handling selector list is tricky. Split on comma and then parse each selector individually.
 // The final result of all the possible element types are then Union-ed into a single type.

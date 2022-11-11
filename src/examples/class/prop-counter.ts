@@ -1,9 +1,6 @@
-import { HydratableElement, hydrate, property } from 'hydrator';
+import { HydratableElement, hydrate, property } from 'hydrator/class.js';
 
-// TODO: What about when the script executes before the element?
-// Do we care if modules are defer-only?
-// TODO: What about light DOM?
-// TODO: MutationObserver of light DOM? Maybe out of scope?
+// TODO: What about light DOM? MutationObserver of light DOM? Maybe out of scope?
 class PropCounter extends HydratableElement {
   // Easy: Replicate Lit properties which automatically call `this.update()` when set.
   @property @hydrate('#initial', Number)
@@ -45,10 +42,10 @@ class PropCounter extends HydratableElement {
   }).bind(this);
 }
 
-customElements.define('prop-counter', PropCounter);
+customElements.define('prop-counter-class', PropCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'prop-counter': PropCounter;
+    'prop-counter-class': PropCounter;
   }
 }

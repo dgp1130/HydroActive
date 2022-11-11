@@ -1,40 +1,40 @@
-import { attr, bind, context, HydratableElement, hydrate, provide } from 'hydrator';
-import * as ctx from 'hydrator/context.js';
+import * as context from 'hydrator/context.js';
+import { attr, component } from 'hydrator';
+import { createSignal } from 'hydrator/signal.js';
 
-/** Context to be provided and received with the current count. */
-const countCtx = ctx.create<number>(Symbol('count'));
+const ctx = context.create<number>(Symbol('count'));
 
-/** Parent component which provide the current count via context. */
-class CountProvider extends HydratableElement {
-  @hydrate(':host', Number, attr('count'))
-  @provide(countCtx) // Provide this value to all descendent components.
-  private count!: number;
+const ContextReceiver = component(($) => {
+  // `$.waitContext()` returns a `Promise` because the context may (actually is in this
+  // case) be provided *after* it is requested. Waiting returns a `Promise<Accessor<T>>`
+  // but this is compatible with `$.bind()`.
+  // Alternatively we could use `$.useContext()`, however that requires an initial value
+  // and writes it to the DOM immediately on bind, which I don't want to do here.
+  const count = $.waitContext(ctx);
+  $.bind('span', count);
+});
 
-  protected override hydrate(): void {
-    this.listen(this.query('#decrement'), 'click', () => { this.count--; });
-    this.listen(this.query('#increment'), 'click', () => { this.count++; });
-  }
-}
-
-customElements.define('count-provider', CountProvider);
+customElements.define('context-receiver', ContextReceiver);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'count-provider': CountProvider;
+    'context-receiver': InstanceType<typeof ContextReceiver>;
   }
 }
 
-/** Child component which receives the current count via context and displays it. */
-class CountContextDisplay extends HydratableElement {
-  @context(countCtx) // Receive the count from context and automatically update this property.
-  @bind('span')
-  private count!: number;
-}
+const ContextProvider = component(($) => {
+  const [ count, setCount ] = createSignal($.hydrate(':host', Number, attr('count')));
 
-customElements.define('count-context-display', CountContextDisplay);
+  $.provideContext(ctx, () => count());
+
+  $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
+  $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
+});
+
+customElements.define('context-provider', ContextProvider);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'count-context-display': CountContextDisplay;
+    'context-provider': InstanceType<typeof ContextProvider>;
   }
 }
