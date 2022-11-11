@@ -79,11 +79,12 @@ class MyCounter extends HydratableElement {
   // happens on first `connectedCallback()`, but can be deferred via `defer-hydration`.
   protected override hydrate(): void {
     // Ergonomic wrapper to read an element from the shadow DOM and assert it exists.
+    // Also types the result based on the query, this has type `HTMLButtonElement`.
     const incrementBtn = this.query('button');
 
     // Ergonomic wrapper to bind event listeners. Automatically removes and readds the
     // listeners when the element is disconnected from / reconnected with the DOM.
-    this.bind(incrementBtn, 'click', () => {
+    this.listen(incrementBtn, 'click', () => {
       // `@live()` automatically adds a setter to dynamically update the rendered
       // `<span />` whenever its value changes.
       this.count++;
