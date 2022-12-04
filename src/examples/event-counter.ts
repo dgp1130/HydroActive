@@ -1,4 +1,4 @@
-import { component } from 'hydrator';
+import { component } from 'hydroactive';
 
 const EventDispatcher = component(($) => {
   $.listen($.query('#decrement'), 'click', () => {

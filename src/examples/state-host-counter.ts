@@ -1,5 +1,5 @@
-import { component } from 'hydrator';
-import { createSignal } from 'hydrator/signal.js';
+import { component } from 'hydroactive';
+import { createSignal } from 'hydroactive/signal.js';
 
 const CounterDisplay = component(($) => {
   const [ count, setCount ] = $.live('span', Number);

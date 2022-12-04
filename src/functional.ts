@@ -23,7 +23,7 @@ export type Hook = () => Disposer | void;
 
 /**
  * Private element state which needs to be accessed outside the class but is internal
- * to the Hydrator library and should be hidden from users.
+ * to the HydroActive library and should be hidden from users.
  */
 interface ElementInternalState {
   hydrated: boolean;
@@ -33,7 +33,7 @@ const elementInternalStateMap = new WeakMap<HTMLElement, ElementInternalState>()
 
 /**
  * Private component state which needs to be accessed outside the class but is internal
- * to the Hydrator library and should be hidden from users.
+ * to the HydroActive library and should be hidden from users.
  */
 interface ComponentInternalState {
   hooks: Hook[];

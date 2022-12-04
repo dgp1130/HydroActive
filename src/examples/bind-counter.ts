@@ -1,5 +1,5 @@
-import { component } from 'hydrator';
-import { createSignal } from 'hydrator/signal.js';
+import { component } from 'hydroactive';
+import { createSignal } from 'hydroactive/signal.js';
 
 const BindCounter = component(($) => {
   // `$.live()` is equivalent to initializing a signal with `$.hydrate()` and then

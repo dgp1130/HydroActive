@@ -140,8 +140,8 @@ function renderImportMap(): string {
 <script type="importmap">
     {
         "imports": {
-            "hydrator": "/index.js",
-            "hydrator/": "/",
+            "hydroactive": "/index.js",
+            "hydroactive/": "/",
             "lit": "/node_modules/lit/index.js",
             "lit/": "/node_modules/lit/",
             "@lit/reactive-element": "/node_modules/@lit/reactive-element/reactive-element.js",

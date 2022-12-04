@@ -1,6 +1,6 @@
-import * as context from 'hydrator/context.js';
-import { attr, component } from 'hydrator';
-import { createSignal } from 'hydrator/signal.js';
+import * as context from 'hydroactive/context.js';
+import { attr, component } from 'hydroactive';
+import { createSignal } from 'hydroactive/signal.js';
 
 const ctx = context.create<number>(Symbol('count'));
 

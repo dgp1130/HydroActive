@@ -1,4 +1,4 @@
-import { component } from 'hydrator';
+import { component } from 'hydroactive';
 
 const DeferredInnerCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
@@ -26,7 +26,7 @@ const DeferredOuterCounter = component(($) => {
   const innerCounter = $.hydrate('deferred-inner-counter');
 
   // Child elements are hydrated first, so this is already loaded and works!
-  // Note that Hydrator cannot force the custom element classes to be loaded for all its
+  // Note that HydroActive cannot force the custom element classes to be loaded for all its
   // children, so if `functional-deferred-outer-counter` is defined *before*
   // `deferred-inner-counter`, you're gonna have a bad time. `$.hydrate()` naturally
   // requires this anyways because it needs a reference to the child component class

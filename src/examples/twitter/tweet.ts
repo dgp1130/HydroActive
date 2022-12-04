@@ -1,6 +1,6 @@
 import './editable-tweet.js';
 
-import { attr, HydratableElement, hydrate } from 'hydrator/class.js';
+import { attr, HydratableElement, hydrate } from 'hydroactive/class.js';
 
 class Tweet extends HydratableElement {
     @hydrate(':host', Number, attr('tweet-id'))

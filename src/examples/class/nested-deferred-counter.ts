@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, live } from 'hydrator/class.js';
+import { HydratableElement, hydrate, live } from 'hydroactive/class.js';
 
 class DeferredInnerCounter extends HydratableElement {
   @live('span', Number)

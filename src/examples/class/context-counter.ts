@@ -1,5 +1,5 @@
-import { attr, bind, context, HydratableElement, hydrate, provide } from 'hydrator/class.js';
-import * as ctx from 'hydrator/context.js';
+import { attr, bind, context, HydratableElement, hydrate, provide } from 'hydroactive/class.js';
+import * as ctx from 'hydroactive/context.js';
 
 /** Context to be provided and received with the current count. */
 const countCtx = ctx.create<number>(Symbol('count'));

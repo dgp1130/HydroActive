@@ -1,4 +1,4 @@
-import { property, HydratableElement, live, hydrate } from 'hydrator/class.js';
+import { property, HydratableElement, live, hydrate } from 'hydroactive/class.js';
 
 /**
  * A component which hydrates and renders the current count. It is effectively

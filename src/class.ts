@@ -339,7 +339,7 @@ export abstract class HydratableElement extends HTMLElement {
 
   private requestHydration(): void {
     // We disallow disconnected hydrations because it's never done in the context of
-    // `Hydrator`, it's value is questionable at best, the contract for user code is
+    // `HydroActive`, it's value is questionable at best, the contract for user code is
     // confusing, and the interplay with `@context()` timeout is confusing.
     if (!this.isConnected) throw new Error(`Can't hydrate unless connected to the DOM.`);
 

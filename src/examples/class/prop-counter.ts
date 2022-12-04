@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate, property } from 'hydrator/class.js';
+import { HydratableElement, hydrate, property } from 'hydroactive/class.js';
 
 // TODO: What about light DOM? MutationObserver of light DOM? Maybe out of scope?
 class PropCounter extends HydratableElement {

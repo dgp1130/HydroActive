@@ -1,4 +1,4 @@
-import { HydratableElement, live } from 'hydrator/class.js';
+import { HydratableElement, live } from 'hydroactive/class.js';
 
 /** Holds two buttons and dispatches events whenever they are clicked. */
 class EventDispatcher extends HydratableElement {

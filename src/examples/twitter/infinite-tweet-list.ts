@@ -1,4 +1,4 @@
-import { HydratableElement, hydrate } from 'hydrator/class.js';
+import { HydratableElement, hydrate } from 'hydroactive/class.js';
 import { html, render, TemplateResult } from 'lit';
 import { parseDomFragment } from '../html-fragments/dom.js';
 

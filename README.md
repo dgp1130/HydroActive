@@ -1,7 +1,7 @@
-# Hydrator
+# HydroActive
 
-Hydrator is a (likely soon-to-be renamed) experimental component library for hydrating
-web components and adding interactivity to pre-rendered HTML.
+HydroActive is a experimental component library for hydrating web components and adding
+interactivity to pre-rendered HTML.
 
 ## Premise
 
@@ -40,8 +40,8 @@ hydration through a different lens:
 Servers are good at rendering HTML and returning it in HTTP responses. That's kind of
 their thing, we don't need to reinvent that. If you have a Node, Java, Ruby, Haskell,
 C, or even Fortran server, any of them should be fine. **How a server renders HTML is
-an unrelated implementation detail.** What Hydrator focuses on is taking that
-pre-rendered HTML and making it interactive on the client.
+an unrelated implementation detail.** HydroActive focuses on taking that pre-rendered
+HTML and making it interactive on the client.
 
 This means we can think of hydration as a purely deserialization problem. Servers can
 render web components with declarative shadow DOM without any fancy tooling or
@@ -56,13 +56,13 @@ integrations, all they need to do is render something like:
 </my-counter>
 ```
 
-Any server can do that, exactly how it does so is unimportant to Hydrator. From here,
-Hydrator makes it easy to load from this component and make it interactable. It does
-this by providing a number of useful decorators and lifecycle hooks. One example would
-be:
+Any server can do that, exactly how it does so is unimportant to HydroActive. From
+here, HydroActive makes it easy to load from this component and make it interactable.
+It does this by providing a number of useful decorators and lifecycle hooks. One
+example would be:
 
 ```typescript
-import { component } from 'hydrator';
+import { component } from 'hydroactive';
 
 // `component()` creates a web component based on the given hydrate function. The
 // callback is invoked on hydration and provides a `$` variable with additional
@@ -150,12 +150,12 @@ Some notable trade-offs between the two authoring formats:
 *   Defining public component properties is _much_ more idiomatic in the class based
     approach.
 *   Weird that signals don't directly compose each other in the functional approach.
-    Since we can't assume all components are built with Hydrator or use signals, we also
-    can't assume other components can use them. Requires unboxing and re-boxing data in
-    unintuitive and likely non-performant ways.
+    Since we can't assume all components are built with HydroActive or use signals, we
+    also can't assume other components can use them. Requires unboxing and re-boxing
+    data in unintuitive and likely non-performant ways.
     *   Maybe it's worth having an API which assumes the other element is built with
-        Hydrator. Just need to make sure there are alternative approaches when that's
-        not true.
+        HydroActive. Just need to make sure there are alternative approaches when
+        that's not true.
 *   Functional approach requires more boilerplate to expose data with manual getters and
     setters. In the class approach, `public` just works.
 *   Functional approach is much more conducive with the imperative context API. However

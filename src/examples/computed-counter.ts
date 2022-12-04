@@ -1,4 +1,4 @@
-import { component } from 'hydrator';
+import { component } from 'hydroactive';
 
 const ComputedCounter = component(($) => {
   const [ count, setCount ] = $.live('#count', Number);
