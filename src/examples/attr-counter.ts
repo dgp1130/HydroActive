@@ -30,6 +30,6 @@ declare global {
 
 function getCount(_counterId: number): Promise<number> {
   return new Promise<number>((resolve) => {
-    setTimeout(() => { resolve(35); }, 3_000);
+    setTimeout(() => { resolve(10); }, 3_000);
   });
 }
