@@ -92,7 +92,6 @@ export function component<Def extends ComponentDefinition>(
       // Hydrate at most once.
       const elementState = elementInternalStateMap.get(this)!;
       if (elementState.hydrated) return;
-      elementState.hydrated = true;
 
       // Call user-authored hydration function.
       this.def = hydrate(this.component) ?? undefined;
@@ -100,6 +99,7 @@ export function component<Def extends ComponentDefinition>(
         const update = this.def.update.bind(undefined);
         this.component.effect(() => { update(); });
       }
+      elementState.hydrated = true;
 
       if (this.def) {
         // Apply the returned properties to this element.
