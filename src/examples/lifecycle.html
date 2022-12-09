@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HydroActive Lifecycle</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/index.js",
+                    "hydroactive/": "/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Lifecycle Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <safe-counter>
+            <template shadowroot="open">
+                <h2>Safe live updates.</h2>
+                <div>The count is: <span>5</span>.</div>
+                <script src="/examples/safe-counter.js" type="module"></script>
+            </template>
+        </safe-counter>
+    </body>
+</html>

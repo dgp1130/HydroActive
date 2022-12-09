@@ -7,6 +7,7 @@ const BindCounter = component(($) => {
   const [ count, setCount ] = createSignal($.hydrate('span', Number));
   $.bind('span', count);
 
+  // This has a memory leak, but we'll fix it later.
   setInterval(() => {
     setCount(count() + 1);
   }, 1_000);
