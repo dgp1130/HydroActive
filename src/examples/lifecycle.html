@@ -27,5 +27,30 @@
                 <script src="/examples/safe-counter.js" type="module"></script>
             </template>
         </safe-counter>
+
+        <effect-counter>
+            <template shadowroot="open">
+                <h2>Effect counter.</h2>
+                <div>The count is: <span>10</span>.</div>
+                <button>Increment and log to console</button>
+                <script src="/examples/effect-counter.js" type="module"></script>
+            </template>
+        </effect-counter>
+
+        <custom-hook>
+            <template shadowroot="open">
+                <h2>Custom hook.</h2>
+                <div>The count is: <span>15</span>.</div>
+                <script src="/examples/custom-hook.js" type="module"></script>
+            </template>
+        </custom-hook>
+
+        <composed-hooks>
+            <template shadowroot="open">
+                <h2>Composed hooks.</h2>
+                <div>The count is: <span>20</span>.</div>
+                <script src="/examples/composed-hooks.js" type="module"></script>
+            </template>
+        </composed-hooks>
     </body>
 </html>

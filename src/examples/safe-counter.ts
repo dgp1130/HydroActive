@@ -3,7 +3,8 @@ import { component } from 'hydroactive';
 const SafeCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
-  $.use(() => {
+  // Same as before, but no memory leak!
+  $.lifecycle(() => {
     // Run on hydration and reconnect.
     const id = setInterval(() => {
       setCount(count() + 1);
