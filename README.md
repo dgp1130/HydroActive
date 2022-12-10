@@ -180,6 +180,9 @@ Some notable trade-offs between the two authoring formats:
         better?
     *   `$.live()` is just the two combined, so it _can_ work, but I feel like it
         shouldn't. Binding late seems like a bad idea, even if it accepts a `Promise`.
+*   `$.asyncEffect()` can't be easily tracked, need to pass signals in advance.
+*   Hard choice between `$.asyncEffect()` depending on untracked signals vs. requiring users
+    to `unobserve()` asynchronous operations.
 
 ### Problems which are the same in both and unrelated to the authoring format
 

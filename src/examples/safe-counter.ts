@@ -1,4 +1,5 @@
 import { component } from 'hydroactive';
+import { unobserved } from 'hydroactive/signal.js';
 
 const SafeCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
@@ -6,9 +7,9 @@ const SafeCounter = component(($) => {
   // Same as before, but no memory leak!
   $.lifecycle(() => {
     // Run on hydration and reconnect.
-    const id = setInterval(() => {
+    const id = setInterval(unobserved(() => {
       setCount(count() + 1);
-    }, 1_000);
+    }), 1_000);
 
     // Run on disconnect.
     return () => { clearInterval(id); };

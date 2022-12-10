@@ -1,10 +1,11 @@
 import { component } from 'hydroactive';
+import { unobserved } from 'hydroactive/signal.js';
 
 const DisposedEffect = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   $.effect(() => {
-    window.increment = () => { setCount(count() + 1); };
+    window.increment = unobserved(() => { setCount(count() + 1); });
     return () => { delete window.increment; };
   });
 });

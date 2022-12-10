@@ -46,10 +46,19 @@
             </template>
         </disposed-effect>
 
+        <async-effect>
+            <template shadowroot="open">
+                <h2>Async effect.</h2>
+                <div>The count is: <span>20</span>.</div>
+                <button>+</button>
+                <script src="/examples/async-effect.js" type="module"></script>
+            </template>
+        </async-effect>
+
         <custom-hook>
             <template shadowroot="open">
                 <h2>Custom hook.</h2>
-                <div>The count is: <span>20</span>.</div>
+                <div>The count is: <span>25</span>.</div>
                 <script src="/examples/custom-hook.js" type="module"></script>
             </template>
         </custom-hook>
@@ -57,7 +66,7 @@
         <composed-hooks>
             <template shadowroot="open">
                 <h2>Composed hooks.</h2>
-                <div>The count is: <span>25</span>.</div>
+                <div>The count is: <span>30</span>.</div>
                 <script src="/examples/composed-hooks.js" type="module"></script>
             </template>
         </composed-hooks>

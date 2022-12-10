@@ -1,6 +1,6 @@
 import * as context from './context.js';
 import { Context, Timeout } from './context.js';
-import { Accessor, Disposer, Signal, createEffect, createSignal } from './signal.js';
+import { Accessor, Disposer, Signal, createEffect, createSignal, unobserved, banAccessors } from './signal.js';
 import { QueriedElement } from './selector.js';
 
 export interface ComponentDefinition {
@@ -90,7 +90,7 @@ export function component<Def extends ComponentDefinition>(
       if (elementState.hydrated) return;
 
       // Call user-authored hydration function.
-      this.def = hydrate(this.component) ?? undefined;
+      this.def = unobserved(hydrate)(this.component) ?? undefined;
       elementState.hydrated = true;
 
       if (this.def) {
@@ -121,6 +121,14 @@ export function component<Def extends ComponentDefinition>(
     }
   } as unknown as Class<HTMLElement & Def>;
 }
+
+type Accessed<Signal> = Signal extends Accessor<infer T> ? T : never;
+type AccessedArray<Signals extends unknown[]> = Signals extends [ infer Head, ...infer Tail ]
+  ? [ Accessed<Head>, ...AccessedArray<Tail> ]
+  : [];
+type AsyncEffect<Accessors extends Accessor<unknown>[]> = (
+  ...args: [ ...values: AccessedArray<Accessors>, signal: AbortSignal ]
+) => Promise<void>;
 
 export class Component<Host extends HTMLElement = HTMLElement> {
   public readonly host: Host;
@@ -155,8 +163,8 @@ export class Component<Host extends HTMLElement = HTMLElement> {
     // If we already hydrated, run the hook immediately and clean up on disconnect.
     // This allows hooks to be defined late and still work with the component lifecycle.
     if (hydrated && this.host.isConnected) {
-      const disposer = initializer();
-      if (disposer) hookDisposers.push(disposer);
+      const disposer = unobserved(initializer)();
+      if (disposer) hookDisposers.push(unobserved(disposer));
     }
   }
 
@@ -172,6 +180,49 @@ export class Component<Host extends HTMLElement = HTMLElement> {
     this.lifecycle(() => {
       const dispose = createEffect(() => effect());
       return () => { dispose(); };
+    });
+  }
+
+  /**
+   * Schedules an async effect to be run on the component any time one of the provided
+   * signals is modified. Signals must be provided in function arguments instead of accessed
+   * in the callback like a typical effect. It should look like so:
+   *
+   * ```typescript
+   * const [ value, setValue ] = createSignal(0);
+   * 
+   * $.asyncEffect(value, async (value, signal: AbortSignal) => {
+   *   // Do something asynchronous with `value`.
+   * });
+   * ```
+   *
+   * This is because it's not possible to subscribe observe signal executions in an async
+   * context, we must synchronously touch *all* the required signals, then use their results
+   * to invoke the async effect when they change.
+   *
+   * An {@link AbortSignal} is provided as the final argument which is triggered when the
+   * effect is disposed. This is useful for cancelling async tasks in an ergonomic fashion.
+   */
+  public asyncEffect<Accessors extends Accessor<unknown>[]>(...args: [
+    ...accessors: Accessors,
+    effect: AsyncEffect<Accessors>,
+  ]): void {
+    const accessors = args.slice(0, -1) as Accessor<unknown>[];
+
+    // Ban accessors because they should be passed in as arguments. Any accessors invoked in
+    // the async effect, will *not* be tracked or retrigger the effect. Accessors are banned
+    // by default, meaning following any `await` they will `throw`. However the synchronous
+    // part of the effect could still read (and technically track) accessors and cause
+    // hard-to-follow execution dependencies. It's better to always fail for any accessor
+    // invocation from an async effect.
+    const effect = banAccessors(args.at(-1) as AsyncEffect<Accessors>);
+
+    this.effect(() => {
+      // Read all the accessors synchronously.
+      const values = accessors.map((accessor) => accessor());
+      const abortCtrl = new AbortController();
+      effect(...values.concat([ abortCtrl.signal ]) as Parameters<AsyncEffect<Accessors>>);
+      return () => { abortCtrl.abort(); };
     });
   }
 
@@ -289,8 +340,9 @@ export class Component<Host extends HTMLElement = HTMLElement> {
 
   public listen(target: EventTarget, event: string, handler: (evt: Event) => void): void {
     this.lifecycle(() => {
-      target.addEventListener(event, handler);
-      return () => target.removeEventListener(event, handler);
+      const handle = unobserved(handler);
+      target.addEventListener(event, handle);
+      return () => target.removeEventListener(event, handle);
     });
   }
 }

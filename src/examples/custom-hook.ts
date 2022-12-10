@@ -1,5 +1,5 @@
 import { component, Component } from 'hydroactive';
-import { Accessor } from 'hydroactive/signal.js';
+import { Accessor, unobserved } from 'hydroactive/signal.js';
 
 function timer($: Component, selector: string): Accessor<number> {
   // Runs whenever you call `timer()` (usually on hydration).
@@ -7,7 +7,7 @@ function timer($: Component, selector: string): Accessor<number> {
 
   $.lifecycle(() => {
     // Runs on hydration and reconnect.
-    const id = setInterval(() => { setCount(count() + 1); }, 1_000);
+    const id = setInterval(unobserved(() => { setCount(count() + 1); }), 1_000);
 
     return () => {
       // Runs on disconnect.

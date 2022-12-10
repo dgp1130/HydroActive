@@ -1,12 +1,12 @@
 import { Component, component } from 'hydroactive';
-import { Accessor, createSignal } from 'hydroactive/signal.js';
+import { Accessor, createSignal, unobserved } from 'hydroactive/signal.js';
 import { _$LE } from 'lit';
 
 function count($: Component): Accessor<number> {
   const [ value, setValue ] = createSignal(0);
 
   $.lifecycle(() => {
-    const id = setInterval(() => { setValue(value() + 1); }, 1_000);
+    const id = setInterval(unobserved(() => { setValue(value() + 1); }), 1_000);
     return () => { clearInterval(id); };
   });
 

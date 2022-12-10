@@ -1,5 +1,5 @@
 import { component } from 'hydroactive';
-import { createSignal } from 'hydroactive/signal.js';
+import { createSignal, unobserved } from 'hydroactive/signal.js';
 
 const BindCounter = component(($) => {
   // `$.live()` is equivalent to initializing a signal with `$.hydrate()` and then
@@ -8,9 +8,9 @@ const BindCounter = component(($) => {
   $.bind('span', count);
 
   // This has a memory leak, but we'll fix it later.
-  setInterval(() => {
+  setInterval(unobserved(() => {
     setCount(count() + 1);
-  }, 1_000);
+  }), 1_000);
 });
 
 customElements.define('bind-counter', BindCounter);
