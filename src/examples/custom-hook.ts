@@ -15,7 +15,6 @@ function timer($: Component, selector: string): Accessor<number> {
     };
   });
 
-  // First value is returned by `$.use()`.
   return count;
 };
 

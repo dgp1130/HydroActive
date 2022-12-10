@@ -168,14 +168,11 @@ Some notable trade-offs between the two authoring formats:
 *   Not sure what `$` _represents_ in the functional approach and don't have a good name
     for it.
 *   Functional `update()` function and `$.effect()` are basically the same thing?
-*   `$.use()` vs `$.effect()` are confusing to choose between.
-*   Should `$.use()` *require* a `Disposer`? If you don't have one, should you just run
-    that code directly in the `component()` callback?
-*   `$.use()` and `$.effect()` create side effects bound to the _component_ lifecycle,
-    not the _signal's_ lifecycle. Signals cannot be garbage collected when used by these
-    functions, even if they are not referenced elsewhere. Maybe that's ok? But it seems
-    weird that these effects are done at the bottom of the usage graph at the individual
-    signals rather than the top of the usage graph like the others.
+*   `$.effect()` create side effects bound to the _component_ lifecycle, not the _signal's_
+    lifecycle. Signals cannot be garbage collected when used by these functions, even if they
+    are not referenced elsewhere. Maybe that's ok? But it seems weird that these effects are
+    done at the bottom of the usage graph at the individual signals rather than the top of
+    the usage graph like the others.
 *   `$.live()` / `$.hydrate()` / `$.bind()` all seem to work when called asynchronously
     _after_ hydration. Is that ok?
     *   `$.bind()` kinda needs this to be compatible with async contexts.
