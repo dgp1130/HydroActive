@@ -1,6 +1,6 @@
 import * as context from './context.js';
 import { Context, Timeout } from './context.js';
-import { Accessor, Disposer, Signal, createEffect, createSignal, Setter } from './signal.js';
+import { Accessor, Disposer, Signal, createEffect, createSignal } from './signal.js';
 import { QueriedElement } from './selector.js';
 
 export interface ComponentDefinition {
@@ -13,17 +13,9 @@ type OmitIndexSignature<T> = {
   [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
 };
 
-// TODO: Test host-specific hooks.
-// TODO: Rename to align with when each function runs.
-/**
- * A `Hook` is a value to be returned to callers combined with an initializer function which
- * is called on `connectedCallback()` and which returns an optional `Disposer` which is
- * invoked on `disconnectedCallback()`. This provides an opportunity to configure logic with
- * cleanup steps to avoid leaking memory. Note that a hook may be executed multiple times if
- * a component is removed and reattached to the DOM.
- */
-export type Hook<T> = [ T, HookInitializer? ];
-export type HookInitializer = () => Disposer | void;
+// An initializer for the component lifecycle. Runs on hydration / reconnect and returns an
+// optional `Disposer` when runs on disconnect.
+export type LifecycleInitializer = () => Disposer | void;
 
 /**
  * Private element state which needs to be accessed outside the class but is internal
@@ -40,14 +32,14 @@ const elementInternalStateMap = new WeakMap<HTMLElement, ElementInternalState>()
  * to the HydroActive library and should be hidden from users.
  */
 interface ComponentInternalState {
-  initializers: Array<HookInitializer>;
+  initializers: Array<LifecycleInitializer>;
 }
 const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>();
 
 export function component<Def extends ComponentDefinition>(
   hydrate: ($: Component<HTMLElement>) => Def | void,
 ): Class<HTMLElement & OmitIndexSignature<Def>> {
-  return class extends HTMLElement implements HTMLElement {
+  return class extends HTMLElement {
     private readonly component: Component<HTMLElement & OmitIndexSignature<Def>>;
     private def?: ComponentDefinition;
 
@@ -147,16 +139,6 @@ export class Component<Host extends HTMLElement = HTMLElement> {
   }
 
   /**
-   * Schedules a hook to be run on the component. The initializer callback is invoked during
-   * hydration / `connectedCallback()`. It may optionally return a `Disposer` which is
-   * invoked on `disconnectedCallback()`.
-   */
-  public use<T>([ value, initializer ]: Hook<T>): T {
-    if (initializer) this.lifecycle(initializer);
-    return value;
-  }
-
-  /**
    * Schedules the lifecycle function to be executed for this component. The initializer
    * callback is invoked when the component is hydrated / connected to the DOM. It may
    * optionally return a `Disposer` which is invoked when the component is disconnected.
@@ -169,7 +151,7 @@ export class Component<Host extends HTMLElement = HTMLElement> {
    * In particular, this function does *not* have any knowledge of signals and will not
    * rerun when they change. If that is what you want, use {@link effect}.
    */
-  public lifecycle(initializer: HookInitializer): void {
+  public lifecycle(initializer: LifecycleInitializer): void {
     // Remember the hook so `connectedCallback()` can invoke it later.
     componentInternalStateMap.get(this)!.initializers.push(initializer);
     const { hydrated, hookDisposers } = elementInternalStateMap.get(this.host)!;
@@ -189,10 +171,16 @@ export class Component<Host extends HTMLElement = HTMLElement> {
    * 
    * Use this function to run reactive operations which should rerun when any used
    * signal changes.
-   * TODO: $.use($, effect(() => { ... }))?
+   * TODO: Return `dispose()` function instead of second parameter? Provide an `AbortSignal`?
    */
   public effect(effect: () => void, dispose?: () => void): void {
-    this.use(effectHook(this, effect, dispose));
+    this.lifecycle(() => {
+      const disposeEffect = createEffect(() => { effect(); });
+      return () => {
+        disposeEffect();
+        dispose?.();
+      };
+    });
   }
 
   public live<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
@@ -256,13 +244,15 @@ export class Component<Host extends HTMLElement = HTMLElement> {
    * 
    * See {@link waitContext} for an asynchronous version which does *not* require an
    * initial value.
-   * TODO: $.use($, ctxHook(...))?
    */
   public useContext<T>(ctx: Context<T>, initial: T, timeout: Timeout = 'task'):
       Accessor<T> {
     const [ value, setValue ] = createSignal(initial);
 
-    this.use(ctxHook(this, ctx, setValue, timeout));
+    this.lifecycle(() => {
+      const unlisten = context.listen(this.host, ctx, (value) => { setValue(value); }, timeout);
+      return () => unlisten();
+    });
 
     return value;
   }
@@ -305,51 +295,12 @@ export class Component<Host extends HTMLElement = HTMLElement> {
     this.host.dispatchEvent(event);
   }
 
-  // TODO: $.use($, listenHook(...))?
   public listen(target: EventTarget, event: string, handler: (evt: Event) => void): void {
-    this.use(listenHook(this, target, event, handler));
+    this.lifecycle(() => {
+      target.addEventListener(event, handler);
+      return () => target.removeEventListener(event, handler);
+    });
   }
-}
-
-function effectHook($: Component, effect: () => void, dispose?: Disposer): Hook<void> {
-  $.lifecycle(() => {
-    const disposeEffect = createEffect(() => { effect(); });
-    return () => {
-      disposeEffect();
-      dispose?.();
-    };
-  });
-
-  return [ undefined ];
-}
-
-function ctxHook<T>($: Component, ctx: Context<T>, setValue: Setter<T>, timeout: Timeout): Hook<void> {
-  $.lifecycle(() => {
-    const unlisten = context.listen(
-      $.host,
-      ctx,
-      (value) => { setValue(value); },
-      timeout,
-    );
-
-    return () => unlisten();
-  });
-  
-  return [ undefined ];
-}
-
-function listenHook(
-  $: Component,
-  target: EventTarget,
-  event: string,
-  handler: (evt: Event) => void,
-): Hook<void> {
-  $.lifecycle(() => {
-    target.addEventListener(event, handler);
-    return () => target.removeEventListener(event, handler);
-  });
-
-  return [ undefined ];
 }
 
 type HydrateSetter = (el: Element, content: string) => void;

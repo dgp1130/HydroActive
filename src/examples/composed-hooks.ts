@@ -1,8 +1,8 @@
-import { Component, component, Hook } from 'hydroactive';
+import { Component, component } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { _$LE } from 'lit';
 
-function count($: Component): Hook<Accessor<number>> {
+function count($: Component): Accessor<number> {
   const [ value, setValue ] = createSignal(0);
 
   $.lifecycle(() => {
@@ -10,16 +10,16 @@ function count($: Component): Hook<Accessor<number>> {
     return () => { clearInterval(id); };
   });
 
-  return [ value ];
+  return value;
 }
 
-function double($: Component, initial: number): Hook<Accessor<number>> {
-  const accessor = $.use(count($));
-  return [ () => initial + (accessor() * 2) ];
+function double($: Component, initial: number): Accessor<number> {
+  const accessor = count($);
+  return () => initial + (accessor() * 2);
 }
 
 const ComposedHooks = component(($) => {
-  const doubledCount = $.use(double($, $.hydrate('span', Number)));
+  const doubledCount = double($, $.hydrate('span', Number));
   $.bind('span', doubledCount);
 });
 
