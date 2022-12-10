@@ -183,6 +183,8 @@ Some notable trade-offs between the two authoring formats:
 *   `$.asyncEffect()` can't be easily tracked, need to pass signals in advance.
 *   Hard choice between `$.asyncEffect()` depending on untracked signals vs. requiring users
     to `unobserve()` asynchronous operations.
+*   Signals require a lot of nuance to use in async contexts, whereas class field setters "just
+    work" in any context.
 
 ### Problems which are the same in both and unrelated to the authoring format
 
