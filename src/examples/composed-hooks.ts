@@ -1,19 +1,19 @@
-import { component, hook } from 'hydroactive';
-import { createSignal } from 'hydroactive/signal.js';
+import { Component, component, Hook } from 'hydroactive';
+import { Accessor, createSignal } from 'hydroactive/signal.js';
 
-const count = hook(() => {
+function count(): Hook<Accessor<number>> {
   const [ value, setValue ] = createSignal(0);
 
   return [ value, () => {
     const id = setInterval(() => { setValue(value() + 1); }, 1_000);
     return () => { clearInterval(id); };
   }];
-});
+}
 
-const double = hook(($, initial: number) => {
-  const accessor = $.use(count($));
+function double($: Component, initial: number): Hook<Accessor<number>> {
+  const accessor = $.use(count());
   return [ () => initial + (accessor() * 2) ];
-});
+}
 
 const ComposedHooks = component(($) => {
   const doubledCount = $.use(double($, $.hydrate('span', Number)));

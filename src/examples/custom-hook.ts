@@ -1,6 +1,7 @@
-import { component, hook } from 'hydroactive';
+import { component, Component, Hook } from 'hydroactive';
+import { Accessor } from 'hydroactive/signal.js';
 
-const timer = hook(($, selector: string) => {
+function timer($: Component, selector: string): Hook<Accessor<number>> {
   // Runs whenever you call `timer()` (usually on hydration).
   const [ count, setCount ] = $.live(selector, Number);
 
@@ -14,7 +15,7 @@ const timer = hook(($, selector: string) => {
       clearInterval(id);
     };
   }];
-});
+};
 
 const CustomHook = component(($) => {
   // TODO: Passes typecheck?

@@ -22,15 +22,7 @@ type OmitIndexSignature<T> = {
  * cleanup steps to avoid leaking memory. Note that a hook may be executed multiple times if
  * a component is removed and reattached to the DOM.
  */
-export interface Hook<T, _El extends HTMLElement = HTMLElement> {
-  value: T,
-  initializer?: HookInitializer,
-}
-export type HookFactoryInput<
-  T,
-  El extends HTMLElement = HTMLElement,
-  Args extends [ $: Component<El>, ...args: unknown[] ] = [ Component<El>, ...unknown[] ],
-> = (...args: Args) => [ T, HookInitializer? ];
+export type Hook<T> = [ T, HookInitializer? ];
 export type HookInitializer = () => Disposer | void;
 
 /**
@@ -51,18 +43,6 @@ interface ComponentInternalState {
   initializers: Array<HookInitializer>;
 }
 const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>();
-
-/** Creates a hook from the given hook factory callback. */
-export function hook<
-  T,
-  El extends HTMLElement = HTMLElement,
-  Args extends [ $: Component<El>, ...args: unknown[] ] = [ Component<El>, ...unknown[] ],
->(cb: HookFactoryInput<T, El, Args>): (...args: Args) => Hook<T, El> {
-  return (...args: Args) => {
-    const [ value, initializer ] = cb(...args);
-    return { value, initializer };
-  };
-}
 
 export function component<Def extends ComponentDefinition>(
   hydrate: ($: Component<HTMLElement>) => Def | void,
@@ -154,7 +134,7 @@ export function component<Def extends ComponentDefinition>(
   } as unknown as Class<HTMLElement & Def>;
 }
 
-class Component<Host extends HTMLElement = HTMLElement> {
+export class Component<Host extends HTMLElement = HTMLElement> {
   public readonly host: Host;
 
   private constructor({ el }: { el: Host }) {
@@ -171,7 +151,7 @@ class Component<Host extends HTMLElement = HTMLElement> {
    * hydration / `connectedCallback()`. It may optionally return a `Disposer` which is
    * invoked on `disconnectedCallback()`.
    */
-  public use<T>({ value, initializer }: Hook<T>): T {
+  public use<T>([ value, initializer ]: Hook<T>): T {
     if (initializer) this.lifecycle(initializer);
     return value;
   }
@@ -331,7 +311,7 @@ class Component<Host extends HTMLElement = HTMLElement> {
   }
 }
 
-const effectHook = hook((_, effect: () => void, dispose?: Disposer) => {
+function effectHook($: Component, effect: () => void, dispose?: Disposer): Hook<void> {
   return [ undefined, () => {
     const disposeEffect = createEffect(() => { effect(); });
     return () => {
@@ -339,9 +319,9 @@ const effectHook = hook((_, effect: () => void, dispose?: Disposer) => {
       dispose?.();
     };
   }];
-});
+}
 
-const ctxHook = hook(<T>($: Component, ctx: Context<T>, setValue: Setter<T>, timeout: Timeout) => {
+function ctxHook<T>($: Component, ctx: Context<T>, setValue: Setter<T>, timeout: Timeout): Hook<void> {
   return [ undefined, () => {
     const unlisten = context.listen(
       $.host,
@@ -352,19 +332,19 @@ const ctxHook = hook(<T>($: Component, ctx: Context<T>, setValue: Setter<T>, tim
 
     return () => unlisten();
   }];
-});
+}
 
-const listenHook = hook((
-  _,
+function listenHook(
+  $: Component,
   target: EventTarget,
   event: string,
   handler: (evt: Event) => void,
-) => {
+): Hook<void> {
   return [ undefined, () => {
     target.addEventListener(event, handler);
     return () => target.removeEventListener(event, handler);
   }];
-});
+}
 
 type HydrateSetter = (el: Element, content: string) => void;
 
