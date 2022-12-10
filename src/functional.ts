@@ -312,17 +312,19 @@ export class Component<Host extends HTMLElement = HTMLElement> {
 }
 
 function effectHook($: Component, effect: () => void, dispose?: Disposer): Hook<void> {
-  return [ undefined, () => {
+  $.lifecycle(() => {
     const disposeEffect = createEffect(() => { effect(); });
     return () => {
       disposeEffect();
       dispose?.();
     };
-  }];
+  });
+
+  return [ undefined ];
 }
 
 function ctxHook<T>($: Component, ctx: Context<T>, setValue: Setter<T>, timeout: Timeout): Hook<void> {
-  return [ undefined, () => {
+  $.lifecycle(() => {
     const unlisten = context.listen(
       $.host,
       ctx,
@@ -331,7 +333,9 @@ function ctxHook<T>($: Component, ctx: Context<T>, setValue: Setter<T>, timeout:
     );
 
     return () => unlisten();
-  }];
+  });
+  
+  return [ undefined ];
 }
 
 function listenHook(
@@ -340,10 +344,12 @@ function listenHook(
   event: string,
   handler: (evt: Event) => void,
 ): Hook<void> {
-  return [ undefined, () => {
+  $.lifecycle(() => {
     target.addEventListener(event, handler);
     return () => target.removeEventListener(event, handler);
-  }];
+  });
+
+  return [ undefined ];
 }
 
 type HydrateSetter = (el: Element, content: string) => void;

@@ -5,8 +5,7 @@ function timer($: Component, selector: string): Hook<Accessor<number>> {
   // Runs whenever you call `timer()` (usually on hydration).
   const [ count, setCount ] = $.live(selector, Number);
 
-  // First value is returned by `$.use()`.
-  return [ count, () => {
+  $.lifecycle(() => {
     // Runs on hydration and reconnect.
     const id = setInterval(() => { setCount(count() + 1); }, 1_000);
 
@@ -14,7 +13,10 @@ function timer($: Component, selector: string): Hook<Accessor<number>> {
       // Runs on disconnect.
       clearInterval(id);
     };
-  }];
+  });
+
+  // First value is returned by `$.use()`.
+  return [ count ];
 };
 
 const CustomHook = component(($) => {
