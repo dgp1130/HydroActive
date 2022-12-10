@@ -120,7 +120,7 @@ Some notable trade-offs between the two authoring formats:
 *   When to use `$.hydrate()` vs `$.query()` is not clear. The former asserts for a
     specific type, which is occasionally useful but easy to forget. Class approach uses
     `@hydrate()` as a declarative decorator while `this.query()` is imperative.
-*   `update()` just _feels_ more intuitive in the class syntax.
+*   `update()` isn't necessary in the functional design, can just use effects.
 *   Functional approach requires returning the custom element definition and "moving"
     its properties over, which feels very hacky.
 *   Functional approach does a better job of encapsulating problem space, user code is

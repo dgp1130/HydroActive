@@ -91,10 +91,6 @@ export function component<Def extends ComponentDefinition>(
 
       // Call user-authored hydration function.
       this.def = hydrate(this.component) ?? undefined;
-      if (this.def?.update) {
-        const update = this.def.update.bind(undefined);
-        this.component.effect(() => { update(); });
-      }
       elementState.hydrated = true;
 
       if (this.def) {

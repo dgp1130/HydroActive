@@ -26,14 +26,12 @@ const StateHostCounter = component(($) => {
   const counterDisplay = $.query('counter-display');
   const [ count, setCount ] = createSignal(counterDisplay.count);
 
+  $.effect(() => {
+    counterDisplay.count = count();
+  });
+
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
-
-  return {
-    update(): void {
-      counterDisplay.count = count();
-    },
-  };
 });
 
 customElements.define('state-host-counter', StateHostCounter);
