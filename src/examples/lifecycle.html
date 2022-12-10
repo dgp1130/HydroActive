@@ -37,10 +37,19 @@
             </template>
         </effect-counter>
 
+        <disposed-effect>
+            <template shadowroot="open">
+                <h2>Disposed effect.</h2>
+                <div>The count is: <span>15</span>.</div>
+                <div>Call the global <code>increment()</code> function to increment.</div>
+                <script src="/examples/disposed-effect.js" type="module"></script>
+            </template>
+        </disposed-effect>
+
         <custom-hook>
             <template shadowroot="open">
                 <h2>Custom hook.</h2>
-                <div>The count is: <span>15</span>.</div>
+                <div>The count is: <span>20</span>.</div>
                 <script src="/examples/custom-hook.js" type="module"></script>
             </template>
         </custom-hook>
@@ -48,7 +57,7 @@
         <composed-hooks>
             <template shadowroot="open">
                 <h2>Composed hooks.</h2>
-                <div>The count is: <span>20</span>.</div>
+                <div>The count is: <span>25</span>.</div>
                 <script src="/examples/composed-hooks.js" type="module"></script>
             </template>
         </composed-hooks>
