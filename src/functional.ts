@@ -167,15 +167,11 @@ export class Component<Host extends HTMLElement = HTMLElement> {
    * 
    * Use this function to run reactive operations which should rerun when any used
    * signal changes.
-   * TODO: Return `dispose()` function instead of second parameter? Provide an `AbortSignal`?
    */
-  public effect(effect: () => void, dispose?: () => void): void {
+  public effect(effect: () => Disposer | void): void {
     this.lifecycle(() => {
-      const disposeEffect = createEffect(() => { effect(); });
-      return () => {
-        disposeEffect();
-        dispose?.();
-      };
+      const dispose = createEffect(() => effect());
+      return () => { dispose(); };
     });
   }
 

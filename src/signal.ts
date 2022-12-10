@@ -39,22 +39,12 @@ export function createSignal<T>(value: T): Signal<T> {
   return [accessor, setter];
 }
 
-export function createEffect(inputEffect: () => void): Disposer {
-  // Clean up existing observers and rerun because we might get different
-  // observers due to a different call stack during execution.
-  const reRunEffect = () => {
-    dispose();
-    effect();
-  };
+export function createEffect(inputEffect: () => Disposer | void): Disposer {
+  let effectDisposer: Disposer | void;
+  function dispose(): void {
+    effectDisposer?.();
+    effectDisposer = undefined;
 
-  const root: Root = {
-    observer: () => {
-      reRunEffect();
-    },
-    disposers: new Set(),
-  };
-
-  const dispose = () => {
     for (const dispose of root.disposers) dispose();
     root.disposers.clear();
   };
@@ -63,12 +53,22 @@ export function createEffect(inputEffect: () => void): Disposer {
   function effect(): void {
     useRoot(root, () => {
       try {
-        inputEffect();
+        effectDisposer = inputEffect();
       } catch (err) {
         console.error(`Unhandled error in effect:\n${(err as Error).message}`);
       }
     });
   }
+
+  const root: Root = {
+    observer: () => {
+      // Clean up existing observers and rerun because we might get different
+      // observers due to a different call stack during execution.
+      dispose();
+      effect();
+    },
+    disposers: new Set(),
+  };
 
   // Kick off effect.
   effect();

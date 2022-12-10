@@ -1,4 +1,4 @@
-import { component } from 'hydroactive';
+import { Component, component } from 'hydroactive';
 import { createSignal } from 'hydroactive/signal.js';
 
 const CounterDisplay = component(($) => {
