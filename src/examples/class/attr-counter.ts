@@ -13,7 +13,7 @@ class AttrCounter extends HydratableElement {
   private count!: number;
 
   protected override hydrate(): void {
-    this.count = getCount(this.counterId);
+    this.count = getCountFromId(this.counterId);
 
     const decrement = this.query('button#decrement');
     this.listen(decrement, 'click', () => { this.count--; });
@@ -33,7 +33,7 @@ declare global {
   }
 }
 
-function getCount(counterId: number): number {
+function getCountFromId(counterId: number): number {
   const count = counterMap.get(counterId);
   if (!count) throw new Error(`No counter for id \`${counterId}\`.`);
   return count;

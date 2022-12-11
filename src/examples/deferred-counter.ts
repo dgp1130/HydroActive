@@ -1,5 +1,7 @@
 import { component } from 'hydroactive';
 
+// Nothing unique about this component.
+// Automatically supports deferring hydration with no effort!
 const DeferredCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 

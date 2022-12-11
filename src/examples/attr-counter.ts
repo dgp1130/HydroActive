@@ -7,18 +7,18 @@ const counterMap = new Map([
 ]);
 
 const AttrCounter = component(($) => {
+  // `:host` means "get the host element".
+  // `attr('counter-id')` means "read from the `counter-id` attribute, not `.textContent`".
   const id = $.hydrate(':host', Number, attr('counter-id'));
-  const initialCount = getCount(id);
+
+  // Client uses this information to get required state.
+  const initialCount = getCountFromId(id);
+
   const [ count, setCount ] = createSignal(initialCount);
   $.bind('span', count);
 
-  const decrement = $.query('button#decrement');
-  $.listen(decrement, 'click', () => { setCount(count() - 1); });
-  decrement.disabled = false;
-
-  const increment = $.query('button#increment');
-  $.listen(increment, 'click', () => { setCount(count() + 1); });
-  increment.disabled = false;
+  $.listen($.query('button#decrement'), 'click', () => { setCount(count() - 1); });
+  $.listen($.query('button#increment'), 'click', () => { setCount(count() + 1); });
 });
 
 customElements.define('attr-counter', AttrCounter);
@@ -29,7 +29,7 @@ declare global {
   }
 }
 
-function getCount(counterId: number): number {
+function getCountFromId(counterId: number): number {
   const count = counterMap.get(counterId);
   if (!count) throw new Error(`No counter for id \`${counterId}\`.`);
   return count;

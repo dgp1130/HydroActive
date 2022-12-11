@@ -24,18 +24,21 @@
             <template shadowroot="open">
                 <h2>Using one-time hydration.</h2>
                 <div>The count is: <span>5</span>.</div>
+
+                <!-- Buttons are disabled initially. Users can't click them prematurely. -->
                 <button id="decrement" disabled>-</button>
                 <button id="increment" disabled>+</button>
                 <script src="/examples/hydrating-counter.js" type="module"></script>
             </template>
         </hydrating-counter>
 
+        <!-- Place hidden information in attributes. -->
         <attr-counter counter-id="1234">
             <template shadowroot="open">
                 <h2>Hydrating from host attributes</h2>
                 <div>The count is: <span>Loading...</span>.</div>
-                <button id="decrement" disabled>-</button>
-                <button id="increment" disabled>+</button>
+                <button id="decrement">-</button>
+                <button id="increment">+</button>
                 <script src="/examples/attr-counter.js" type="module"></script>
             </template>
         </attr-counter>

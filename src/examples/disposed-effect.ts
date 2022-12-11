@@ -5,8 +5,15 @@ const DisposedEffect = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   $.effect(() => {
-    window.increment = unobserved(() => { setCount(count() + 1); });
-    return () => { delete window.increment; };
+    window.counter = {
+      count: count(),
+      increment: unobserved((): void => {
+        setCount(count() + 1);
+      }),
+    };
+
+    // Return a `Disposer`to clean up the previous execution before the next one.
+    return () => { delete window.counter; };
   });
 });
 
@@ -18,6 +25,9 @@ declare global {
   }
 
   interface Window {
-    increment?(): void;
+    counter?: {
+      count: number;
+      increment(): void;
+    }
   }
 }

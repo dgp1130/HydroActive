@@ -20,7 +20,9 @@
             <a href="/">Home</a>
         </header>
 
+        <!-- Pre-rendered HTML defines the UI. -->
         <live-counter>
+            <!-- Declarative shadow DOM for improved encapsulation. -->
             <template shadowroot="open">
                 <h2>Live updates.</h2>
                 <div>The count is: <span>5</span>.</div>

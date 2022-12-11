@@ -1,5 +1,7 @@
 import { component } from 'hydroactive';
 
+// Nothing unique about this component.
+// Automatically supports deferring hydration with no effort!
 const DeferredInnerCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
@@ -22,15 +24,15 @@ declare global {
   }
 }
 
+// Nothing unique about this component.
+// Automatically supports deferring hydration with no effort!
 const DeferredOuterCounter = component(($) => {
-  const innerCounter = $.hydrate('deferred-inner-counter');
+  const innerCounter = $.hydrate('deferred-inner-counter', DeferredInnerCounter);
 
   // Child elements are hydrated first, so this is already loaded and works!
   // Note that HydroActive cannot force the custom element classes to be loaded for all its
-  // children, so if `functional-deferred-outer-counter` is defined *before*
-  // `deferred-inner-counter`, you're gonna have a bad time. `$.hydrate()` naturally
-  // requires this anyways because it needs a reference to the child component class
-  // which forces it to be defined first.
+  // children, so if `deferred-outer-counter` is defined *before* `deferred-inner-counter`, you're
+  // gonna have a bad time.
   innerCounter.increment();
 
   const decrement = $.query('button#decrement');

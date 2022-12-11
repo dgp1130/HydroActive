@@ -1,31 +1,16 @@
 import { component, Component } from 'hydroactive';
 import { Accessor, unobserved } from 'hydroactive/signal.js';
 
-function timer($: Component, selector: string): Accessor<number> {
-  // Runs whenever you call `timer()` (usually on hydration).
-  const [ count, setCount ] = $.live(selector, Number);
-
-  $.lifecycle(() => {
-    // Runs on hydration and reconnect.
-    const id = setInterval(unobserved(() => { setCount(count() + 1); }), 1_000);
-
-    return () => {
-      // Runs on disconnect.
-      clearInterval(id);
-    };
-  });
-
-  return count;
-};
-
 const CustomHook = component(($) => {
   // TODO: Passes typecheck?
   // timer($, $.hydrate('span'));
 
+  // `timer()` hook encapsulates the desired behavior.
   const count = timer($, 'span');
 
+  // Returned signal can be used for additional behavior.
   $.effect(() => {
-    console.log(`The \`custom-hook\` count is: ${count()}.`);
+    console.log(`custom-hook: The current count is ${count()}.`);
   });
 });
 
@@ -36,3 +21,19 @@ declare global {
     'custom-hook': InstanceType<typeof CustomHook>;
   }
 }
+
+// "Hooks" are really just functions executed at hydration time.
+// They typically take `$` as a parameter to access component functionality.
+function timer($: Component, selector: string): Accessor<number> {
+  // Runs whenever you call `timer()` (usually on hydration).
+  const [ count, setCount ] = $.live(selector, Number);
+
+  // Set up our own lifecycle behavior internal to the hook.
+  $.lifecycle(() => {
+    const id = setInterval(unobserved(() => { setCount(count() + 1); }), 1_000);
+    return () => { clearInterval(id); };
+  });
+
+  // Return whatever we want, in this case the `count` accessor.
+  return count;
+};

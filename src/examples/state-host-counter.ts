@@ -1,4 +1,4 @@
-import { Component, component } from 'hydroactive';
+import { component } from 'hydroactive';
 import { createSignal } from 'hydroactive/signal.js';
 
 const CounterDisplay = component(($) => {
@@ -23,15 +23,16 @@ declare global {
 
 const StateHostCounter = component(($) => {
   // Initialize the outer component with state hydrated from the inner component.
-  const counterDisplay = $.query('counter-display');
+  const counterDisplay = $.hydrate('counter-display', CounterDisplay);
   const [ count, setCount ] = createSignal(counterDisplay.count);
-
-  $.effect(() => {
-    counterDisplay.count = count();
-  });
 
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
+
+  // Update inner component with new count whenever it changes.
+  $.effect(() => {
+    counterDisplay.count = count();
+  });
 });
 
 customElements.define('state-host-counter', StateHostCounter);

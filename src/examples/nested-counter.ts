@@ -3,6 +3,7 @@ import { component } from 'hydroactive';
 const InnerCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
+  // Return the public API of this custom element. Functions are applied to the web component.
   return {
     decrement(): void {
       setCount(count() - 1);
@@ -23,9 +24,14 @@ declare global {
 }
 
 const OuterCounter = component(($) => {
-  const innerCounter = $.hydrate('inner-counter');
+  // Can hydrate just a plain reference to the element, no need to parse its text.
+  const innerCounter = $.hydrate('inner-counter', InnerCounter);
 
-  innerCounter.increment(); // Should be a valid reference at hydration time.
+  // InnerCounter should hydrate first and have usable methods even at hydration time.
+  // Import ordering naturally causes this behavior, but doesn't always happen.
+  // Even here, `OuterCounter` can be written to *not* have an explicit dependency on `InnerCounter`
+  // by using `$.query('inner-counter')`. This could hydrate out of order depending on your bundler.
+  innerCounter.increment();
 
   $.listen($.query('#decrement'), 'click', () => { innerCounter.decrement(); });
   $.listen($.query('#increment'), 'click', () => { innerCounter.increment(); });
