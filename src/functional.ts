@@ -226,9 +226,10 @@ export class Component<Host extends HTMLElement = HTMLElement> {
     });
   }
 
+  // TODO: How should `$.live('.foo', HTMLSpanElement)` work?
   public live<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
     selector: Selector,
-    type: HydrateConverter<Source, Result, QueriedElement<Selector>> = HTMLElement as any,
+    type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,
   ): Signal<Result> {
     const initialValue = this.hydrate(selector, type, source);
@@ -238,10 +239,11 @@ export class Component<Host extends HTMLElement = HTMLElement> {
     return [ accessor, setter ];
   }
 
-  // TODO: Require explicit `type` to force dependencies between components.
+  // TODO: `$.hydrate('span', HTMLDivElement)` should return an `HTMLDivElement` type?
+  // TODO: Infers return type incorrectly based on usage? `wantDiv($.hydrate('span', HTMLSpanElement))`
   public hydrate<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
     selector: Selector,
-    type: HydrateConverter<Source, Result, QueriedElement<Selector>> = HTMLElement as any,
+    type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,
   ): Result {
     const el = this.query(selector);

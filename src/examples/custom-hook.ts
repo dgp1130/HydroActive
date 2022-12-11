@@ -2,9 +2,6 @@ import { component, Component } from 'hydroactive';
 import { Accessor, unobserved } from 'hydroactive/signal.js';
 
 const CustomHook = component(($) => {
-  // TODO: Passes typecheck?
-  // timer($, $.hydrate('span'));
-
   // `timer()` hook encapsulates the desired behavior.
   const count = timer($, 'span');
 
