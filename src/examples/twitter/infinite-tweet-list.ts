@@ -1,5 +1,4 @@
 import { HydratableElement, hydrate } from 'hydroactive/class.js';
-import { html, render, TemplateResult } from 'lit';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
 class InfiniteTweetList extends HydratableElement {
@@ -20,7 +19,9 @@ class InfiniteTweetList extends HydratableElement {
             const tweet = template.content.cloneNode(true /* deep */);
 
             // Append it to the list, wrapped in a list element.
-            this.list.append(renderFragment(html`<li>${tweet}</li>`));
+            const listItem = document.createElement('li');
+            listItem.appendChild(tweet);
+            this.list.append(listItem);
         });
     }
 }
@@ -31,14 +32,4 @@ declare global {
     interface HTMLElementTagNameMap {
         'my-infinite-tweet-list': InfiniteTweetList;
     }
-}
-
-/**
- * lit-html's `render()` function requires a consistent host, so this is a nicer
- * wrapper around it.
- */
-function renderFragment(template: TemplateResult): DocumentFragment {
-    const frag = document.createDocumentFragment();
-    render(template, frag);
-    return frag;
 }
