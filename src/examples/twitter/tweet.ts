@@ -1,29 +1,23 @@
 import './editable-tweet.js';
 
-import { attr, HydratableElement, hydrate } from 'hydroactive/class.js';
+import { attr, component } from 'hydroactive';
 
-class Tweet extends HydratableElement {
-    @hydrate(':host', Number, attr('tweet-id'))
-    private tweetId!: number;
+const Tweet = component(($) => {
+  const tweetId = $.hydrate(':host', Number, attr('tweet-id'));
+  const content = $.hydrate('span', String);
 
-    @hydrate('span', String)
-    private content!: string;
-
-    protected override hydrate(): void {
-        const editButton = this.query('button');
-        this.listen(editButton, 'click', () => {
-            const editableTweet = document.createElement('my-editable-tweet');
-            editableTweet.tweetId = this.tweetId;
-            editableTweet.content = this.content;
-            this.replaceWith(editableTweet);
-        });
-    }
-}
+  $.listen($.query('button'), 'click', () => {
+    const editableTweet = document.createElement('my-editable-tweet');
+    editableTweet.tweetId = tweetId;
+    editableTweet.content = content;
+    $.host.replaceWith(editableTweet);
+  });
+});
 
 customElements.define('my-tweet', Tweet);
 
 declare global {
-    interface HTMLElementTagNameMap {
-        'my-tweet': Tweet;
-    }
+  interface HTMLElementTagNameMap {
+    'my-tweet': InstanceType<typeof Tweet>;
+  }
 }
