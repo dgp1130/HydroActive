@@ -208,3 +208,5 @@ comparison between functional and class. Instead these are just some general des
     https://github.com/webcomponents-cg/community-protocols/issues/38
 *   Declaring props are component properties, means they have a chance of conflicting with
     existing properties.
+*   Tricky to manage dependencies on the template. Server needs to know that `my-foo` will CSR
+    `my-bar` and therefore the template for `my-bar` needs to be rendered out.

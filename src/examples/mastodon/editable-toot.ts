@@ -2,31 +2,31 @@ import { component, ComponentDef, factory } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-export const EditableTweet = component(($: ComponentDef<{ tweetId: number, content: string }>) => {
-  const tweetId = $.host.tweetId!;
+export const EditableToot = component(($: ComponentDef<{ tootId: number, content: string }>) => {
+  const tootId = $.host.tootId!;
   const content = useInput($, 'input', $.host.content!);
 
   $.listen($.query('form'), 'submit', async (evt) => {
     evt.preventDefault();
 
-    const url = new URL('/tweet/edit', location.href);
-    url.searchParams.set('id', tweetId.toString());
+    const url = new URL('/toot/edit', location.href);
+    url.searchParams.set('id', tootId.toString());
     url.searchParams.set('content', content());
 
     const res = await fetch(url, { method: 'POST' });
     const template = await parseDomFragment(res);
-    const editedTweet = template.content.cloneNode(true /* deep */);
-    $.host.replaceWith(editedTweet);
+    const editedToot = template.content.cloneNode(true /* deep */);
+    $.host.replaceWith(editedToot);
   });
 });
 
-export const createEditableTweet = factory(EditableTweet);
+export const createEditableToot = factory(EditableToot);
 
-customElements.define('editable-tweet', EditableTweet);
+customElements.define('editable-toot', EditableToot);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'editable-tweet': InstanceType<typeof EditableTweet>;
+    'editable-toot': InstanceType<typeof EditableToot>;
   }
 }
 

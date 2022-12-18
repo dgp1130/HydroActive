@@ -14,14 +14,14 @@ app.use(express.static('dist/', {
     maxAge: 30_000 /* milliseconds */,
 }));
 
-interface Tweet {
+interface Toot {
     id: number;
     content: string;
 }
 
-function renderInfiniteTweetList(initialTweets: Tweet[]): string {
+function renderInfiniteTootList(initialToots: Toot[]): string {
     return `
-        <infinite-tweet-list>
+        <infinite-toot-list>
             <template shadowroot="open">
                 <style>
                     :host {
@@ -39,89 +39,89 @@ function renderInfiniteTweetList(initialTweets: Tweet[]): string {
                 </style>
 
                 <ul>
-                    ${initialTweets.map((tweet) => `
-                        <li>${renderTweet(tweet)}</li>
+                    ${initialToots.map((toot) => `
+                        <li>${renderToot(toot)}</li>
                     `.trim()).join('\n')}
                 </ul>
                 <button>Load more</button>
             </template>
-            <script src="/examples/twitter/infinite-tweet-list.js" type="module"></script>
-        </infinite-tweet-list>
+            <script src="/examples/mastodon/infinite-toot-list.js" type="module"></script>
+        </infinite-toot-list>
     `.trim();
 }
 
 /**
- * Renders a tweet with the given ID and content. Includes associated JavaScript
+ * Renders a toot with the given ID and content. Includes associated JavaScript
  * and CSS with the content inside declarative shadow DOM for isolation.
  */
-function renderTweet({ id, content }: Tweet): string {
+function renderToot({ id, content }: Toot): string {
     return `
-<tweet-view tweet-id="${id}">
+<toot-view toot-id="${id}">
     <template shadowroot="open">
         <style>span { color: red; }</style>
 
         <span>${content}</span>
         <button>Edit</button>
     </template>
-    <script src="/examples//twitter/tweet.js" type="module" async></script>
-</tweet-view>
+    <script src="/examples/mastodon/toot-view.js" type="module" async></script>
+</toot-view>
     `.trim();
 }
 
-function randomTweet(): Tweet {
+function randomToot(): Toot {
     const id = Math.floor(Math.random() * 10_000);
-    const content = `Hello world from tweet #${id}.`;
+    const content = `Hello world from toot #${id}.`;
 
     return { id, content };
 }
 
-app.get('/examples/twitter/', (_req, res) => {
-    const tweets = Array(5).fill(0).map(() => randomTweet());
+app.get('/examples/mastodon/', (_req, res) => {
+    const toots = Array(5).fill(0).map(() => randomToot());
 
     res.contentType('text/html').end(`
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Twitter</title>
+        <title>Mastodon</title>
         <meta charset="utf8">
         ${renderImportMap()}
-        ${renderEditTweetTemplate()}
+        ${renderEditTootTemplate()}
     </head>
     <body>
-        <h1>Twitter</h1>
+        <h1>Mastodon</h1>
 
         <header>
             <a href="/">Home</a>
         </header>
 
-        ${renderInfiniteTweetList(tweets)}
+        ${renderInfiniteTootList(toots)}
     </body>
 </html>
     `.trim());
 });
 
-/** Returns a generic tweet for the given ID. */
-app.get('/tweet', (req, res) => {
+/** Returns a generic toot for the given ID. */
+app.get('/toot', (req, res) => {
     const id = parseIntegerParam(req, 'id');
 
-    const content = renderTweet({
+    const content = renderToot({
         id,
-        content: `Hello world from tweet #${id}.`,
+        content: `Hello world from toot #${id}.`,
     });
     res.contentType('text/html').end(content);
 });
 
 /**
- * "Edits" the tweet with the given ID to use the provided content. Also returns
- * a rendered tweet with the new content.
+ * "Edits" the toot with the given ID to use the provided content. Also returns
+ * a rendered toot with the new content.
  */
-app.post('/tweet/edit', (req, res) => {
+app.post('/toot/edit', (req, res) => {
     const id = parseIntegerParam(req, 'id');
     const content = req.query['content'];
-    if (!content || typeof content !== 'string') throw new Error(`Editing a tweet requires \`?content\` to be set.`);
+    if (!content || typeof content !== 'string') throw new Error(`Editing a toot requires \`?content\` to be set.`);
 
-    const tweet = { id, content } as Tweet;
-    res.contentType('text/html').end(renderTweet(tweet));
+    const toot: Toot = { id, content };
+    res.contentType('text/html').end(renderToot(toot));
 });
 
 function parseIntegerParam(req: Request, name: string): number {
@@ -157,9 +157,9 @@ function renderImportMap(): string {
     `.trim();
 }
 
-function renderEditTweetTemplate(): string {
+function renderEditTootTemplate(): string {
     return `
-<template data-hydroactive-tag="editable-tweet">
+<template data-hydroactive-tag="editable-toot">
     <form>
         <input type="text" />
         <button type="submit">Save</button>
