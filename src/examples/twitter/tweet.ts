@@ -2,22 +2,22 @@ import './editable-tweet.js';
 
 import { attr, component } from 'hydroactive';
 
-const Tweet = component(($) => {
+const TweetView = component(($) => {
   const tweetId = $.hydrate(':host', Number, attr('tweet-id'));
   const content = $.hydrate('span', String);
 
   $.listen($.query('button'), 'click', () => {
-    const editableTweet = document.createElement('my-editable-tweet');
+    const editableTweet = document.createElement('editable-tweet');
     editableTweet.tweetId = tweetId;
     editableTweet.content = content;
     $.host.replaceWith(editableTweet);
   });
 });
 
-customElements.define('my-tweet', Tweet);
+customElements.define('tweet-view', TweetView);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'my-tweet': InstanceType<typeof Tweet>;
+    'tweet-view': InstanceType<typeof TweetView>;
   }
 }

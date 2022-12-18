@@ -22,10 +22,10 @@ const InfiniteTweetList = component(($) => {
   });
 });
 
-customElements.define('my-infinite-tweet-list', InfiniteTweetList);
+customElements.define('infinite-tweet-list', InfiniteTweetList);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'my-infinite-tweet-list': InstanceType<typeof InfiniteTweetList>;
+    'infinite-tweet-list': InstanceType<typeof InfiniteTweetList>;
   }
 }

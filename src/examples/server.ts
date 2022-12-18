@@ -21,7 +21,7 @@ interface Tweet {
 
 function renderInfiniteTweetList(initialTweets: Tweet[]): string {
     return `
-        <my-infinite-tweet-list>
+        <infinite-tweet-list>
             <template shadowroot="open">
                 <style>
                     :host {
@@ -46,7 +46,7 @@ function renderInfiniteTweetList(initialTweets: Tweet[]): string {
                 <button>Load more</button>
             </template>
             <script src="/examples/twitter/infinite-tweet-list.js" type="module"></script>
-        </my-infinite-tweet-list>
+        </infinite-tweet-list>
     `.trim();
 }
 
@@ -56,7 +56,7 @@ function renderInfiniteTweetList(initialTweets: Tweet[]): string {
  */
 function renderTweet({ id, content }: Tweet): string {
     return `
-<my-tweet tweet-id="${id}">
+<tweet-view tweet-id="${id}">
     <template shadowroot="open">
         <style>span { color: red; }</style>
 
@@ -64,7 +64,7 @@ function renderTweet({ id, content }: Tweet): string {
         <button>Edit</button>
     </template>
     <script src="/examples//twitter/tweet.js" type="module" async></script>
-</my-tweet>
+</tweet-view>
     `.trim();
 }
 

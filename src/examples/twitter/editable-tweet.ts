@@ -2,7 +2,7 @@ import { LitElement, TemplateResult, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-@customElement('my-editable-tweet')
+@customElement('editable-tweet')
 class EditableTweet extends LitElement {
     @property()
     public tweetId!: number;
@@ -35,6 +35,6 @@ class EditableTweet extends LitElement {
 
 declare global {
     interface HTMLElementTagNameMap {
-        'my-editable-tweet': EditableTweet;
+        'editable-tweet': EditableTweet;
     }
 }
