@@ -1,35 +1,31 @@
-import { HydratableElement, hydrate } from 'hydroactive/class.js';
+import { component } from 'hydroactive';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-class InfiniteTweetList extends HydratableElement {
-    @hydrate('ul', HTMLUListElement)
-    private list!: HTMLUListElement;
+const InfiniteTweetList = component(($) => {
+  const list = $.hydrate('ul', HTMLUListElement);
 
-    protected override hydrate(): void {
-        const loadMoreButton = this.query('button');
-        this.listen(loadMoreButton, 'click', async () => {
-            // Pick a random tweet using our superior ranking algorithm.
-            const randomId = Math.floor(Math.random() * 10_000);
-            const tweetUrl = new URL('/tweet', location.href);
-            tweetUrl.searchParams.set('id', randomId.toString());
+  $.listen($.query('button'), 'click', async () => {
+    // Pick a random tweet using our superior ranking algorithm.
+    const randomId = Math.floor(Math.random() * 10_000);
+    const tweetUrl = new URL('/tweet', location.href);
+    tweetUrl.searchParams.set('id', randomId.toString());
 
-            // Fetch the tweet.
-            const res = await fetch(tweetUrl);
-            const template = await parseDomFragment(res);
-            const tweet = template.content.cloneNode(true /* deep */);
+    // Fetch the tweet.
+    const res = await fetch(tweetUrl);
+    const template = await parseDomFragment(res);
+    const tweet = template.content.cloneNode(true /* deep */);
 
-            // Append it to the list, wrapped in a list element.
-            const listItem = document.createElement('li');
-            listItem.appendChild(tweet);
-            this.list.append(listItem);
-        });
-    }
-}
+    // Append it to the list, wrapped in a list element.
+    const listItem = document.createElement('li');
+    listItem.appendChild(tweet);
+    list.append(listItem);
+  });
+});
 
 customElements.define('my-infinite-tweet-list', InfiniteTweetList);
 
 declare global {
-    interface HTMLElementTagNameMap {
-        'my-infinite-tweet-list': InfiniteTweetList;
-    }
+  interface HTMLElementTagNameMap {
+    'my-infinite-tweet-list': InstanceType<typeof InfiniteTweetList>;
+  }
 }
