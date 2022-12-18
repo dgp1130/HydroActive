@@ -1,8 +1,8 @@
-import { Component, component } from 'hydroactive';
+import { ComponentDef, component } from 'hydroactive';
 import { Accessor, createSignal, unobserved } from 'hydroactive/signal.js';
 
 // Hook that returns a signal which increments every second.
-function count($: Component): Accessor<number> {
+function count($: ComponentDef): Accessor<number> {
   const [ value, setValue ] = createSignal(0);
 
   $.lifecycle(() => {
@@ -14,7 +14,7 @@ function count($: Component): Accessor<number> {
 }
 
 // Hook that returns a signal which increments by 2 every second.
-function countBy2($: Component, initial: number): Accessor<number> {
+function countBy2($: ComponentDef, initial: number): Accessor<number> {
   // Compose the existing hook.
   const accessor = count($);
 

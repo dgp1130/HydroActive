@@ -1,4 +1,4 @@
-import { component, Component } from 'hydroactive';
+import { component, ComponentDef } from 'hydroactive';
 import { Accessor, unobserved } from 'hydroactive/signal.js';
 
 const CustomHook = component(($) => {
@@ -21,7 +21,7 @@ declare global {
 
 // "Hooks" are really just functions executed at hydration time.
 // They typically take `$` as a parameter to access component functionality.
-function timer($: Component, selector: string): Accessor<number> {
+function timer($: ComponentDef, selector: string): Accessor<number> {
   // Runs whenever you call `timer()` (usually on hydration).
   const [ count, setCount ] = $.live(selector, Number);
 

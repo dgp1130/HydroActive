@@ -4,14 +4,8 @@ import { Accessor, Disposer, Signal, createEffect, createSignal, unobserved, ban
 import { QueriedElement } from './selector.js';
 
 export interface ComponentDefinition {
-  update?(): void;
   [prop: string]: unknown;
 }
-
-// Returns a type identical to `T` but without the index signature.
-type OmitIndexSignature<T> = {
-  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
-};
 
 // An initializer for the component lifecycle. Runs on hydration / reconnect and returns an
 // optional `Disposer` when runs on disconnect.
@@ -36,12 +30,14 @@ interface ComponentInternalState {
 }
 const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>();
 
-export function component<Def extends ComponentDefinition>(
-  hydrate: ($: Component<HTMLElement>) => Def | void,
-): Class<HTMLElement & OmitIndexSignature<Def>> {
+export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HTMLElement> =
+  Component<Element & Partial<Props>>;
+
+export function component<Props extends {}, Def extends ComponentDefinition>(
+  hydrate: ($: ComponentDef<Props, HTMLElement>) => Def | void,
+): Class<HTMLElement & Def & Partial<Props>> & InternalProps<Props> {
   return class extends HTMLElement {
-    private readonly component: Component<HTMLElement & OmitIndexSignature<Def>>;
-    private def?: ComponentDefinition;
+    private readonly component: ComponentDef<Props, HTMLElement>;
 
     constructor() {
       super();
@@ -57,15 +53,14 @@ export function component<Def extends ComponentDefinition>(
       // Ignore anything that isn't a removal of `defer-hydration`.
       if (name !== 'defer-hydration' || newValue !== null) return;
 
-      // Ignore removal of `defer-hydration` when disconnected, because we don't support
-      // hydration when disconnected from the DOM. Hydration will be triggered by
-      // `connectedCallback()` when the element is attached.
-      if (!this.isConnected) return;
-
       this.requestHydration();
 
-      // Execute hooks. We can't rely on `connectedCallback()` because it ran prior to
-      // hydration.
+      // While we can hydrate when not connected, don't run initializers while disconnected.
+      // They will be executed on `connectedCallback()`.
+      if (!this.isConnected) return;
+
+      // Execute hooks. We are already connected to the DOM, so we can't rely on
+      // `connectedCallback()` because it ran prior to hydration.
       const componentState = componentInternalStateMap.get(this.component)!;
       const elementState = elementInternalStateMap.get(this)!;
       for (const initializer of componentState.initializers) {
@@ -79,6 +74,28 @@ export function component<Def extends ComponentDefinition>(
       // removed.
       if (this.hasAttribute('defer-hydration')) return;
 
+      if (!this.shadowRoot) {
+        const tagName = this.tagName.toLowerCase();
+
+        const templates = Array.from(document.querySelectorAll(
+            `template[data-hydroactive-tag=${tagName}]`) as NodeListOf<HTMLTemplateElement>);
+        if (templates.length === 0) {
+          throw new Error(`
+Could not find any templates for element \`${tagName}\` without a shadow root:
+1) If this element is intended to be prerendered directly, make sure its content is in a \`<template shadowroot="...">...</template>\`.
+2) If this element is intended to be rendered from a template, make sure to define a \`<template data-hydroactive-tag="${tagName}">...</template>\` on the page.
+          `.trim());
+        } else if (templates.length > 1) {
+          throw new Error(`Found multiple templates for \`${
+            tagName}\`. Please delete all but one.`);
+        }
+        const [ template ] = templates as [ HTMLTemplateElement ];
+
+        this.attachShadow({ mode: 'open' });
+        const contents = template.content.cloneNode(true /* deep */);
+        this.shadowRoot!.appendChild(contents);
+      }
+
       // Hydrate any deferred child nodes before hydrating this node.
       const deferredChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
       for (const child of deferredChildren) {
@@ -90,12 +107,12 @@ export function component<Def extends ComponentDefinition>(
       if (elementState.hydrated) return;
 
       // Call user-authored hydration function.
-      this.def = unobserved(hydrate)(this.component) ?? undefined;
+      const def = unobserved(hydrate)(this.component) ?? undefined;
       elementState.hydrated = true;
 
-      if (this.def) {
+      if (def) {
         // Apply the returned properties to this element.
-        Object.defineProperties(this, Object.getOwnPropertyDescriptors(this.def));
+        Object.defineProperties(this, Object.getOwnPropertyDescriptors(def));
       }
     }
 
@@ -119,8 +136,32 @@ export function component<Def extends ComponentDefinition>(
       for (const dispose of elementState.hookDisposers) dispose();
       elementState.hookDisposers.splice(0, elementState.hookDisposers.length);
     }
-  } as unknown as Class<HTMLElement & Def>;
+  } as unknown as Class<HTMLElement & Def & Props> & InternalProps<Props>;
 }
+
+// Generates a factory for the given HydroActive element based on its defined properties.
+export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(clazz: Clazz):
+    (props: GetProps<Clazz>) => InstanceType<Clazz> {
+  return (props: GetProps<Clazz>): InstanceType<Clazz> => {
+    const el = new clazz();
+    el.setAttribute('defer-hydration', ''); // Set `defer-hydration` so we can momentarily remove it.
+
+    for (const [ key, value ] of Object.entries(props)) {
+      (el as unknown as Record<string, unknown>)[key] = value;
+    }
+
+    // Trigger disconnected hydration after initializing properties by removing the
+    // `defer-hydration` attribute. See: https://github.com/webcomponents-cg/community-protocols/issues/38
+    el.removeAttribute('defer-hydration');
+
+    return el as InstanceType<Clazz>;
+  };
+}
+
+// Store props types on the component class so we can use them for type inference.
+type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
+type GetProps<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
+  Clazz extends InternalProps<infer Props> ? Props : never;
 
 type Accessed<Signal> = Signal extends Accessor<infer T> ? T : never;
 type AccessedArray<Signals extends unknown[]> = Signals extends [ infer Head, ...infer Tail ]
@@ -130,7 +171,7 @@ type AsyncEffect<Accessors extends Accessor<unknown>[]> = (
   ...args: [ ...values: AccessedArray<Accessors>, signal: AbortSignal ]
 ) => Promise<void>;
 
-export class Component<Host extends HTMLElement = HTMLElement> {
+class Component<Host extends HTMLElement = HTMLElement> {
   public readonly host: Host;
 
   private constructor({ el }: { el: Host }) {

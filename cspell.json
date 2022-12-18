@@ -3,7 +3,12 @@
     "ignorePaths": [],
     "dictionaryDefinitions": [],
     "dictionaries": [],
-    "words": ["hydroactive"],
+    "words": [
+        "Clazz",
+        "hydroactive",
+        "prerendered",
+        "templating"
+    ],
     "ignoreWords": [],
     "import": []
 }

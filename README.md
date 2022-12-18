@@ -192,3 +192,15 @@ Some notable trade-offs between the two authoring formats:
 *   Due to hydration timing, context becomes awkward since child components usually
     hydrate before parent components.
 *   Hydration is still synchronous due to the way `defer-hydration` works.
+
+### Some notes about template components
+
+These aren't implemented in the class-based syntax right now, so this isn't really a
+comparison between functional and class. Instead these are just some general design notes.
+
+*   Template components are arguably client-side rendered, should that be out of scope?
+*   Generated component factories cannot assert all the given properties are actually given.
+*   `$.host.someValueFromProps` includes `| undefined` in the type because we can't guarantee
+    that the component will always be initialized through the factory.
+*   No good community protocol consensus on how to hydrate disconnected elements.
+    https://github.com/webcomponents-cg/community-protocols/issues/38

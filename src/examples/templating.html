@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HydroActive Templating</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/index.js",
+                    "hydroactive/": "/"
+                }
+            }
+        </script>
+
+        <!-- Prerender a template with `data-hydroactive-tag` referring to the custom element
+            which will use it. Simply leave any unknown elements empty. -->
+        <template data-hydroactive-tag="templated-counter">
+            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
+            <div>The current count is: <span></span>.</div>
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+        </template>
+    </head>
+    <body>
+        <h1>Templating Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <templated-init>
+            <template shadowroot="open">
+                <h2>Using a server-side rendered template</h2>
+
+                <form>
+                    <span>Choose the initial count: </span>
+                    <input type="number" value="0" />
+                    <button type="submit">Start</button>
+                    <div>The counter will automatically increment once.</div>
+                </form>
+
+                <script src="/examples/templated-counter.js" type="module"></script>
+            </template>
+        </templated-init>
+    </body>
+</html>
