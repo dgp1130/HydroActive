@@ -1,7 +1,7 @@
 import { component } from 'hydroactive';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-const InfiniteTweetList = component(($) => {
+export const InfiniteTweetList = component(($) => {
   const list = $.hydrate('ul', HTMLUListElement);
 
   $.listen($.query('button'), 'click', async () => {

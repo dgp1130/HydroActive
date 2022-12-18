@@ -85,6 +85,7 @@ app.get('/examples/twitter/', (_req, res) => {
         <title>Twitter</title>
         <meta charset="utf8">
         ${renderImportMap()}
+        ${renderEditTweetTemplate()}
     </head>
     <body>
         <h1>Twitter</h1>
@@ -153,6 +154,17 @@ function renderImportMap(): string {
         }
     }
 </script>
+    `.trim();
+}
+
+function renderEditTweetTemplate(): string {
+    return `
+<template data-hydroactive-tag="editable-tweet">
+    <form>
+        <input type="text" />
+        <button type="submit">Save</button>
+    </form>
+</template>
     `.trim();
 }
 

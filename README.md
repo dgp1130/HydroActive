@@ -183,8 +183,10 @@ Some notable trade-offs between the two authoring formats:
 *   `$.asyncEffect()` can't be easily tracked, need to pass signals in advance.
 *   Hard choice between `$.asyncEffect()` depending on untracked signals vs. requiring users
     to `unobserve()` asynchronous operations.
-*   Signals require a lot of nuance to use in async contexts, whereas class field setters "just
-    work" in any context.
+*   Signals require a lot of nuance to use in async contexts, whereas class field setters
+    "just work" in any context.
+*   `unobserve()` doesn't really work for async functions. Each step of the process needs to
+    be unobserved.
 
 ### Problems which are the same in both and unrelated to the authoring format
 
@@ -204,3 +206,5 @@ comparison between functional and class. Instead these are just some general des
     that the component will always be initialized through the factory.
 *   No good community protocol consensus on how to hydrate disconnected elements.
     https://github.com/webcomponents-cg/community-protocols/issues/38
+*   Declaring props are component properties, means they have a chance of conflicting with
+    existing properties.

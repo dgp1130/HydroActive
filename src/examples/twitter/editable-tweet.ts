@@ -1,40 +1,43 @@
-import { LitElement, TemplateResult, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { component, ComponentDef, factory } from 'hydroactive';
+import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-@customElement('editable-tweet')
-class EditableTweet extends LitElement {
-    @property()
-    public tweetId!: number;
+export const EditableTweet = component(($: ComponentDef<{ tweetId: number, content: string }>) => {
+  const tweetId = $.host.tweetId!;
+  const content = useInput($, 'input', $.host.content!);
 
-    @property()
-    public content!: string;
+  $.listen($.query('form'), 'submit', async (evt) => {
+    evt.preventDefault();
 
-    protected override render(): TemplateResult {
-        return html`
-            <input type="text" value="${this.content}" @change="${this.updateContent.bind(this)}" />
-            <button type="submit" @click="${this.save.bind(this)}">Save</button>
-        `;
-    }
+    const url = new URL('/tweet/edit', location.href);
+    url.searchParams.set('id', tweetId.toString());
+    url.searchParams.set('content', content());
 
-    private updateContent(evt: CustomEvent): void {
-        this.content = (evt.target as HTMLInputElement).value;
-    }
+    const res = await fetch(url, { method: 'POST' });
+    const template = await parseDomFragment(res);
+    const editedTweet = template.content.cloneNode(true /* deep */);
+    $.host.replaceWith(editedTweet);
+  });
+});
 
-    private async save(_evt: Event): Promise<void> {
-        const url = new URL('/tweet/edit', location.href);
-        url.searchParams.set('id', this.tweetId.toString());
-        url.searchParams.set('content', this.content);
+export const createEditableTweet = factory(EditableTweet);
 
-        const res = await fetch(url, { method: 'POST' });
-        const template = await parseDomFragment(res);
-        const editedTweet = template.content.cloneNode(true /* deep */);
-        this.replaceWith(editedTweet);
-    }
-}
+customElements.define('editable-tweet', EditableTweet);
 
 declare global {
-    interface HTMLElementTagNameMap {
-        'editable-tweet': EditableTweet;
-    }
+  interface HTMLElementTagNameMap {
+    'editable-tweet': InstanceType<typeof EditableTweet>;
+  }
+}
+
+function useInput($: ComponentDef, selector: string, initialValue?: string): Accessor<string> {
+  const input = $.hydrate(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
+  if (initialValue !== undefined) input.value = initialValue;
+  const [ value, setValue ] = createSignal(input.value);
+
+  $.listen(input, 'change', () => {
+    setValue(input.value);
+  });
+
+  return value;
 }

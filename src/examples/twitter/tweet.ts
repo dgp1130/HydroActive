@@ -1,16 +1,12 @@
-import './editable-tweet.js';
-
 import { attr, component } from 'hydroactive';
+import { createEditableTweet } from './editable-tweet.js';
 
-const TweetView = component(($) => {
+export const TweetView = component(($) => {
   const tweetId = $.hydrate(':host', Number, attr('tweet-id'));
   const content = $.hydrate('span', String);
 
   $.listen($.query('button'), 'click', () => {
-    const editableTweet = document.createElement('editable-tweet');
-    editableTweet.tweetId = tweetId;
-    editableTweet.content = content;
-    $.host.replaceWith(editableTweet);
+    $.host.replaceWith(createEditableTweet({ tweetId, content }));
   });
 });
 
