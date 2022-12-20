@@ -12,7 +12,7 @@
     "build": "npm run -s build-ts && npm run -s build-html && npm run -s build-package",
     "build-ts": "tsc && ln -f -s ../node_modules dist/",
     "build-html": "cp src/examples/*.html dist/examples/ && cp src/examples/class/*.html dist/examples/class/",
-    "build-package": "cp package.json dist/package.json",
+    "build-package": "cp package.json README.md dist/",
     "serve": "node dist/examples/server.js",
     "test": "npm run -s build-ts",
     "clean": "rm -rf dist/"
