@@ -1,5 +1,4 @@
 import { component } from 'hydroactive';
-import { unobserved } from 'hydroactive/signal.js';
 
 // Define a new custom element.
 // `$` provides HydroActive APIs for hydrating the component and adding interactivity.
@@ -15,9 +14,9 @@ const LiveCounter = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   // This has a memory leak, but we'll fix it later.
-  setInterval(unobserved(() => {
+  setInterval(() => {
     setCount(count() + 1);
-  }), 1_000);
+  }, 1_000);
 });
 
 // Link any `<live-counter />` elements to the `LiveCounter` custom element class.

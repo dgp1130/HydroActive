@@ -22,11 +22,6 @@ export function createSignal<T>(value: T): Signal<T> {
         observers.add(observer);
         activeRoot.disposers.add(() => observers.delete(observer));
       }
-    } else {
-      // Not sure if it's a good idea to throw by default. It does allow `$.asyncEffect()`
-      // to fail when misused, but also means users have to deal with `unobserved()` which
-      // can be quite confusing.
-      throw new Error('Unobserved signal access. The current execution stack is not being observed for signal accesses, and will *not* rerun when they change. If you expect something to rerun, make sure it is observing signals you are calling the accessor from within it. If you don\'t want anything to execute on signal update, then wrap the function with `unobserve(doOneOffOperationWithSignals)(...args)`.');
     }
 
     return value;
@@ -85,24 +80,7 @@ export function createEffect(inputEffect: () => Disposer | void): Disposer {
   };
 }
 
-// Allow accessors to be called in the given function untracked, but without throwing any
-// errors.
-export function unobserved<Args extends unknown[], Result>(
-  cb: (...args: Args) => Result,
-): (...args: Args) => Result {
-  return (...args: Args) => useRoot({ disposers: new Set() }, () => cb(...args));
-}
-
-// Throw an error if any accessor is called in the given function. This is the default
-// behavior but this is useful to do when executing within a possibly observed context and
-// you want to ban accessors from a particular stack execution.
-export function banAccessors<Args extends unknown[], Result>(
-  cb: (...args: Args) => Result,
-): (...args: Args) => Result {
-  return (...args) => useRoot(undefined, () => cb(...args));
-}
-
-function useRoot<T>(root: Root | undefined, cb: () => T): T {
+function useRoot<T>(root: Root, cb: () => T): T {
   const prevRoot = activeRoot;
   activeRoot = root;
   try {

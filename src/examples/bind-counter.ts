@@ -1,5 +1,5 @@
 import { component } from 'hydroactive';
-import { createSignal, unobserved } from 'hydroactive/signal.js';
+import { createSignal } from 'hydroactive/signal.js';
 
 const BindCounter = component(($) => {
   // 1. Get the DOM element with `this.shadowRoot.querySelector('span')`.
@@ -13,9 +13,9 @@ const BindCounter = component(($) => {
   $.bind('span', count);
 
   // This has a memory leak, but we'll fix it later.
-  setInterval(unobserved(() => {
+  setInterval(() => {
     setCount(count() + 1);
-  }), 1_000);
+  }, 1_000);
 });
 
 customElements.define('bind-counter', BindCounter);

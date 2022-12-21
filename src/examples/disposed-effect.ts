@@ -1,5 +1,4 @@
 import { component } from 'hydroactive';
-import { unobserved } from 'hydroactive/signal.js';
 
 const DisposedEffect = component(($) => {
   const [ count, setCount ] = $.live('span', Number);
@@ -7,9 +6,9 @@ const DisposedEffect = component(($) => {
   $.effect(() => {
     window.counter = {
       count: count(),
-      increment: unobserved((): void => {
+      increment(): void {
         setCount(count() + 1);
-      }),
+      },
     };
 
     // Return a `Disposer`to clean up the previous execution before the next one.

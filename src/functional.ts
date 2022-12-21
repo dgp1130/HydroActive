@@ -1,6 +1,6 @@
 import * as context from './context.js';
 import { Context, Timeout } from './context.js';
-import { Accessor, Disposer, Signal, createEffect, createSignal, unobserved, banAccessors } from './signal.js';
+import { Accessor, Disposer, Signal, createEffect, createSignal } from './signal.js';
 import { QueriedElement } from './selector.js';
 
 export interface ComponentDefinition {
@@ -107,7 +107,7 @@ Could not find any templates for element \`${tagName}\` without a shadow root:
       if (elementState.hydrated) return;
 
       // Call user-authored hydration function.
-      const def = unobserved(hydrate)(this.component) ?? undefined;
+      const def = hydrate(this.component) ?? undefined;
       elementState.hydrated = true;
 
       if (def) {
@@ -204,8 +204,8 @@ class Component<Host extends HTMLElement = HTMLElement> {
     // If we already hydrated, run the hook immediately and clean up on disconnect.
     // This allows hooks to be defined late and still work with the component lifecycle.
     if (hydrated && this.host.isConnected) {
-      const disposer = unobserved(initializer)();
-      if (disposer) hookDisposers.push(unobserved(disposer));
+      const disposer = initializer();
+      if (disposer) hookDisposers.push(disposer);
     }
   }
 
@@ -256,7 +256,7 @@ class Component<Host extends HTMLElement = HTMLElement> {
     // part of the effect could still read (and technically track) accessors and cause
     // hard-to-follow execution dependencies. It's better to always fail for any accessor
     // invocation from an async effect.
-    const effect = banAccessors(args.at(-1) as AsyncEffect<Accessors>);
+    const effect = args.at(-1) as AsyncEffect<Accessors>;
 
     this.effect(() => {
       // Read all the accessors synchronously.
@@ -384,9 +384,8 @@ class Component<Host extends HTMLElement = HTMLElement> {
 
   public listen(target: EventTarget, event: string, handler: (evt: Event) => void): void {
     this.lifecycle(() => {
-      const handle = unobserved(handler);
-      target.addEventListener(event, handle);
-      return () => target.removeEventListener(event, handle);
+      target.addEventListener(event, handler);
+      return () => target.removeEventListener(event, handler);
     });
   }
 }

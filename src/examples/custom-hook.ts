@@ -1,5 +1,5 @@
 import { component, ComponentDef } from 'hydroactive';
-import { Accessor, unobserved } from 'hydroactive/signal.js';
+import { Accessor } from 'hydroactive/signal.js';
 
 const CustomHook = component(($) => {
   // `timer()` hook encapsulates the desired behavior.
@@ -27,7 +27,7 @@ function timer($: ComponentDef, selector: string): Accessor<number> {
 
   // Set up our own lifecycle behavior internal to the hook.
   $.lifecycle(() => {
-    const id = setInterval(unobserved(() => { setCount(count() + 1); }), 1_000);
+    const id = setInterval(() => { setCount(count() + 1); }, 1_000);
     return () => { clearInterval(id); };
   });
 
