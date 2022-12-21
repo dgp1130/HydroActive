@@ -141,12 +141,12 @@ Could not find any templates for element \`${tagName}\` without a shadow root:
 
 // Generates a factory for the given HydroActive element based on its defined properties.
 export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(clazz: Clazz):
-    (props: GetProps<Clazz>) => InstanceType<Clazz> {
-  return (props: GetProps<Clazz>): InstanceType<Clazz> => {
+    (props?: GetProps<Clazz>) => InstanceType<Clazz> {
+  return (props) => {
     const el = new clazz();
     el.setAttribute('defer-hydration', ''); // Set `defer-hydration` so we can momentarily remove it.
 
-    for (const [ key, value ] of Object.entries(props)) {
+    for (const [ key, value ] of Object.entries(props ?? {})) {
       (el as unknown as Record<string, unknown>)[key] = value;
     }
 

@@ -12,15 +12,6 @@
                 }
             }
         </script>
-
-        <!-- Prerender a template with `data-hydroactive-tag` referring to the custom element
-            which will use it. Simply leave any unknown elements empty. -->
-        <template data-hydroactive-tag="templated-counter">
-            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
-            <div>The current count is: <span></span>.</div>
-            <button id="decrement">-</button>
-            <button id="increment">+</button>
-        </template>
     </head>
     <body>
         <h1>Templating Examples</h1>
@@ -28,6 +19,32 @@
         <header>
             <a href="/">Home</a>
         </header>
+
+        <!-- Prerender a template with `data-hydroactive-tag` referring to the custom element
+            which will use it. Simply leave any unknown elements empty. -->
+        <template data-hydroactive-tag="spawn-counter">
+            <div>The current count is: <span>5</span>.</div>
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+        </template>
+
+        <my-spawner>
+            <template shadowroot="open">
+                <h2>Spawned counter</h2>
+
+                <button>Spawn</button>
+                <ul></ul>
+
+                <script src="/examples/spawn-counter.js" type="module"></script>
+            </template>
+        </my-spawner>
+
+        <template data-hydroactive-tag="templated-counter">
+            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
+            <div>The current count is: <span></span>.</div>
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+        </template>
 
         <templated-init>
             <template shadowroot="open">
