@@ -43,7 +43,7 @@ const Initializer = component(($) => {
     // Client side render a new counter with the user-specified initial value.
     const item = document.createElement('li');
     item.appendChild(createPropsCounter({
-      initialCount: initialCount() ?? 0,
+      initialCount: initialCount(),
     }));
     list.appendChild(item);
   });

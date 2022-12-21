@@ -143,12 +143,12 @@ Could not find any templates for element \`${tagName}\` without a shadow root:
 
 // Generates a factory for the given HydroActive element based on its defined properties.
 export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(clazz: Clazz):
-    (props?: GetProps<Clazz>) => InstanceType<Clazz> {
-  return (props) => {
+    (...args: FactoryParams<Clazz>) => InstanceType<Clazz> {
+  return (...[props = {}]) => {
     const el = new clazz();
     el.setAttribute('defer-hydration', ''); // Set `defer-hydration` so we can momentarily remove it.
 
-    for (const [ key, value ] of Object.entries(props ?? {})) {
+    for (const [ key, value ] of Object.entries(props)) {
       (el as unknown as Record<string, unknown>)[key] = value;
     }
 
@@ -159,6 +159,10 @@ export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(cl
     return el as InstanceType<Clazz>;
   };
 }
+
+// Require props from the given component, or nothing at all if the component has no props.
+type FactoryParams<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
+  {} extends GetProps<Clazz> ? [] : [ props: GetProps<Clazz> ];
 
 // Store props types on the component class so we can use them for type inference.
 type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
