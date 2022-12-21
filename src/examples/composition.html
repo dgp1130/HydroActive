@@ -41,7 +41,7 @@
         <!-- Outer component wants the count, but can't get it from under inner component. -->
         <state-host-counter>
             <template shadowroot="open">
-                <h2>State host counter</h2>
+                <h2>Props counter</h2>
 
                 <!-- Count is hidden in the inner component's shadow DOM. -->
                 <counter-display>
@@ -52,7 +52,7 @@
 
                 <button id="decrement">-</button>
                 <button id="increment">+</button>
-                <script src="/examples/state-host-counter.js" type="module"></script>
+                <script src="/examples/props-counter.js" type="module"></script>
             </template>
         </state-host-counter>
 

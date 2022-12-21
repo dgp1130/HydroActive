@@ -1,8 +1,8 @@
 import { attr, component } from 'hydroactive';
 
 const counterIdMap = new Map([
-  [ 1234, 20 ],
-  [ 4321, 25 ],
+  [ 1234, 10 ],
+  [ 4321, 15 ],
 ]);
 
 const RepeatedCounter = component(($) => {

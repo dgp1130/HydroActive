@@ -18,6 +18,7 @@ export type LifecycleInitializer = () => Disposer | void;
 interface ElementInternalState {
   hydrated: boolean;
   hookDisposers: Disposer[];
+  propSignals: Map<string, Accessor<unknown>>;
 }
 const elementInternalStateMap = new WeakMap<HTMLElement, ElementInternalState>();
 
@@ -31,7 +32,7 @@ interface ComponentInternalState {
 const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>();
 
 export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HTMLElement> =
-  Component<Element & Partial<Props>>;
+  Component<Element, Props>;
 
 // TODO: Should we automatically do `customElements.define()` to make sure you can't get a
 // reference to the element without defining it?
@@ -43,11 +44,12 @@ export function component<Props extends {}, Def extends ComponentDefinition>(
 
     constructor() {
       super();
-      this.component = Component.from(this) as any;
       elementInternalStateMap.set(this, {
         hydrated: false,
         hookDisposers: [],
+        propSignals: new Map(),
       });
+      this.component = Component.from(this as any) as any;
     }
 
     static get observedAttributes() { return [ 'defer-hydration' ]; }
@@ -171,7 +173,7 @@ export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(cl
 
 // Require props from the given component, or nothing at all if the component has no props.
 type FactoryParams<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
-  {} extends GetProps<Clazz> ? [] : [ props: GetProps<Clazz> ];
+  {} extends GetProps<Clazz> ? [ props?: GetProps<Clazz> ] : [ props: GetProps<Clazz> ];
 
 // Store props types on the component class so we can use them for type inference.
 type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
@@ -186,16 +188,48 @@ type AsyncEffect<Accessors extends Accessor<unknown>[]> = (
   ...args: [ ...values: AccessedArray<Accessors>, signal: AbortSignal ]
 ) => Promise<void>;
 
-class Component<Host extends HTMLElement = HTMLElement> {
-  public readonly host: Host;
+function proxyProps(host: HTMLElement, elementState: ElementInternalState): {} {
+  return new Proxy({}, {
+    get: (_target: {}, prop: string, _receiver: unknown): unknown => {
+      const signal = elementState.propSignals.get(prop);
+      if (signal) return signal;
+      
+      const [ value, setValue ] = createSignal((host as any)[prop]);
+      elementState.propSignals.set(prop, value);
 
-  private constructor({ el }: { el: Host }) {
+      Object.defineProperty(host, prop, {
+        get() { return value(); },
+        set(value) { setValue(value); },
+      });
+
+      return value;
+    },
+  });
+}
+
+type SignalsOf<Props extends {}> = { [Key in keyof Props]-?: Accessor<Props[Key]> };
+class Component<
+  Host extends HTMLElement = HTMLElement,
+  Props extends {} = {},
+> {
+  public readonly host: Host & Partial<Props>;
+
+  // `$.props` always includes `undefined`, because the component can be created outside of
+  // any HydroActive factory without any required parameters set.
+  public readonly props: SignalsOf<Partial<Props>>;
+
+  private constructor({ el, props }: { el: Host & Partial<Props>, props: SignalsOf<Props> }) {
     this.host = el;
+    this.props = props;
     componentInternalStateMap.set(this, { initializers: [] });
   }
 
-  public static from<Host extends HTMLElement>(el: Host): Component<Host> {
-    return new Component({ el });
+  public static from<
+    Host extends HTMLElement,
+    Props extends Record<string, Accessor<unknown>>,
+  >(el: Host & Partial<Props>): Component<Host> {
+    const props = proxyProps(el, elementInternalStateMap.get(el)!) as SignalsOf<Props>;
+    return new Component({ el, props });
   }
 
   /**
@@ -309,6 +343,7 @@ class Component<Host extends HTMLElement = HTMLElement> {
     return value;
   }
 
+  // TODO: Require `T` be a stringifiable primitive.
   public bind<T>(
     selector: string,
     signal: Accessor<T> | Promise<Accessor<T>>,

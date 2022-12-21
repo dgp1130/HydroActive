@@ -88,12 +88,9 @@
             <script src="/examples/repeated-template.js" type="module"></script>
         </div>
 
-        <!-- TODO: Props as signals? -->
-        <template data-hydroactive-tag="props-counter">
+        <template data-hydroactive-tag="required-props-counter">
             <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
-            <div>The current count is: <span></span>.</div>
-            <button id="decrement">-</button>
-            <button id="increment">+</button>
+            <div>The count is: <span></span>.</div>
         </template>
 
         <my-initializer>
@@ -101,17 +98,17 @@
                 <h2>Counter with props</h2>
 
                 <form>
-                    <input type="number" value="10" required />
+                    <input type="number" value="20" required />
                     <button type="submit">Spawn</button>
                 </form>
                 <ul></ul>
 
-                <script src="/examples/props-counter.js" type="module"></script>
+                <script src="/examples/required-props-counter.js" type="module"></script>
             </template>
         </my-initializer>
 
         <template data-hydroactive-tag="hydrated-template-counter">
-            <div>The current count is: <span>15</span>.</div>
+            <div>The current count is: <span>25</span>.</div>
         </template>
 
         <template-hydrator>

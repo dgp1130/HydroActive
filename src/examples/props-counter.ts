@@ -1,67 +1,47 @@
-import { component, factory, ComponentDef } from 'hydroactive';
-import { Accessor, createSignal } from 'hydroactive/signal.js';
+import { component, ComponentDef } from 'hydroactive';
+import { createSignal } from 'hydroactive/signal.js';
 
-// Define the "props" in the `$` type.
-const PropsCounter = component(($: ComponentDef<{ initialCount: number }>) => {
-  // Props are JS properties on the custom element type, so they are available on `$.host`.
-  // Since this component could be instantiated by a `document.createElement('props-counter')`,
-  // we can't assume all properties will be given, so they are optional. Assert any required
-  // properties if necessary.
-  if ($.host.initialCount === undefined) throw new Error('\`initialCount\` is required.');
-  
-  // Use the initial count from props and bind it to the template.
-  const [ count, setCount ] = createSignal($.host.initialCount);
-  $.bind('span', count);
+// Define "props" this component accepts in the `$` type. Most of the time these should be
+// optional (include `?` for each property) because the component will hydrate before the
+// parent component has a chance to set props, so these will likely be `undefined` initially.
+const CounterDisplay = component(($: ComponentDef<{ count?: number }>) => {
+  const initialCount = $.hydrate('span', Number);
+
+  // Use `$.props.myProp` to get a signal which automatically updates any time the property
+  // is modified on the custom element.
+  $.bind('span', () => $.props.count() ?? initialCount);
+
+  // Return hydration state useful to parent components.
+  return { initialCount };
+});
+
+customElements.define('counter-display', CounterDisplay);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'counter-display': InstanceType<typeof CounterDisplay>;
+  }
+}
+
+// Holds the state of the current count.
+const StateHostCounter = component(($) => {
+  // Initialize the outer component with state hydrated from the inner component.
+  const counterDisplay = $.hydrate('counter-display', CounterDisplay);
+  const [ count, setCount ] = createSignal(counterDisplay.initialCount);
 
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
-});
 
-// Generate a factory to create and hydrate a new instance of the component. Typings require
-// that all the defined props are given as inputs.
-const createPropsCounter = factory(PropsCounter);
-
-customElements.define('props-counter', PropsCounter);
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'props-counter': InstanceType<typeof PropsCounter>;
-  }
-}
-
-const Initializer = component(($) => {
-  const list = $.hydrate('ul', HTMLUListElement);
-
-  // Can't be NaN because the input is `type="number" required`, so the browser won't allow a
-  // non-numeric value.
-  const inputText = useInput($, 'input');
-  const initialCount = () => Number(inputText());
-
-  $.listen($.query('form'), 'submit', (evt) => {
-    evt.preventDefault();
-
-    // Client side render a new counter with the user-specified initial value.
-    const item = document.createElement('li');
-    item.appendChild(createPropsCounter({
-      initialCount: initialCount(),
-    }));
-    list.appendChild(item);
+  // Set props of inner component by modifying the property on the custom element directly.
+  $.effect(() => {
+    counterDisplay.count = count();
   });
 });
 
-customElements.define('my-initializer', Initializer);
+customElements.define('state-host-counter', StateHostCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'my-initializer': InstanceType<typeof Initializer>;
+    'state-host-counter': InstanceType<typeof StateHostCounter>;
   }
-}
-
-function useInput($: ComponentDef, selector: string): Accessor<string> {
-  const input = $.hydrate(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
-  const [ value, setValue ] = createSignal(input.value);
-
-  $.listen(input, 'change', () => { setValue(input.value); });
-
-  return value;
 }

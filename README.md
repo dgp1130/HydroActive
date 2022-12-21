@@ -187,6 +187,17 @@ Some notable trade-offs between the two authoring formats:
     "just work" in any context.
 *   `unobserve()` doesn't really work for async functions. Each step of the process needs to
     be unobserved.
+*   `$.props.*` are basically always `undefined` during hydration, just to immediately be
+    overwritten when the parent component hydrates.
+*   `ComponentDef<{ count: number }>` optionality really specifies the type of the factory's
+    parameters, not `$.props`.
+*   It's really easy to use `ComponentDef<{ count: number }>` without a `?` or understanding
+    the hydration timing nuances of that choice. Maybe we should default make everything
+    optional with an opt-out? Not totally sure how that would work.
+*   `$.props` setters don't trigger if a subproperty is modified. Maybe that's ok? We
+    shouldn't expose the signal on the property anyways to avoid leaking implementation
+    details and in vanilla JS you wouldn't expect modifying a subproperty to notify the
+    component about the change.
 
 ### Problems which are the same in both and unrelated to the authoring format
 
