@@ -39,6 +39,28 @@
             </template>
         </my-spawner>
 
+        <!-- TODO: Make attributes accessible? -->
+        <template data-hydroactive-tag="props-counter">
+            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
+            <div>The current count is: <span></span>.</div>
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+        </template>
+
+        <my-initializer>
+            <template shadowroot="open">
+                <h2>Counter with props</h2>
+
+                <form>
+                    <input type="number" value="10" required />
+                    <button type="submit">Spawn</button>
+                </form>
+                <ul></ul>
+
+                <script src="/examples/props-counter.js" type="module"></script>
+            </template>
+        </my-initializer>
+
         <template data-hydroactive-tag="templated-counter">
             <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
             <div>The current count is: <span></span>.</div>
