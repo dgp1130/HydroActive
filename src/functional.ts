@@ -96,6 +96,15 @@ Could not find any templates for element \`${tagName}\` without a shadow root:
         this.attachShadow({ mode: 'open' });
         const contents = template.content.cloneNode(true /* deep */);
         this.shadowRoot!.appendChild(contents);
+
+        // Move all attributes from the template over to this element since we've cloned from
+        // it. Prefer any attributes already on this element, since those are more specific than
+        // the template.
+        for (const attr of template.getAttributeNames()) {
+          if (!this.hasAttribute(attr)) {
+            this.setAttribute(attr, template.getAttribute(attr)!);
+          }
+        }
       }
 
       // Hydrate any deferred child nodes before hydrating this node.

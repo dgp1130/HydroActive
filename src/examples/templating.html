@@ -39,7 +39,56 @@
             </template>
         </my-spawner>
 
-        <!-- TODO: Make attributes accessible? -->
+        <!-- Any attributes on the template are used as defaults. -->
+        <template data-hydroactive-tag="repeated-counter" name="Devel">
+            <div>
+                Hello <span id="name"></span>, the current count is:
+                <span id="count"></span>.
+                <slot></slot>
+            </div>
+        </template>
+
+        <!-- Templates can be repeated multiple times in the document, even when SSR'd. Note
+        that these components do not load their contents until JavaScript is executed, so this
+        should only be used if at least one instance of the component will be CSR'd. -->
+        <div>
+            <h2>Repeated templates</h2>
+
+            <ul>
+                <!-- Can repeat a template as many times as desired. Uses default name. -->
+                <li><repeated-counter counter-id="1234"></repeated-counter></li>
+                <li><repeated-counter counter-id="1234"></repeated-counter></li>
+
+                <!-- Use explicitly provided name, not the default. -->
+                <li><repeated-counter counter-id="4321" name="Ollie"></repeated-counter></li>
+
+                <!-- Can supply light DOM. -->
+                <li>
+                    <repeated-counter counter-id="4321">
+                        <div>Hello from light DOM!</div>
+                    </repeated-counter>
+                </li>
+
+                <!-- Template is only used if there is no shadow DOM. If shadow DOM is
+                pre-rerendered, then it is used directly. But, I generally don't recommend
+                using the same component with different templates. -->
+                <li>
+                    <repeated-counter counter-id="4321" name="Ollie">
+                        <template shadowroot="open">
+                            <div>
+                                Hello from a unique template where the name is
+                                <span id="name"></span> and the count is
+                                <span id="count"></span>.
+                            </div>
+                        </template>
+                    </repeated-counter>
+                </li>
+            </ul>
+
+            <script src="/examples/repeated-template.js" type="module"></script>
+        </div>
+
+        <!-- TODO: Props as signals? -->
         <template data-hydroactive-tag="props-counter">
             <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
             <div>The current count is: <span></span>.</div>

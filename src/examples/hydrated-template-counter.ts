@@ -25,8 +25,7 @@ declare global {
 const TemplateHydrator = component(($) => {
   const spawnBtn = $.query('button');
 
-  $.listen(spawnBtn, 'click', (evt) => {
-    evt.preventDefault();
+  $.listen(spawnBtn, 'click', () => {
     spawnBtn.disabled = true;
 
     // Factory automatically hydrates the component, so it is immediately usable.
