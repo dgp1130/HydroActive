@@ -61,26 +61,19 @@
             </template>
         </my-initializer>
 
-        <template data-hydroactive-tag="templated-counter">
-            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
-            <div>The current count is: <span></span>.</div>
-            <button id="decrement">-</button>
-            <button id="increment">+</button>
+        <template data-hydroactive-tag="hydrated-template-counter">
+            <div>The current count is: <span>15</span>.</div>
         </template>
 
-        <templated-init>
+        <template-hydrator>
             <template shadowroot="open">
-                <h2>Using a server-side rendered template</h2>
+                <h2>Hydrating template</h2>
 
-                <form>
-                    <span>Choose the initial count: </span>
-                    <input type="number" value="0" />
-                    <button type="submit">Start</button>
-                    <div>The counter will automatically increment once.</div>
-                </form>
+                <button>Spawn</button>
+                <div>The counter will automatically increment once.</div>
 
-                <script src="/examples/templated-counter.js" type="module"></script>
+                <script src="/examples/hydrated-template-counter.js" type="module"></script>
             </template>
-        </templated-init>
+        </template-hydrator>
     </body>
 </html>
