@@ -33,6 +33,8 @@ const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>
 export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HTMLElement> =
   Component<Element & Partial<Props>>;
 
+// TODO: Should we automatically do `customElements.define()` to make sure you can't get a
+// reference to the element without defining it?
 export function component<Props extends {}, Def extends ComponentDefinition>(
   hydrate: ($: ComponentDef<Props, HTMLElement>) => Def | void,
 ): Class<HTMLElement & Def & Partial<Props>> & InternalProps<Props> {
@@ -361,21 +363,22 @@ class Component<Host extends HTMLElement = HTMLElement> {
     return this.useContext(ctx, initial, 'forever');
   }
 
-  public query<Selector extends string>(selector: Selector): QueriedElement<Selector, HTMLElement> {
-    if (selector === ':host') return this.host as QueriedElement<Selector, HTMLElement>;
+  public query<Selector extends string>(selector: Selector):
+      BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
+    const results = this.queryAll(selector);
 
-    const node = this.host.shadowRoot!.querySelector(selector);
-    if (!node) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
-
-    return node as QueriedElement<Selector, HTMLElement>;
+    return results[0]!;
   }
 
-  public queryAll<Selector extends string>(selector: Selector): QueriedElement<Selector, HTMLElement>[] {
-    if (selector === ':host') return [ this.host as QueriedElement<Selector, HTMLElement> ];
+  public queryAll<Selector extends string>(selector: Selector):
+      Array<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
+    type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
+
+    if (selector === ':host') return [ this.host as El ];
 
     const nodes = Array.from(this.host.shadowRoot!.querySelectorAll(selector));
     if (nodes.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
-    return nodes as QueriedElement<Selector, HTMLElement>[];
+    return nodes as El[];
   }
 
   public dispatch(event: Event): void {
@@ -389,6 +392,11 @@ class Component<Host extends HTMLElement = HTMLElement> {
     });
   }
 }
+
+type BanCustomElementSelector<Selector extends string, Result> =
+  Selector extends `${string}-${string}`
+  ? Invalid<`Don't get custom elements from \`$.query()\` or \`$.queryAll()\` as they might not be hydrated. Use \`$.hydrate('${Selector}', ${SkewerToPascalCase<Selector>})\` instead. This forces \`${SkewerToPascalCase<Selector>}\` to hydrate first.`>
+  : Result;
 
 type HydrateSetter = (el: Element, content: string) => void;
 
@@ -530,3 +538,21 @@ function* prototypeChain(obj: Class<unknown>): Generator<object, void, void> {
 function assertNever(value: never): never {
   throw new Error(`Unexpected call to \`assertNever()\` with value: ${value}`);
 }
+
+type SkewerToPascalCase<Text extends string> = Join<CapitalizeAll<Split<Text, '-'>>, ''>;
+type Split<Text extends string, Separator extends string> =
+  Text extends `${infer Prefix}${Separator}${infer Rest}`
+    ? [ Prefix, ...Split<Rest, Separator> ]
+    : [ Text ];
+type CapitalizeAll<List extends string[]> =
+  List extends [ infer Head extends string, ...infer Tail extends string[] ]
+    ? [ Capitalize<Head>, ...CapitalizeAll<Tail> ]
+    : [ ];
+type Join<List extends string[], Separator extends string> =
+  List extends [ infer Head extends string, ...infer Tail extends string[] ]
+    ? `${Head}${Separator}${Join<Tail, Separator>}`
+    : ``;
+
+// Inspired by: https://github.com/ryb73/invalid-type/blob/3ada996a6d4fe1fa7bfeb2440019540643feb54e/src/index.ts
+const invalidSymbol = Symbol('Invalid type');
+type Invalid<_Message extends string> = (arg: typeof invalidSymbol) => typeof invalidSymbol;
