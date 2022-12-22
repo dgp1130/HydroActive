@@ -77,5 +77,35 @@
             </island-counter>
         </is-land>
         <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+
+        <!-- Knows what the user is. -->
+        <orchestrated-parent user-id="1234">
+            <template shadowroot="open">
+                <h2>Orchestrated counter</h2>
+
+                <!-- Can modify the count, but doesn't know what the initial count is. -->
+                <!-- Needs to hydrate *after* `orchestrated-initial-count`. -->
+                <orchestrated-counter defer-hydration>
+                    <template shadowroot="open">
+                        <div>The current count is: <span>-</span>.</div>
+                        <button id="decrement">-</button>
+                        <button id="increment">+</button>
+                    </template>
+                </orchestrated-counter>
+
+                <!-- Knows what the initial count is, but not the user. -->
+                <!-- Needs to hydrate *before* `orchestrated-counter`. -->
+                <orchestrated-initial-count defer-hydration>
+                    <template shadowroot="open">
+                        <div>
+                            The initial count for <span id="user"></span> was
+                            <span id="count">25</span>.
+                        </div>
+                    </template>
+                </orchestrated-initial-count>
+
+                <script src="/examples/orchestrated-counter.js" type="module"></script>
+            </template>
+        </orchestrated-parent>
     </body>
 </html>

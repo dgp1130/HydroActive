@@ -226,6 +226,15 @@ comparison between functional and class. Instead these are just some general des
 *   Tricky to manage dependencies on the template. Server needs to know that `my-foo` will CSR
     `my-bar` and therefore the template for `my-bar` needs to be rendered out.
 
+### Hydration orchestration
+
+*   Data "returned" from hydration is set on the component's properties. This works, but means
+    the data can never be garbage collected because it could always be read in the future. Not
+    really fixable without a community protocol about how to return hydration data.
+*   No standardized indication on the component type what properties are "props" input into
+    hydration. HydroActive has `GetProps`, but this is not a standard protocol.
+*   No clear indication on the component type what properties are "returned" from hydration.
+
 ## Internal
 
 ### Testing

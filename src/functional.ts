@@ -102,12 +102,6 @@ abstract class HydroActiveComponent<Props extends {}, Def extends ComponentDefin
     // removed.
     if (this.hasAttribute('defer-hydration')) return;
 
-    // Hydrate any deferred child nodes before hydrating this node.
-    const deferredChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
-    for (const child of deferredChildren) {
-      child.removeAttribute('defer-hydration');
-    }
-
     // Hydrate at most once.
     const elementState = elementInternalStateMap.get(this)!;
     if (elementState.hydrated) return;
@@ -402,6 +396,21 @@ class Component<
     return value;
   }
 
+  // TODO: Rename to `$.hydrate()`.
+  // TODO: Consider adding `$.hydrateChildren()`.
+  public hydrateElement<Clazz extends Class<Element>>(
+    selector: string,
+    clazz: Clazz,
+    // `props` is optional if the class does not have any required props.
+    ...[ props = {} as any ]: {} extends GetProps<Clazz>
+        ? [ props?: GetProps<Clazz> ]
+        : [ props: GetProps<Clazz> ]
+  ): InstanceType<Clazz> {
+    const el = this.query(selector);
+    hydrate(el, clazz, props);
+    return el;
+  }
+
   // TODO: Require `T` be a stringifiable primitive.
   public bind<T>(
     selector: string,
@@ -470,6 +479,7 @@ class Component<
     return this.useContext(ctx, initial, 'forever');
   }
 
+  // TODO: Throw if returning a custom element.
   public query<Selector extends string>(selector: Selector):
       BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
     const [ el, ...rest ] = this.queryAll(selector);
@@ -479,6 +489,7 @@ class Component<
     return el;
   }
 
+  // TODO: Throw if returning a custom element.
   public queryAll<Selector extends string>(selector: Selector):
       OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
     type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
