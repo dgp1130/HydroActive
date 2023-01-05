@@ -3,6 +3,9 @@
 HydroActive is a experimental component library for hydrating web components and adding
 interactivity to pre-rendered HTML.
 
+Check out the [YouTube video](https://www.youtube.com/watch?v=zL0TzFY6aj0) for an in-depth
+discussion and demo of HydroActive's features.
+
 ## Premise
 
 Most server-side rendering / static site generation solutions bind the client and
@@ -22,7 +25,7 @@ always bothered me:
     every component is implicitly rendered in both contexts.
 1.  Why are we passing a JSON side-channel to the client? This seems unnecessary given
     that we already have the rendered HTML, why do we need to duplicate that
-    information in a different structure.
+    information in a different structure?
 1.  Why do I have to write my components to be hybrid-compatible? Why can't I write the
     server-side rendered components and directly read the file system, while my
     client-side rendered components could directly access browser APIs?
@@ -71,14 +74,15 @@ const MyCounter = component(($) => {
   // `$.live()` automatically hydrates this property by doing
   // `this.shadowRoot!.querySelector('span')!.textContent!` and parsing the result as a
   // `Number`. Returns a `Signal` to provide reactive reads and writes.
+  // Whenever `setCount` is called, the `<span />` tag is automatically updated.
   const [ count, setCount ] = $.live('span', Number);
 
   // Ergonomic wrapper to read an element from the shadow DOM and assert it exists.
   // Also types the result based on the query, this has type `HTMLButtonElement`.
-  const incrementBtn = $.query('button#increment');
+  const incrementBtn = $.query('button');
 
-  // Ergonomic wrapper to bind event listeners. Automatically removes and readds the
-  // listener when the element is disconnected from / reconnected with the DOM.
+  // Ergonomic wrapper to bind event listeners. Automatically removes and re-adds the
+  // listener when the element is disconnected from / reconnected to the DOM.
   $.listen(incrementBtn, 'click', () => {
     // `setCount()` automatically updates the underlying DOM with the new value.
     setCount(count() + 1);
@@ -86,7 +90,7 @@ const MyCounter = component(($) => {
 });
 ```
 
-See [examples](/src/examples/) for more cool features. The HTML pages contained
+See [examples](/src/examples/) for more cool features. The HTML pages contain hard-coded,
 pre-rendered HTML (remember, how they get rendered by the server is an implementation
 detail). The TypeScript files house the component's implementations and demonstrate
 different forms of reactivity and use cases.
