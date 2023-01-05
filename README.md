@@ -225,3 +225,27 @@ comparison between functional and class. Instead these are just some general des
     existing properties.
 *   Tricky to manage dependencies on the template. Server needs to know that `my-foo` will CSR
     `my-bar` and therefore the template for `my-bar` needs to be rendered out.
+
+## Internal
+
+### Testing
+
+Run tests with `npm test`. Debug tests with `npm run test-debug` and then opening
+[`localhost:8000`](http://localhost:8000/).
+
+### Publishing
+
+To publish first make sure tests pass:
+
+```shell
+npm test
+```
+
+Then build and publish the package:
+
+```shell
+npm run build
+(cd dist/ && npm publish)
+```
+
+Alternatively run `(cd dist/ && npm pack)` to inspect the tarball to be published.

@@ -4,7 +4,7 @@ import { createSignal } from 'hydroactive/signal.js';
 // Define "props" this component accepts in the `$` type. Most of the time these should be
 // optional (include `?` for each property) because the component will hydrate before the
 // parent component has a chance to set props, so these will likely be `undefined` initially.
-const CounterDisplay = component(($: ComponentDef<{ count?: number }>) => {
+export const CounterDisplay = component(($: ComponentDef<{ count?: number }>) => {
   const initialCount = $.hydrate('span', Number);
 
   // Use `$.props.myProp` to get a signal which automatically updates any time the property
@@ -24,7 +24,7 @@ declare global {
 }
 
 // Holds the state of the current count.
-const StateHostCounter = component(($) => {
+export const StateHostCounter = component(($) => {
   // Initialize the outer component with state hydrated from the inner component.
   const counterDisplay = $.hydrate('counter-display', CounterDisplay);
   const [ count, setCount ] = createSignal(counterDisplay.initialCount);

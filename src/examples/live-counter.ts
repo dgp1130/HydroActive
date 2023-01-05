@@ -2,7 +2,7 @@ import { component } from 'hydroactive';
 
 // Define a new custom element.
 // `$` provides HydroActive APIs for hydrating the component and adding interactivity.
-const LiveCounter = component(($) => {
+export const LiveCounter = component(($) => {
   // Apply hydration logic.
 
   // `$.live()` creates a "live binding" to a particular DOM element.

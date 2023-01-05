@@ -177,7 +177,7 @@ type FactoryParams<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
 
 // Store props types on the component class so we can use them for type inference.
 type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
-type GetProps<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
+export type GetProps<Clazz extends Class<Element> & InternalProps<{}>> =
   Clazz extends InternalProps<infer Props> ? Props : never;
 
 type Accessed<Signal> = Signal extends Accessor<infer T> ? T : never;
@@ -413,20 +413,22 @@ class Component<
 
   public query<Selector extends string>(selector: Selector):
       BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
-    const results = this.queryAll(selector);
+    const [ el, ...rest ] = this.queryAll(selector);
 
-    return results[0]!;
+    if (rest.length !== 0) throw new Error(`Found multiple instances of selector \`${selector}\` in the shadow DOM, only one was expected.`);
+
+    return el;
   }
 
   public queryAll<Selector extends string>(selector: Selector):
-      Array<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
+      OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
     type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
 
     if (selector === ':host') return [ this.host as El ];
 
     const nodes = Array.from(this.host.shadowRoot!.querySelectorAll(selector));
     if (nodes.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
-    return nodes as El[];
+    return nodes as OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>>;
   }
 
   public dispatch(event: Event): void {
@@ -441,6 +443,7 @@ class Component<
   }
 }
 
+type OneOrMore<T> = [ T, ...T[] ];
 type BanCustomElementSelector<Selector extends string, Result> =
   Selector extends `${string}-${string}`
   ? Invalid<`Don't get custom elements from \`$.query()\` or \`$.queryAll()\` as they might not be hydrated. Use \`$.hydrate('${Selector}', ${SkewerToPascalCase<Selector>})\` instead. This forces \`${SkewerToPascalCase<Selector>}\` to hydrate first.`>
