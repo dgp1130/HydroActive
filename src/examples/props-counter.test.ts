@@ -1,23 +1,21 @@
-import { hydrate, query } from 'hydroactive/testing.js';
+import { hit, hydrate } from 'hydroactive/testing.js';
 
 import { CounterDisplay, StateHostCounter } from './props-counter.js';
 
 describe('CounterDisplay', () => {
-  it('hydrates initial count', () => {
-    const counter = query('counter-display#hydrates', CounterDisplay);
+  hit('counter-display#hydrates', 'hydrates initial count', (counter) => {
     expect(counter.shadowRoot!.textContent).toContain('The count is: 5.');
 
-    hydrate(counter);
+    hydrate(counter, CounterDisplay);
 
     expect(counter.shadowRoot!.textContent).toContain('The count is: 5.');
     expect(counter.initialCount).toBe(5);
   });
 
-  it('hydrates with provided property', () => {
-    const counter = query('counter-display#prop', CounterDisplay);
+  hit('counter-display#prop', 'hydrates with provided property', (counter) => {
     expect(counter.shadowRoot!.textContent).toContain('The count is: 5.');
 
-    hydrate(counter, { count: 10 });
+    hydrate(counter, CounterDisplay, { count: 10 });
 
     expect(counter.shadowRoot!.textContent).toContain('The count is: 10.'); // Prop bound to DOM.
     expect(counter.initialCount).toBe(5); // Value read from HTML.
@@ -25,12 +23,11 @@ describe('CounterDisplay', () => {
 });
 
 describe('StateHostCounter', () => {
-  it('increments', () => {
-    const counter = query('state-host-counter#increments', StateHostCounter);
+  hit('state-host-counter#increments', 'increments', (counter) => {
     const display = counter.shadowRoot!.querySelector('counter-display')!;
     expect(display.shadowRoot!.textContent).toContain('The count is: 5.');
 
-    hydrate(counter);
+    hydrate(counter, StateHostCounter);
 
     // Hydration should not change displayed count.
     expect(display.shadowRoot!.textContent).toContain('The count is: 5.');
@@ -41,12 +38,11 @@ describe('StateHostCounter', () => {
     expect(display.shadowRoot!.textContent).toContain('The count is: 6.');
   });
 
-  it('decrements', () => {
-    const counter = query('state-host-counter#decrements', StateHostCounter);
+  hit('state-host-counter#decrements', 'decrements', (counter) => {
     const display = counter.shadowRoot!.querySelector('counter-display')!;
     expect(display.shadowRoot!.textContent).toContain('The count is: 5.');
 
-    hydrate(counter);
+    hydrate(counter, StateHostCounter);
 
     // Hydration should not change displayed count.
     expect(display.shadowRoot!.textContent).toContain('The count is: 5.');

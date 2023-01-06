@@ -1,4 +1,4 @@
-import { hydrate, query } from 'hydroactive/testing.js';
+import { hit, hydrate } from 'hydroactive/testing.js';
 
 import { LiveCounter } from './live-counter.js';
 
@@ -13,11 +13,10 @@ describe('LiveCounter', () => {
     clock.uninstall();
   });
 
-  it('increments over time', () => {
-    const counter = query('live-counter#increments', LiveCounter);
+  hit('live-counter#increments', 'increments over time', (counter) => {
     expect(counter.shadowRoot!.textContent).toContain('The count is: 5.');
 
-    hydrate(counter, {});
+    hydrate(counter, LiveCounter);
 
     expect(counter.shadowRoot!.textContent).toContain('The count is: 5.');
     clock.tick(1_000);
