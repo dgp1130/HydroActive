@@ -235,17 +235,31 @@ Run tests with `npm test`. Debug tests with `npm run test-debug` and then openin
 
 ### Publishing
 
-To publish first make sure tests pass:
-
-```shell
-npm test
-```
-
-Then build and publish the package:
-
-```shell
-npm run build
-(cd dist/ && npm publish)
-```
-
-Alternatively run `(cd dist/ && npm pack)` to inspect the tarball to be published.
+1.  Make sure you're on the right Node version.
+    ```shell
+    nvm install
+    ```
+1.  Increment the version number in [`package.json`](/package.json).
+1.  Make sure tests pass:
+    ```shell
+    npm test
+    ```
+1.  Update the version in the lockfile.
+    ```shell
+    npm install
+    ```
+    Make sure no other dependencies were updated.
+1.  Then build and publish the package:
+    ```shell
+    npm run build
+    (cd dist/ && npm publish)
+    # Alternatively run `(cd dist/ && npm pack)` to inspect the tarball to be published.
+    ```
+1.  Commit, tag, and push the incremented version number.
+    ```shell
+    git add . && git commit -m "Release v0.0.1."
+    git tag releases/0.0.1
+    git push --follow-tags
+    ```
+1.  Go to [GitHub releases](https://github.com/dgp1130/HydroActive/releases/) and create a
+    new release with a changelog.
