@@ -1,4 +1,4 @@
-import { component, ComponentDef, factory } from 'hydroactive';
+import { component, ComponentDef } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
@@ -19,8 +19,6 @@ export const EditableToot = component(($: ComponentDef<{ tootId: number, content
     $.host.replaceWith(editedToot);
   });
 });
-
-export const createEditableToot = factory(EditableToot);
 
 customElements.define('editable-toot', EditableToot);
 

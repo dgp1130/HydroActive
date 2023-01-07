@@ -1,4 +1,4 @@
-import { component, factory } from 'hydroactive';
+import { component, hydrate } from 'hydroactive';
 
 // Hydration is run with the `<template data-hydroactive-tag />` contents cloned into the
 // shadow DOM. Hydrate from that starting point.
@@ -7,11 +7,13 @@ const SpawnCounter = component(($) => {
 
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
-});
 
-// Generate a factory to create and hydrate a new instance of the component. This makes sure
-// the new component is immediately hydrated and usable.
-const spawnCounter = factory(SpawnCounter);
+  return {
+    increment(): void {
+      setCount(count() + 1);
+    },
+  };
+});
 
 customElements.define('spawn-counter', SpawnCounter);
 
@@ -22,13 +24,21 @@ declare global {
 }
 
 const Spawner = component(($) => {
-  const list = $.hydrate('ul', HTMLUListElement);
+  const counterTemplate = $.query('template');
+  const list = $.query('ul');
 
   $.listen($.query('button'), 'click', () => {
-    // Spawn a new counter by client-side rendering a new instance based on the template.
-    const item = document.createElement('li');
-    item.appendChild(spawnCounter());
+    // Spawn a new counter by rendering a new instance based on the template.
+    const counter = (counterTemplate.content.cloneNode(true /* deep */) as Element).firstElementChild!;
 
+    // Hydrate the counter before it is appended to the DOM.
+    hydrate(counter, SpawnCounter);
+
+    // Counter is interactable and typed correctly (it's typed SpawnCounter, not Element)!
+    counter.increment(); // works!
+
+    const item = document.createElement('li');
+    item.appendChild(counter);
     list.appendChild(item);
   });
 });

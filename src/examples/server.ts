@@ -44,8 +44,9 @@ function renderInfiniteTootList(initialToots: Toot[]): string {
                     `.trim()).join('\n')}
                 </ul>
                 <button>Load more</button>
+
+                <script src="/examples/mastodon/infinite-toot-list.js" type="module"></script>
             </template>
-            <script src="/examples/mastodon/infinite-toot-list.js" type="module"></script>
         </infinite-toot-list>
     `.trim();
 }
@@ -62,8 +63,13 @@ function renderToot({ id, content }: Toot): string {
 
         <span>${content}</span>
         <button>Edit</button>
+
+        <template>
+            ${renderEditToot()}
+        </template>
+
+        <script src="/examples/mastodon/toot-view.js" type="module" async></script>
     </template>
-    <script src="/examples/mastodon/toot-view.js" type="module" async></script>
 </toot-view>
     `.trim();
 }
@@ -85,7 +91,6 @@ app.get('/examples/mastodon/', (_req, res) => {
         <title>Mastodon</title>
         <meta charset="utf8">
         ${renderImportMap()}
-        ${renderEditTootTemplate()}
     </head>
     <body>
         <h1>Mastodon</h1>
@@ -157,14 +162,18 @@ function renderImportMap(): string {
     `.trim();
 }
 
-function renderEditTootTemplate(): string {
+function renderEditToot(): string {
     return `
-<template data-hydroactive-tag="editable-toot">
-    <form>
-        <input type="text" />
-        <button type="submit">Save</button>
-    </form>
-</template>
+<editable-toot>
+    <template shadowroot="open">
+        <form>
+            <input type="text" />
+            <button type="submit">Save</button>
+        </form>
+
+        <script src="/examples/mastodon/editable-toot.js" type="module" async></script>
+    </template>
+</editable-toot>
     `.trim();
 }
 

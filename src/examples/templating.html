@@ -20,14 +20,6 @@
             <a href="/">Home</a>
         </header>
 
-        <!-- Prerender a template with `data-hydroactive-tag` referring to the custom element
-            which will use it. Simply leave any unknown elements empty. -->
-        <template data-hydroactive-tag="spawn-counter">
-            <div>The current count is: <span>5</span>.</div>
-            <button id="decrement">-</button>
-            <button id="increment">+</button>
-        </template>
-
         <my-spawner>
             <template shadowroot="open">
                 <h2>Spawned counter</h2>
@@ -35,91 +27,44 @@
                 <button>Spawn</button>
                 <ul></ul>
 
+                <!-- Render inactive components in a <template /> to be cloned later. -->
+                <template>
+                    <spawn-counter>
+                        <template shadowroot="open">
+                            <div>The current count is: <span>5</span>.</div>
+                            <button id="decrement">-</button>
+                            <button id="increment">+</button>
+                        </template>
+                    </spawn-counter>
+                </template>
+
                 <script src="/examples/spawn-counter.js" type="module"></script>
             </template>
         </my-spawner>
-
-        <!-- Any attributes on the template are used as defaults. -->
-        <template data-hydroactive-tag="repeated-counter" name="Devel">
-            <div>
-                Hello <span id="name"></span>, the current count is:
-                <span id="count"></span>.
-                <slot></slot>
-            </div>
-        </template>
-
-        <!-- Templates can be repeated multiple times in the document, even when SSR'd. Note
-        that these components do not load their contents until JavaScript is executed, so this
-        should only be used if at least one instance of the component will be CSR'd. -->
-        <div>
-            <h2>Repeated templates</h2>
-
-            <ul>
-                <!-- Can repeat a template as many times as desired. Uses default name. -->
-                <li><repeated-counter counter-id="1234"></repeated-counter></li>
-                <li><repeated-counter counter-id="1234"></repeated-counter></li>
-
-                <!-- Use explicitly provided name, not the default. -->
-                <li><repeated-counter counter-id="4321" name="Ollie"></repeated-counter></li>
-
-                <!-- Can supply light DOM. -->
-                <li>
-                    <repeated-counter counter-id="4321">
-                        <div>Hello from light DOM!</div>
-                    </repeated-counter>
-                </li>
-
-                <!-- Template is only used if there is no shadow DOM. If shadow DOM is
-                pre-rerendered, then it is used directly. But, I generally don't recommend
-                using the same component with different templates. -->
-                <li>
-                    <repeated-counter counter-id="4321" name="Ollie">
-                        <template shadowroot="open">
-                            <div>
-                                Hello from a unique template where the name is
-                                <span id="name"></span> and the count is
-                                <span id="count"></span>.
-                            </div>
-                        </template>
-                    </repeated-counter>
-                </li>
-            </ul>
-
-            <script src="/examples/repeated-template.js" type="module"></script>
-        </div>
-
-        <template data-hydroactive-tag="required-props-counter">
-            <!-- Don't know what the current count is at render time, leave the `<span />` blank. -->
-            <div>The count is: <span></span>.</div>
-        </template>
 
         <my-initializer>
             <template shadowroot="open">
                 <h2>Counter with props</h2>
 
                 <form>
-                    <input type="number" value="20" required />
+                    <input type="number" value="10" required />
                     <button type="submit">Spawn</button>
                 </form>
                 <ul></ul>
 
+                <!-- Don't know what the current count is at render time, so render inside a
+                     `<template />` element. -->
+                <template>
+                    <required-props-counter>
+                        <template shadowroot="open">
+                            <!-- Leave the count blank at render time. -->
+                            <div>The count is: <span></span>.</div>
+                        </template>
+                    </required-props-counter>
+                </template>
+
                 <script src="/examples/required-props-counter.js" type="module"></script>
             </template>
         </my-initializer>
-
-        <template data-hydroactive-tag="hydrated-template-counter">
-            <div>The current count is: <span>25</span>.</div>
-        </template>
-
-        <template-hydrator>
-            <template shadowroot="open">
-                <h2>Hydrating template</h2>
-
-                <button>Spawn</button>
-                <div>The counter will automatically increment once.</div>
-
-                <script src="/examples/hydrated-template-counter.js" type="module"></script>
-            </template>
-        </template-hydrator>
     </body>
 </html>

@@ -1,4 +1,5 @@
-import { hit, hydrate } from 'hydroactive/testing.js';
+import { hydrate } from 'hydroactive';
+import { hit } from 'hydroactive/testing.js';
 
 import { CounterDisplay, StateHostCounter } from './props-counter.js';
 

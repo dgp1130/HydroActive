@@ -1,21 +1,19 @@
-import { component, factory, ComponentDef } from 'hydroactive';
+import { component, hydrate, ComponentDef } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 
 // Define the props and access them at `$.props`. They are wrapped into signal accessors and
-// update whenever someone modifies the component property. Since this component is being
-// hydrated from a template, it actually can receive props at hydration time, meaning this is
-// the exception where props can be non-optional and the `factory()` function enforces this in
-// its types.
+// update whenever someone modifies the component property. These props are initially provided
+// at hydration time and can be modified on the component properties afterwards.
 const RequiredPropsCounter = component(($: ComponentDef<{ count: number }>) => {
-  // Unfortunately we can't guarantee that this component is constructed from the factory or
-  // that all the props will be set prior to hydration. So `$.props.*` always returns a signal
-  // with `| undefined` in the type.
+  // Bind the count prop to the `<span />` element prerendered as empty.
+  //
+  // While HydroActive APIs will require that `count` is provided via types, it can't
+  // guarantee that this component is hydrated via HydroActive. It could be hydrated like a
+  // plain custom element and `count` might be omitted. To account for this, `$.props.*`
+  // always returns a signal with `| undefined` in the type. You can `!` the `undefined` away
+  // or assert the value is defined at runtime.
   $.bind('span', () => assertDefined($.props.count()));
 });
-
-// Generate a factory to create and hydrate a new instance of the component. Typings require
-// that all the defined props are given as inputs.
-const createRequiredPropsCounter = factory(RequiredPropsCounter);
 
 customElements.define('required-props-counter', RequiredPropsCounter);
 
@@ -26,7 +24,8 @@ declare global {
 }
 
 const Initializer = component(($) => {
-  const list = $.hydrate('ul', HTMLUListElement);
+  const counterTemplate = $.query('template');
+  const list = $.query('ul');
 
   // Can't be NaN because the input is `type="number" required`, so the browser won't allow a
   // non-numeric value.
@@ -36,11 +35,14 @@ const Initializer = component(($) => {
   $.listen($.query('form'), 'submit', (evt) => {
     evt.preventDefault();
 
-    // Client side render a new counter with the user-specified initial value.
+    // Render a new counter with the user-specified initial value.
+    const counter = (counterTemplate.content.cloneNode(true /* deep */) as Element).firstElementChild!;
+
+    // Props must be provided to `hydrate()`. Types are inferred and `count` is required.
+    hydrate(counter, RequiredPropsCounter, { count: count() });
+
     const item = document.createElement('li');
-    item.appendChild(createRequiredPropsCounter({
-      count: count(),
-    }));
+    item.appendChild(counter);
     list.appendChild(item);
   });
 });

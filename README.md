@@ -193,7 +193,7 @@ Some notable trade-offs between the two authoring formats:
     be unobserved.
 *   `$.props.*` are basically always `undefined` during hydration, just to immediately be
     overwritten when the parent component hydrates.
-*   `ComponentDef<{ count: number }>` optionality really specifies the type of the factory's
+*   `ComponentDef<{ count: number }>` optionality really specifies the type of `hydrate()`'s
     parameters, not `$.props`.
 *   It's really easy to use `ComponentDef<{ count: number }>` without a `?` or understanding
     the hydration timing nuances of that choice. Maybe we should default make everything
@@ -218,7 +218,7 @@ comparison between functional and class. Instead these are just some general des
 *   Template components are arguably client-side rendered, should that be out of scope?
 *   Generated component factories cannot assert all the given properties are actually given.
 *   `$.host.someValueFromProps` includes `| undefined` in the type because we can't guarantee
-    that the component will always be initialized through the factory.
+    that the component will always be initialized through `hydrate()`.
 *   No good community protocol consensus on how to hydrate disconnected elements.
     https://github.com/webcomponents-cg/community-protocols/issues/38
 *   Declaring props are component properties, means they have a chance of conflicting with

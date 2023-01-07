@@ -39,6 +39,7 @@ export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HT
 export function component<Props extends {}, Def extends ComponentDefinition>(
   hydrate: ($: ComponentDef<Props, HTMLElement>) => Def | void,
 ): Class<HTMLElement & Def & Partial<Props>> & InternalProps<Props> {
+  // TODO: Assign a name?
   return class extends HTMLElement {
     private readonly component: ComponentDef<Props, HTMLElement>;
 
@@ -77,37 +78,6 @@ export function component<Props extends {}, Def extends ComponentDefinition>(
       // Don't hydrate when the `defer-hydration` attribute is set. Wait for it to be
       // removed.
       if (this.hasAttribute('defer-hydration')) return;
-
-      if (!this.shadowRoot) {
-        const tagName = this.tagName.toLowerCase();
-
-        const templates = Array.from(document.querySelectorAll(
-            `template[data-hydroactive-tag=${tagName}]`) as NodeListOf<HTMLTemplateElement>);
-        if (templates.length === 0) {
-          throw new Error(`
-Could not find any templates for element \`${tagName}\` without a shadow root:
-1) If this element is intended to be prerendered directly, make sure its content is in a \`<template shadowroot="...">...</template>\`.
-2) If this element is intended to be rendered from a template, make sure to define a \`<template data-hydroactive-tag="${tagName}">...</template>\` on the page.
-          `.trim());
-        } else if (templates.length > 1) {
-          throw new Error(`Found multiple templates for \`${
-            tagName}\`. Please delete all but one.`);
-        }
-        const [ template ] = templates as [ HTMLTemplateElement ];
-
-        this.attachShadow({ mode: 'open' });
-        const contents = template.content.cloneNode(true /* deep */);
-        this.shadowRoot!.appendChild(contents);
-
-        // Move all attributes from the template over to this element since we've cloned from
-        // it. Prefer any attributes already on this element, since those are more specific than
-        // the template.
-        for (const attr of template.getAttributeNames()) {
-          if (!this.hasAttribute(attr)) {
-            this.setAttribute(attr, template.getAttribute(attr)!);
-          }
-        }
-      }
 
       // Hydrate any deferred child nodes before hydrating this node.
       const deferredChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
@@ -152,32 +122,99 @@ Could not find any templates for element \`${tagName}\` without a shadow root:
   } as unknown as Class<HTMLElement & Def & Props> & InternalProps<Props>;
 }
 
-// Generates a factory for the given HydroActive element based on its defined properties.
-export function factory<Clazz extends Class<HTMLElement> & InternalProps<{}>>(clazz: Clazz):
-    (...args: FactoryParams<Clazz>) => InstanceType<Clazz> {
-  return (...[props = {}]) => {
-    const el = new clazz();
-    el.setAttribute('defer-hydration', ''); // Set `defer-hydration` so we can momentarily remove it.
+/**
+ * Hydrates the given element by assigning all the given properties and then removing the
+ * `defer-hydration` attribute.
+ * 
+ * Asserts that `defer-hydration` is present prior to removing it to ensure the element was
+ * not previously hydrated.
+ * Also asserts that the given element is actually an instance of the provided class.
+ */
+export function hydrate<Clazz extends Class<Element>>(el: Element, clazz: Clazz,
+  // `props` can be omitted if the element does not have any required properties.
+  ...[ props = {} as any ]: (
+    {} extends GetProps<Clazz>
+      ? [ props?: GetProps<Clazz> ]
+      : [ props: GetProps<Clazz> ]
+  )
+): asserts el is InstanceType<Clazz> {
+  // Assert that the element is not already hydrated. We expect `defer-hydration` to already
+  // be set. We check this first to avoid unnecessary side effects if the check is failed.
+  // Ignore elements in other documents, see implementation note below.
+  if (!el.hasAttribute('defer-hydration') && el.ownerDocument === document) {
+    throw new Error(`Expected element to be deferred, but it was already hydrated. Did you forget \`defer-hydration\`?`);
+  }
 
-    for (const [ key, value ] of Object.entries(props)) {
-      (el as unknown as Record<string, unknown>)[key] = value;
-    }
+  // Make sure element's in different documents are upgraded (but not hydrated).
+  //
+  // VERY LONG IMPLEMENTATION NOTE: Other documents are typically "inert", meaning they do
+  // *not* run scripts and do *not* upgrade their custom elements. This usually happens when
+  // cloning a custom element from a template. The template has a different `Document` which
+  // owns the template contents. When we call `template.content.cloneNode()`, the clone is
+  // still owned by the same document and thus cannot be upgraded.
+  //
+  // See: https://github.com/WICG/webcomponents/issues/946#issuecomment-1200377464
+  //
+  // To address this, we adopt the node into the main document, upgrade the element, and
+  // then reattach it to its original location in its previous document. This seems to be the
+  // "least surprising" solution as compared to alternatives:
+  // 1.  Adopt the node but don't reattach to its original position - Confusing because
+  //     `hydrate()` now modifies DOM structure in an unintuitive manner.
+  // 2.  Import the node by cloning it - Confusing because we need to return a new node from
+  //     `hydrate()` which only matters some of the time and users need to manually dispose of
+  //     the old node as appropriate.
+  // 3.  Throw an error, and tell the caller to adopt / import the node - Defers a very
+  //     nuanced question to devs. They also need to make sure adopting the node doesn't
+  //     trigger hydration by itself, which is easy to forget.
+  //
+  // Reattaching the node is wasteful from a performance perspective, since we're effectively
+  // moving a node from its original document to the main document, upgrading it, then moving
+  // it back to its original document, only to return to the caller who will very likely just
+  // add it back again to the main document. While wasteful, this is the most intuitive
+  // behavior, and particularly performance-sensitive use cases can make sure to adopt the
+  // node first to skip the code path.
+  if (el.ownerDocument !== document) {
+    const parent = el.parentElement;
+    const nextSibling = el.nextSibling;
 
-    // Trigger disconnected hydration after initializing properties by removing the
-    // `defer-hydration` attribute. See: https://github.com/webcomponents-cg/community-protocols/issues/38
-    el.removeAttribute('defer-hydration');
+    // Set `defer-hydration` to make sure that upgrading the component does not automatically
+    // hydrate it.
+    el.setAttribute('defer-hydration', '');
 
-    return el as InstanceType<Clazz>;
-  };
+    // Adopt the node into the current document, removing it from its existing document.
+    document.adoptNode(el);
+
+    // Upgrade the custom element. Does *not* hydrate because of `defer-hydration`.
+    customElements.upgrade(el);
+
+    // Reattach to its original position in the original document.
+    if (parent) parent.insertBefore(el, nextSibling);
+  }
+
+  // Assert class instance to make sure we were given the right class for this element.
+  // This is not very useful itself, however it requires that the user imports the component's
+  // class, meaning it is very likely (though notably not guaranteed) to to be defined.
+  // We can't do this until *after* the element has been upgraded, so if the caller gives the
+  // wrong class, there is still a visible side effect from the hydration attempt. Considering
+  // this likely reveals a programming mistake rather than an expected failure, this side
+  // effect will hopefully not cause too many issues.
+  if (!(el instanceof clazz)) {
+    throw new Error(`Expected element to be an instance of \`${
+      clazz.name}\`, but got an instance of \`${(el as Element).constructor.name}\` instead.`);
+  }
+
+  // Assign all the provided props values.
+  for (const [ key, value ] of Object.entries(props)) {
+    (el as unknown as Record<string, unknown>)[key] = value;
+  }
+
+  // Hydrate the element.
+  el.removeAttribute('defer-hydration');
 }
-
-// Require props from the given component, or nothing at all if the component has no props.
-type FactoryParams<Clazz extends Class<HTMLElement> & InternalProps<{}>> =
-  {} extends GetProps<Clazz> ? [ props?: GetProps<Clazz> ] : [ props: GetProps<Clazz> ];
 
 // Store props types on the component class so we can use them for type inference.
 type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
-export type GetProps<Clazz extends Class<Element> & InternalProps<{}>> =
+type GetProps<Clazz extends Class<Element> & InternalProps<{}>> =
   Clazz extends InternalProps<infer Props> ? Props : never;
 
 type Accessed<Signal> = Signal extends Accessor<infer T> ? T : never;
@@ -215,7 +252,7 @@ class Component<
   public readonly host: Host & Partial<Props>;
 
   // `$.props` always includes `undefined`, because the component can be created outside of
-  // any HydroActive factory without any required parameters set.
+  // any HydroActive APIs without any required parameters set.
   public readonly props: SignalsOf<Partial<Props>>;
 
   private constructor({ el, props }: { el: Host & Partial<Props>, props: SignalsOf<Props> }) {
