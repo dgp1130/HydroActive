@@ -386,7 +386,7 @@ class Component<
     type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,
   ): Result {
-    const el = this.query(selector);
+    const el = queryAsserted(this.host, selector);
     const content = getSource(el, source);
     const coerce = getCoercer(type);
     const value = coerce(content);
@@ -476,13 +476,13 @@ class Component<
   }
 
   public query<Selector extends string>(selector: Selector):
-      BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
+      QueriedElement<Selector, HTMLElement> {
     const el = queryAsserted(this.host, selector);
 
     // Assert the result does not contain a custom element, because it may not be hydrated.
     // Ignore this check for the host element because that's we're not worried about hydration
     // timing there.
-    if (selector !== ':host' && el.tagName.includes('-')) {
+    if (selector !== ':host' && isCustomElement(el)) {
       throw new Error(`Selector \`${selector}\` matched a custom element (\`${
           el.constructor.name}\`) which is not supported by \`$.query()\` and \`$.queryAll()\` because they don't enforce that the element is hydrated. Use \`$.hydrate('${
           selector}', ${skewerCaseToUpperCamelCase(el.tagName)})\` instead.`);
@@ -492,7 +492,7 @@ class Component<
   }
 
   public queryAll<Selector extends string>(selector: Selector):
-      OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
+      OneOrMore<QueriedElement<Selector, HTMLElement>> {
     const els = queryAllAsserted(this.host, selector);
 
     // Skip custom element check for the host element.
@@ -500,7 +500,7 @@ class Component<
 
     // Assert the results do not contain a custom element, because it may not be hydrated.
     for (const el of els) {
-      if (el.tagName.includes('-')) {
+      if (isCustomElement(el)) {
         throw new Error(`Selector \`${selector}\` matched a custom element (\`${
             el.constructor.name}\`) which is not supported by \`$.query()\` and \`$.queryAll()\` because they don't enforce that the element is hydrated. Use \`$.hydrate('${
             selector}', ${skewerCaseToUpperCamelCase(el.tagName)})\` instead.`);
@@ -523,7 +523,7 @@ class Component<
 }
 
 function queryAsserted<Selector extends string>(host: Element, selector: Selector):
-    BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
+    QueriedElement<Selector, HTMLElement> {
   const [ el, ...rest ] = queryAllAsserted(host, selector);
 
   if (rest.length !== 0) throw new Error(`Found multiple instances of selector \`${selector}\` in the shadow DOM, only one was expected.`);
@@ -532,22 +532,16 @@ function queryAsserted<Selector extends string>(host: Element, selector: Selecto
 }
 
 function queryAllAsserted<Selector extends string>(host: Element, selector: Selector):
-    OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
-  type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
-
-  if (selector === ':host') return [ host as El ];
+    OneOrMore<QueriedElement<Selector, HTMLElement>> {
+  if (selector === ':host') return [ host as QueriedElement<Selector, HTMLElement> ];
 
   const els = Array.from(host.shadowRoot!.querySelectorAll(selector));
   if (els.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
 
-  return els as OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>>;
+  return els as OneOrMore<QueriedElement<Selector, HTMLElement>>;
 }
 
 type OneOrMore<T> = [ T, ...T[] ];
-type BanCustomElementSelector<Selector extends string, Result> =
-  Selector extends `${string}-${string}`
-  ? Invalid<`Don't get custom elements from \`$.query()\` or \`$.queryAll()\` as they might not be hydrated. Use \`$.hydrate('${Selector}', ${SkewerToPascalCase<Selector>})\` instead. This forces \`${SkewerToPascalCase<Selector>}\` to hydrate first.`>
-  : Result;
 
 type HydrateSetter = (el: Element, content: string) => void;
 
@@ -637,7 +631,7 @@ const coerceToNumber: Coercer<number> = (content) => {
   const str = content instanceof Element ? content.textContent! : content;
   return Number(str); // TODO: `undefined`?
 }
-function assertElement<El extends Element>(
+function assertHydratedElement<El extends Element>(
   content: HydrateContent,
   type: HydrateConverter<HydrateSource, unknown /* Result */, El>,
 ): El {
@@ -651,7 +645,15 @@ function assertElement<El extends Element>(
       type}\`, but got an element of type ${content.constructor.name}`);
   }
 
+  if (isCustomElement(content) && content.hasAttribute('defer-hydration')) {
+    throw new Error(`Expected custom element to be hydrated, but it is still deferred. Use \`$.hydrate()\` to trigger hydration.`);
+  }
+
   return content as El;
+}
+
+function isCustomElement(el: Element): boolean {
+  return el.tagName.includes('-');
 }
 
 function getCoercer<Source extends HydrateSource, Result, El extends Element>(
@@ -663,7 +665,7 @@ function getCoercer<Source extends HydrateSource, Result, El extends Element>(
     return coerceToNumber as unknown as Coercer<Result>;
   } else if (classExtends(type, Element)) {
     return (content): Result => {
-      return assertElement(content, type) as unknown as Result;
+      return assertHydratedElement(content, type) as unknown as Result;
     };
   } else {
     return type as Coercer<Result>;
@@ -689,24 +691,6 @@ function* prototypeChain(obj: Class<unknown>): Generator<object, void, void> {
 function assertNever(value: never): never {
   throw new Error(`Unexpected call to \`assertNever()\` with value: ${value}`);
 }
-
-type SkewerToPascalCase<Text extends string> = Join<CapitalizeAll<Split<Text, '-'>>, ''>;
-type Split<Text extends string, Separator extends string> =
-  Text extends `${infer Prefix}${Separator}${infer Rest}`
-    ? [ Prefix, ...Split<Rest, Separator> ]
-    : [ Text ];
-type CapitalizeAll<List extends string[]> =
-  List extends [ infer Head extends string, ...infer Tail extends string[] ]
-    ? [ Capitalize<Head>, ...CapitalizeAll<Tail> ]
-    : [ ];
-type Join<List extends string[], Separator extends string> =
-  List extends [ infer Head extends string, ...infer Tail extends string[] ]
-    ? `${Head}${Separator}${Join<Tail, Separator>}`
-    : ``;
-
-// Inspired by: https://github.com/ryb73/invalid-type/blob/3ada996a6d4fe1fa7bfeb2440019540643feb54e/src/index.ts
-const invalidSymbol = Symbol('Invalid type');
-type Invalid<_Message extends string> = (arg: typeof invalidSymbol) => typeof invalidSymbol;
 
 function skewerCaseToUpperCamelCase(skewerCase: string): string {
   return skewerCase.split('-')
