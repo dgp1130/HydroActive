@@ -47,10 +47,7 @@ export function component<Props extends {}, Def extends ComponentDefinition>(
 
   // Overwrite the class name for debugging purposes.
   Object.defineProperty(HydroActiveComponentClass, 'name', {
-    value: tagName.split('-')
-        .filter((part) => part !== '')
-        .map((part) => `${part[0]!.toUpperCase()}${part.slice(1)}`)
-        .join(''),
+    value: skewerCaseToUpperCamelCase(tagName),
   });
 
   // Define the custom element immediately, so HydroActive components cannot be hydrated prior
@@ -405,7 +402,7 @@ class Component<
         ? [ props?: GetProps<Clazz> ]
         : [ props: GetProps<Clazz> ]
   ): InstanceType<Clazz> {
-    const el = this.query(selector);
+    const el = queryAsserted(this.host, selector);
     hydrate(el, clazz, props);
     return el;
   }
@@ -478,26 +475,39 @@ class Component<
     return this.useContext(ctx, initial, 'forever');
   }
 
-  // TODO: Throw if returning a custom element.
   public query<Selector extends string>(selector: Selector):
       BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
-    const [ el, ...rest ] = this.queryAll(selector);
+    const el = queryAsserted(this.host, selector);
 
-    if (rest.length !== 0) throw new Error(`Found multiple instances of selector \`${selector}\` in the shadow DOM, only one was expected.`);
+    // Assert the result does not contain a custom element, because it may not be hydrated.
+    // Ignore this check for the host element because that's we're not worried about hydration
+    // timing there.
+    if (selector !== ':host' && el.tagName.includes('-')) {
+      throw new Error(`Selector \`${selector}\` matched a custom element (\`${
+          el.constructor.name}\`) which is not supported by \`$.query()\` and \`$.queryAll()\` because they don't enforce that the element is hydrated. Use \`$.hydrate('${
+          selector}', ${skewerCaseToUpperCamelCase(el.tagName)})\` instead.`);
+    }
 
     return el;
   }
 
-  // TODO: Throw if returning a custom element.
   public queryAll<Selector extends string>(selector: Selector):
       OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
-    type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
+    const els = queryAllAsserted(this.host, selector);
 
-    if (selector === ':host') return [ this.host as El ];
+    // Skip custom element check for the host element.
+    if (selector === ':host') return els;
 
-    const nodes = Array.from(this.host.shadowRoot!.querySelectorAll(selector));
-    if (nodes.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
-    return nodes as OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>>;
+    // Assert the results do not contain a custom element, because it may not be hydrated.
+    for (const el of els) {
+      if (el.tagName.includes('-')) {
+        throw new Error(`Selector \`${selector}\` matched a custom element (\`${
+            el.constructor.name}\`) which is not supported by \`$.query()\` and \`$.queryAll()\` because they don't enforce that the element is hydrated. Use \`$.hydrate('${
+            selector}', ${skewerCaseToUpperCamelCase(el.tagName)})\` instead.`);
+      }
+    }
+
+    return els;
   }
 
   public dispatch(event: Event): void {
@@ -510,6 +520,27 @@ class Component<
       return () => target.removeEventListener(event, handler);
     });
   }
+}
+
+function queryAsserted<Selector extends string>(host: Element, selector: Selector):
+    BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>> {
+  const [ el, ...rest ] = queryAllAsserted(host, selector);
+
+  if (rest.length !== 0) throw new Error(`Found multiple instances of selector \`${selector}\` in the shadow DOM, only one was expected.`);
+
+  return el;
+}
+
+function queryAllAsserted<Selector extends string>(host: Element, selector: Selector):
+    OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>> {
+  type El = BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>;
+
+  if (selector === ':host') return [ host as El ];
+
+  const els = Array.from(host.shadowRoot!.querySelectorAll(selector));
+  if (els.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
+
+  return els as OneOrMore<BanCustomElementSelector<Selector, QueriedElement<Selector, HTMLElement>>>;
 }
 
 type OneOrMore<T> = [ T, ...T[] ];
@@ -676,3 +707,10 @@ type Join<List extends string[], Separator extends string> =
 // Inspired by: https://github.com/ryb73/invalid-type/blob/3ada996a6d4fe1fa7bfeb2440019540643feb54e/src/index.ts
 const invalidSymbol = Symbol('Invalid type');
 type Invalid<_Message extends string> = (arg: typeof invalidSymbol) => typeof invalidSymbol;
+
+function skewerCaseToUpperCamelCase(skewerCase: string): string {
+  return skewerCase.split('-')
+      .filter((part) => part !== '')
+      .map((part) => `${part[0]!.toUpperCase()}${part.slice(1).toLowerCase()}`)
+      .join('');
+}
