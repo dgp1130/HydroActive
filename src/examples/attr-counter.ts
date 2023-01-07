@@ -9,7 +9,7 @@ const counterMap = new Map([
 const AttrCounter = component('attr-counter', ($) => {
   // `:host` means "get the host element".
   // `attr('counter-id')` means "read from the `counter-id` attribute, not `.textContent`".
-  const id = $.hydrate(':host', Number, attr('counter-id'));
+  const id = $.read(':host', Number, attr('counter-id'));
 
   // Client uses this information to get required state.
   const initialCount = getCountFromId(id);

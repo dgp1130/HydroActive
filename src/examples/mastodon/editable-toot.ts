@@ -27,7 +27,7 @@ declare global {
 }
 
 function useInput($: ComponentDef, selector: string, initialValue?: string): Accessor<string> {
-  const input = $.hydrate(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
+  const input = $.read(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
   if (initialValue !== undefined) input.value = initialValue;
   const [ value, setValue ] = createSignal(input.value);
 

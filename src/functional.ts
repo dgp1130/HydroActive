@@ -375,16 +375,16 @@ class Component<
     type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,
   ): Signal<Result> {
-    const initialValue = this.hydrate(selector, type, source);
+    const initialValue = this.read(selector, type, source);
     const [ accessor, setter ] = createSignal(initialValue);
     this.bind(selector, accessor, source);
 
     return [ accessor, setter ];
   }
 
-  // TODO: `$.hydrate('span', HTMLDivElement)` should return an `HTMLDivElement` type?
-  // TODO: Infers return type incorrectly based on usage? `wantDiv($.hydrate('span', HTMLSpanElement))`
-  public hydrate<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
+  // TODO: `$.read('span', HTMLDivElement)` should return an `HTMLDivElement` type?
+  // TODO: Infers return type incorrectly based on usage? `wantDiv($.read('span', HTMLSpanElement))`
+  public read<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
     selector: Selector,
     type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,

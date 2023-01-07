@@ -2,7 +2,7 @@ import { component } from 'hydroactive';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
 export const InfiniteTootList = component('infinite-toot-list', ($) => {
-  const list = $.hydrate('ul', HTMLUListElement);
+  const list = $.read('ul', HTMLUListElement);
 
   $.listen($.query('button'), 'click', async () => {
     // Pick a random toot using our superior ranking algorithm.

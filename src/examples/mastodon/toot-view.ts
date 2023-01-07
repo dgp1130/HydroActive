@@ -3,8 +3,8 @@ import { EditableToot } from './editable-toot.js';
 
 export const TootView = component('toot-view', ($) => {
   const editTootTemplate = $.query('template');
-  const tootId = $.hydrate(':host', Number, attr('toot-id'));
-  const content = $.hydrate('span', String);
+  const tootId = $.read(':host', Number, attr('toot-id'));
+  const content = $.read('span', String);
 
   $.listen($.query('button'), 'click', () => {
     const editToot = (editTootTemplate.content.cloneNode(true /* deep */) as Element).firstElementChild!;

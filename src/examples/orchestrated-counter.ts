@@ -6,7 +6,7 @@ const OrchestratedInitialCount = component(
   'orchestrated-initial-count',
   ($: ComponentDef<{ user: User }>) => {
     $.bind('#user', () => $.props.user()!.name);
-    const count = $.hydrate('#count', Number);
+    const count = $.read('#count', Number);
 
     return { count };
   },
@@ -39,7 +39,7 @@ declare global {
 
 // Orchestrates the hydration of multiple sub-components to force a specific ordering.
 const OrchestratedParent = component('orchestrated-parent', ($) => {
-  const user = getUser($.hydrate(':host', Number, attr('user-id')));
+  const user = getUser($.read(':host', Number, attr('user-id')));
 
   // Hydrate `orchestrated-initial-count` *first* and get the initial count from it.
   const { count } = $.hydrateElement('orchestrated-initial-count', OrchestratedInitialCount, { user });

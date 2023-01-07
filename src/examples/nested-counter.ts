@@ -23,7 +23,7 @@ declare global {
 
 const OuterCounter = component('outer-counter', ($) => {
   // Can hydrate just a plain reference to the element, no need to parse its text.
-  const innerCounter = $.hydrate('inner-counter', InnerCounter);
+  const innerCounter = $.read('inner-counter', InnerCounter);
 
   // InnerCounter should hydrate first and have usable methods even at hydration time.
   // Import ordering naturally causes this behavior, but doesn't always happen.

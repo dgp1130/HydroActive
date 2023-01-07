@@ -26,7 +26,7 @@ declare global {
 }
 
 const ContextProvider = component('context-provider', ($) => {
-  const [ count, setCount ] = createSignal($.hydrate(':host', Number, attr('count')));
+  const [ count, setCount ] = createSignal($.read(':host', Number, attr('count')));
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
 

@@ -121,9 +121,9 @@ Some notable trade-offs between the two authoring formats:
     JS decorator proposal.
 *   Returning object in functional approach feels like it's hacking in the class
     approach in the middle of the functional approach.
-*   When to use `$.hydrate()` vs `$.query()` is not clear. The former asserts for a
-    specific type, which is occasionally useful but easy to forget. Class approach uses
-    `@hydrate()` as a declarative decorator while `this.query()` is imperative.
+*   When to use `$.hydrateElement()`, `$.read()`, and `$.query()` is not clear. Class
+    approach uses `@hydrate()` as a declarative decorator while `this.query()` is
+    imperative.
 *   `update()` isn't necessary in the functional design, can just use effects.
 *   Functional approach requires returning the custom element definition and "moving"
     its properties over, which feels very hacky.
@@ -177,11 +177,10 @@ Some notable trade-offs between the two authoring formats:
     are not referenced elsewhere. Maybe that's ok? But it seems weird that these effects are
     done at the bottom of the usage graph at the individual signals rather than the top of
     the usage graph like the others.
-*   `$.live()` / `$.hydrate()` / `$.bind()` all seem to work when called asynchronously
+*   `$.live()` / `$.read()` / `$.bind()` all seem to work when called asynchronously
     _after_ hydration. Is that ok?
     *   `$.bind()` kinda needs this to be compatible with async contexts.
-    *   `$.hydrate()` makes logical sense, but has a bad name. Maybe `$.init()` would be
-        better?
+    *   `$.read()` makes logical sense.
     *   `$.live()` is just the two combined, so it _can_ work, but I feel like it
         shouldn't. Binding late seems like a bad idea, even if it accepts a `Promise`.
 *   `$.asyncEffect()` can't be easily tracked, need to pass signals in advance.

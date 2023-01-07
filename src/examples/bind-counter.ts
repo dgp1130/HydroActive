@@ -4,7 +4,7 @@ import { createSignal } from 'hydroactive/signal.js';
 const BindCounter = component('bind-counter', ($) => {
   // 1. Get the DOM element with `this.shadowRoot.querySelector('span')`.
   // 2. Read `.textContent` and parse to a `Number`.
-  const initialCount = $.hydrate('span', Number);
+  const initialCount = $.read('span', Number);
 
   // 3. Create a signal with that initial value.
   const [ count, setCount ] = createSignal(initialCount);

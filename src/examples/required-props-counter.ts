@@ -52,7 +52,7 @@ declare global {
 }
 
 function useInput($: ComponentDef, selector: string): Accessor<string> {
-  const input = $.hydrate(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
+  const input = $.read(selector, HTMLInputElement) as HTMLInputElement; // TODO: Unnecessary cast.
   const [ value, setValue ] = createSignal(input.value);
 
   $.listen(input, 'change', () => { setValue(input.value); });

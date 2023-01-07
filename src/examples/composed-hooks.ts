@@ -23,7 +23,7 @@ function countBy2($: ComponentDef, initial: number): Accessor<number> {
 }
 
 const ComposedHooks = component('composed-hooks', ($) => {
-  const doubledCount = countBy2($, $.hydrate('span', Number));
+  const doubledCount = countBy2($, $.read('span', Number));
   $.bind('span', doubledCount);
 });
 
