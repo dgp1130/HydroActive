@@ -42,10 +42,10 @@ const OrchestratedParent = component('orchestrated-parent', ($) => {
   const user = getUser($.read(':host', Number, attr('user-id')));
 
   // Hydrate `orchestrated-initial-count` *first* and get the initial count from it.
-  const { count } = $.hydrateElement('orchestrated-initial-count', OrchestratedInitialCount, { user });
+  const { count } = $.hydrate('orchestrated-initial-count', OrchestratedInitialCount, { user });
 
   // Hydrate `orchestrated-counter` *second`, using the initial count we just hydrated.
-  $.hydrateElement('orchestrated-counter', OrchestratedCounter, { count });
+  $.hydrate('orchestrated-counter', OrchestratedCounter, { count });
 });
 
 declare global {

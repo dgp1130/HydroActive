@@ -121,9 +121,8 @@ Some notable trade-offs between the two authoring formats:
     JS decorator proposal.
 *   Returning object in functional approach feels like it's hacking in the class
     approach in the middle of the functional approach.
-*   When to use `$.hydrateElement()`, `$.read()`, and `$.query()` is not clear. Class
-    approach uses `@hydrate()` as a declarative decorator while `this.query()` is
-    imperative.
+*   When to use `$.hydrate()`, `$.read()`, and `$.query()` is not clear. Class approach
+    uses `@hydrate()` as a declarative decorator while `this.query()` is imperative.
 *   `update()` isn't necessary in the functional design, can just use effects.
 *   Functional approach requires returning the custom element definition and "moving"
     its properties over, which feels very hacky.

@@ -25,7 +25,7 @@ declare global {
 // Nothing unique about this component.
 // Automatically supports deferring hydration with no effort!
 const DeferredOuterCounter = component('deferred-outer-counter', ($) => {
-  const innerCounter = $.hydrateElement('deferred-inner-counter', DeferredInnerCounter);
+  const innerCounter = $.hydrate('deferred-inner-counter', DeferredInnerCounter);
 
   // Child elements are hydrated first, so this is already loaded and works!
   // Note that HydroActive cannot force the custom element classes to be loaded for all its

@@ -396,9 +396,8 @@ class Component<
     return value;
   }
 
-  // TODO: Rename to `$.hydrate()`.
   // TODO: Consider adding `$.hydrateChildren()`.
-  public hydrateElement<Clazz extends Class<Element>>(
+  public hydrate<Clazz extends Class<Element>>(
     selector: string,
     clazz: Clazz,
     // `props` is optional if the class does not have any required props.
