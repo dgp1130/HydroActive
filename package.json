@@ -13,7 +13,7 @@
   "scripts": {
     "start": "npm run -s clean && npm run -s build && npm run -s serve",
     "build": "npm run -s clean && npm run -s build-ts && npm run -s build-html && npm run -s build-package",
-    "build-ts": "tsc && ln -f -s ../node_modules dist/",
+    "build-ts": "tsc -p tsconfig.lib.json && ln -f -s ../node_modules dist/",
     "build-tests": "tsc -p tsconfig.test.json && cp src/examples/*.test.html dist/examples/",
     "build-html": "cp src/examples/*.html dist/examples/ && cp src/examples/class/*.html dist/examples/class/",
     "build-package": "cp package.json README.md dist/",

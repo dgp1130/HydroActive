@@ -1,8 +1,8 @@
+/** @fileoverview Config for the test compilation. */
 {
-  "extends": "./tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "include": ["src/**/*.test.ts"],
-  "exclude": [],
   "compilerOptions": {
     "types": ["jasmine"],
-  }
+  },
 }
