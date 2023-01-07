@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const AsyncEffect = component(($) => {
+const AsyncEffect = component('async-effect', ($) => {
   const [ countAccessor, setCount ] = $.live('span', Number);
   $.listen($.query('button'), 'click', () => { setCount(countAccessor() + 1); });
 
@@ -36,8 +36,6 @@ const AsyncEffect = component(($) => {
     }
   });
 });
-
-customElements.define('async-effect', AsyncEffect);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const EffectCounter = component(($) => {
+const EffectCounter = component('effect-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
   $.listen($.query('button'), 'click', () => { setCount(count() + 1); });
 
@@ -17,8 +17,6 @@ const EffectCounter = component(($) => {
     console.log(`effect-counter: The current count is ${count()}.`);
   });
 });
-
-customElements.define('effect-counter', EffectCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

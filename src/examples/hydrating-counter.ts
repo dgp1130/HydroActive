@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const HydratingCounter = component(($) => {
+const HydratingCounter = component('hydrating-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   // Inferred type from selector tag name.
@@ -18,8 +18,6 @@ const HydratingCounter = component(($) => {
   label.textContent = 'Hi, I\'m CSR\'d! These buttons are also disabled until their event listeners are loaded.';
   $.host.shadowRoot!.append(label);
 });
-
-customElements.define('hydrating-counter', HydratingCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

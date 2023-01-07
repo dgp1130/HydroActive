@@ -2,7 +2,7 @@ import { component, ComponentDef } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-export const EditableToot = component(($: ComponentDef<{ tootId: number, content: string }>) => {
+export const EditableToot = component('editable-toot', ($: ComponentDef<{ tootId: number, content: string }>) => {
   const tootId = $.host.tootId!;
   const content = useInput($, 'input', $.host.content!);
 
@@ -19,8 +19,6 @@ export const EditableToot = component(($: ComponentDef<{ tootId: number, content
     $.host.replaceWith(editedToot);
   });
 });
-
-customElements.define('editable-toot', EditableToot);
 
 declare global {
   interface HTMLElementTagNameMap {

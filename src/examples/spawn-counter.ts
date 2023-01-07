@@ -2,7 +2,7 @@ import { component, hydrate } from 'hydroactive';
 
 // Hydration is run with the `<template data-hydroactive-tag />` contents cloned into the
 // shadow DOM. Hydrate from that starting point.
-const SpawnCounter = component(($) => {
+const SpawnCounter = component('spawn-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
@@ -15,15 +15,13 @@ const SpawnCounter = component(($) => {
   };
 });
 
-customElements.define('spawn-counter', SpawnCounter);
-
 declare global {
   interface HTMLElementTagNameMap {
     'spawn-counter': InstanceType<typeof SpawnCounter>;
   }
 }
 
-const Spawner = component(($) => {
+const Spawner = component('my-spawner', ($) => {
   const counterTemplate = $.query('template');
   const list = $.query('ul');
 
@@ -42,8 +40,6 @@ const Spawner = component(($) => {
     list.appendChild(item);
   });
 });
-
-customElements.define('my-spawner', Spawner);
 
 declare global {
   interface HTMLElementTagNameMap {

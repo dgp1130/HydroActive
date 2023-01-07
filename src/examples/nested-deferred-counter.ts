@@ -2,7 +2,7 @@ import { component } from 'hydroactive';
 
 // Nothing unique about this component.
 // Automatically supports deferring hydration with no effort!
-const DeferredInnerCounter = component(($) => {
+const DeferredInnerCounter = component('deferred-inner-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   return {
@@ -16,8 +16,6 @@ const DeferredInnerCounter = component(($) => {
   };
 });
 
-customElements.define('deferred-inner-counter', DeferredInnerCounter);
-
 declare global {
   interface HTMLElementTagNameMap {
     'deferred-inner-counter': InstanceType<typeof DeferredInnerCounter>;
@@ -26,7 +24,7 @@ declare global {
 
 // Nothing unique about this component.
 // Automatically supports deferring hydration with no effort!
-const DeferredOuterCounter = component(($) => {
+const DeferredOuterCounter = component('deferred-outer-counter', ($) => {
   const innerCounter = $.hydrate('deferred-inner-counter', DeferredInnerCounter);
 
   // Child elements are hydrated first, so this is already loaded and works!
@@ -43,8 +41,6 @@ const DeferredOuterCounter = component(($) => {
   $.listen(increment, 'click', () => { innerCounter.increment(); });
   increment.disabled = false;
 });
-
-customElements.define('deferred-outer-counter', DeferredOuterCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

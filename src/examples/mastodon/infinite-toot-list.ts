@@ -1,7 +1,7 @@
 import { component } from 'hydroactive';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-export const InfiniteTootList = component(($) => {
+export const InfiniteTootList = component('infinite-toot-list', ($) => {
   const list = $.hydrate('ul', HTMLUListElement);
 
   $.listen($.query('button'), 'click', async () => {
@@ -21,8 +21,6 @@ export const InfiniteTootList = component(($) => {
     list.append(listItem);
   });
 });
-
-customElements.define('infinite-toot-list', InfiniteTootList);
 
 declare global {
   interface HTMLElementTagNameMap {

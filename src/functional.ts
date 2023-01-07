@@ -34,92 +34,114 @@ const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>
 export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HTMLElement> =
   Component<Element, Props>;
 
-// TODO: Should we automatically do `customElements.define()` to make sure you can't get a
-// reference to the element without defining it?
 export function component<Props extends {}, Def extends ComponentDefinition>(
+  tagName: `${string}-${string}`,
   hydrate: ($: ComponentDef<Props, HTMLElement>) => Def | void,
 ): Class<HTMLElement & Def & Partial<Props>> & InternalProps<Props> {
-  // TODO: Assign a name?
-  return class extends HTMLElement {
-    private readonly component: ComponentDef<Props, HTMLElement>;
-
-    constructor() {
-      super();
-      elementInternalStateMap.set(this, {
-        hydrated: false,
-        hookDisposers: [],
-        propSignals: new Map(),
-      });
-      this.component = Component.from(this as any) as any;
-    }
-
-    static get observedAttributes() { return [ 'defer-hydration' ]; }
-    attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
-      // Ignore anything that isn't a removal of `defer-hydration`.
-      if (name !== 'defer-hydration' || newValue !== null) return;
-
-      this.requestHydration();
-
-      // While we can hydrate when not connected, don't run initializers while disconnected.
-      // They will be executed on `connectedCallback()`.
-      if (!this.isConnected) return;
-
-      // Execute hooks. We are already connected to the DOM, so we can't rely on
-      // `connectedCallback()` because it ran prior to hydration.
-      const componentState = componentInternalStateMap.get(this.component)!;
-      const elementState = elementInternalStateMap.get(this)!;
-      for (const initializer of componentState.initializers) {
-        const disposer = initializer();
-        if (disposer) elementState.hookDisposers.push(disposer);
-      }
-    }
-
-    private requestHydration(): void {
-      // Don't hydrate when the `defer-hydration` attribute is set. Wait for it to be
-      // removed.
-      if (this.hasAttribute('defer-hydration')) return;
-
-      // Hydrate any deferred child nodes before hydrating this node.
-      const deferredChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
-      for (const child of deferredChildren) {
-        child.removeAttribute('defer-hydration');
-      }
-
-      // Hydrate at most once.
-      const elementState = elementInternalStateMap.get(this)!;
-      if (elementState.hydrated) return;
-
-      // Call user-authored hydration function.
-      const def = hydrate(this.component) ?? undefined;
-      elementState.hydrated = true;
-
-      if (def) {
-        // Apply the returned properties to this element.
-        Object.defineProperties(this, Object.getOwnPropertyDescriptors(def));
-      }
-    }
-
-    connectedCallback(): void {
-      this.requestHydration();
-
-      // Invoke all hooks and schedule their disposers.
-      // Effects are implemented as hooks and are also invoked here.
-      const componentState = componentInternalStateMap.get(this.component)!;
-      const elementState = elementInternalStateMap.get(this)!;
-      for (const initializer of componentState.initializers) {
-        const disposer = initializer();
-        if (disposer) elementState.hookDisposers.push(disposer);
-      }
-    }
-
-    disconnectedCallback(): void {
-      // Dispose any active hooks. Drop the disposers afterwards because when the hooks
-      // rerun on the next `connectedCallback()`, they will generate new disposers.
-      const elementState = elementInternalStateMap.get(this)!;
-      for (const dispose of elementState.hookDisposers) dispose();
-      elementState.hookDisposers.splice(0, elementState.hookDisposers.length);
+  // Extend the base class and close over the provided `hydrate()` function.
+  const HydroActiveComponentClass = class extends HydroActiveComponent<Props, Def> {
+    protected override hydrate(component: ComponentDef<Props, HTMLElement>): Def | void {
+      return hydrate(component);
     }
   } as unknown as Class<HTMLElement & Def & Props> & InternalProps<Props>;
+
+  // Overwrite the class name for debugging purposes.
+  Object.defineProperty(HydroActiveComponentClass, 'name', {
+    value: tagName.split('-')
+        .filter((part) => part !== '')
+        .map((part) => `${part[0]!.toUpperCase()}${part.slice(1)}`)
+        .join(''),
+  });
+
+  // Define the custom element immediately, so HydroActive components cannot be hydrated prior
+  // to being defined as long as they have a dependency on the component class.
+  customElements.define(tagName, HydroActiveComponentClass);
+
+  return HydroActiveComponentClass;
+}
+
+abstract class HydroActiveComponent<Props extends {}, Def extends ComponentDefinition>
+    extends HTMLElement {
+  private readonly component: ComponentDef<Props, HTMLElement>;
+
+  constructor() {
+    super();
+    elementInternalStateMap.set(this, {
+      hydrated: false,
+      hookDisposers: [],
+      propSignals: new Map(),
+    });
+    this.component = Component.from(this as any) as any;
+  }
+
+  static get observedAttributes() { return [ 'defer-hydration' ]; }
+  attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null): void {
+    // Ignore anything that isn't a removal of `defer-hydration`.
+    if (name !== 'defer-hydration' || newValue !== null) return;
+
+    this.requestHydration();
+
+    // While we can hydrate when not connected, don't run initializers while disconnected.
+    // They will be executed on `connectedCallback()`.
+    if (!this.isConnected) return;
+
+    // Execute hooks. We are already connected to the DOM, so we can't rely on
+    // `connectedCallback()` because it ran prior to hydration.
+    const componentState = componentInternalStateMap.get(this.component)!;
+    const elementState = elementInternalStateMap.get(this)!;
+    for (const initializer of componentState.initializers) {
+      const disposer = initializer();
+      if (disposer) elementState.hookDisposers.push(disposer);
+    }
+  }
+
+  protected abstract hydrate(component: ComponentDef<Props, HTMLElement>): Def | void;
+
+  private requestHydration(): void {
+    // Don't hydrate when the `defer-hydration` attribute is set. Wait for it to be
+    // removed.
+    if (this.hasAttribute('defer-hydration')) return;
+
+    // Hydrate any deferred child nodes before hydrating this node.
+    const deferredChildren = this.shadowRoot!.querySelectorAll('[defer-hydration]');
+    for (const child of deferredChildren) {
+      child.removeAttribute('defer-hydration');
+    }
+
+    // Hydrate at most once.
+    const elementState = elementInternalStateMap.get(this)!;
+    if (elementState.hydrated) return;
+
+    // Call user-authored hydration function.
+    const def = this.hydrate(this.component) ?? undefined;
+    elementState.hydrated = true;
+
+    if (def) {
+      // Apply the returned properties to this element.
+      Object.defineProperties(this, Object.getOwnPropertyDescriptors(def));
+    }
+  }
+
+  connectedCallback(): void {
+    this.requestHydration();
+
+    // Invoke all hooks and schedule their disposers.
+    // Effects are implemented as hooks and are also invoked here.
+    const componentState = componentInternalStateMap.get(this.component)!;
+    const elementState = elementInternalStateMap.get(this)!;
+    for (const initializer of componentState.initializers) {
+      const disposer = initializer();
+      if (disposer) elementState.hookDisposers.push(disposer);
+    }
+  }
+
+  disconnectedCallback(): void {
+    // Dispose any active hooks. Drop the disposers afterwards because when the hooks
+    // rerun on the next `connectedCallback()`, they will generate new disposers.
+    const elementState = elementInternalStateMap.get(this)!;
+    for (const dispose of elementState.hookDisposers) dispose();
+    elementState.hookDisposers.splice(0, elementState.hookDisposers.length);
+  }
 }
 
 /**

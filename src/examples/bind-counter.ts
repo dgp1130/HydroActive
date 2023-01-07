@@ -1,7 +1,7 @@
 import { component } from 'hydroactive';
 import { createSignal } from 'hydroactive/signal.js';
 
-const BindCounter = component(($) => {
+const BindCounter = component('bind-counter', ($) => {
   // 1. Get the DOM element with `this.shadowRoot.querySelector('span')`.
   // 2. Read `.textContent` and parse to a `Number`.
   const initialCount = $.hydrate('span', Number);
@@ -17,8 +17,6 @@ const BindCounter = component(($) => {
     setCount(count() + 1);
   }, 1_000);
 });
-
-customElements.define('bind-counter', BindCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

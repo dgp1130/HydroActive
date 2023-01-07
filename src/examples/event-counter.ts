@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const EventDispatcher = component(($) => {
+const EventDispatcher = component('event-dispatcher', ($) => {
   // Propagate user clicks as `count-decrement` events.
   $.listen($.query('#decrement'), 'click', () => {
     $.dispatch(new Event('count-decrement', { bubbles: true }));
@@ -12,23 +12,19 @@ const EventDispatcher = component(($) => {
   });
 });
 
-customElements.define('event-dispatcher', EventDispatcher);
-
 declare global {
   interface HTMLElementTagNameMap {
     'event-dispatcher': InstanceType<typeof EventDispatcher>;
   }
 }
 
-const EventHandler = component(($) => {
+const EventHandler = component('event-handler', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   // List for `count-{decrement,increment}` events and modify the count.
   $.listen($.host, 'count-decrement', () => { setCount(count() - 1); });
   $.listen($.host, 'count-increment', () => { setCount(count() + 1); });
 });
-
-customElements.define('event-handler', EventHandler);
 
 declare global {
   interface HTMLElementTagNameMap {

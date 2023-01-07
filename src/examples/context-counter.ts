@@ -4,7 +4,7 @@ import { Accessor, createSignal } from 'hydroactive/signal.js';
 
 const ctx = context.create<number>(Symbol('count'));
 
-const ContextReceiver = component(($) => {
+const ContextReceiver = component('context-receiver', ($) => {
   // Read context from the parent element returns a `Promise`.
   const count: Promise<Accessor<number>> = $.waitContext(ctx);
 
@@ -19,15 +19,13 @@ const ContextReceiver = component(($) => {
   // const count: Accessor<number> = $.useContext(ctx, 0 /* initial value */);
 });
 
-customElements.define('context-receiver', ContextReceiver);
-
 declare global {
   interface HTMLElementTagNameMap {
     'context-receiver': InstanceType<typeof ContextReceiver>;
   }
 }
 
-const ContextProvider = component(($) => {
+const ContextProvider = component('context-provider', ($) => {
   const [ count, setCount ] = createSignal($.hydrate(':host', Number, attr('count')));
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('#increment'), 'click', () => { setCount(count() + 1); });
@@ -36,8 +34,6 @@ const ContextProvider = component(($) => {
   // Automatically updated when the signal changes.
   $.provideContext(ctx, count);
 });
-
-customElements.define('context-provider', ContextProvider);
 
 declare global {
   interface HTMLElementTagNameMap {

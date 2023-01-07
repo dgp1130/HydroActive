@@ -6,7 +6,7 @@ const counterMap = new Map([
   [ 1234, 10 ],
 ]);
 
-const AttrCounter = component(($) => {
+const AttrCounter = component('attr-counter', ($) => {
   // `:host` means "get the host element".
   // `attr('counter-id')` means "read from the `counter-id` attribute, not `.textContent`".
   const id = $.hydrate(':host', Number, attr('counter-id'));
@@ -20,8 +20,6 @@ const AttrCounter = component(($) => {
   $.listen($.query('button#decrement'), 'click', () => { setCount(count() - 1); });
   $.listen($.query('button#increment'), 'click', () => { setCount(count() + 1); });
 });
-
-customElements.define('attr-counter', AttrCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

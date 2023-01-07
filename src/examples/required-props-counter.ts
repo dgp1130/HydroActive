@@ -4,7 +4,7 @@ import { Accessor, createSignal } from 'hydroactive/signal.js';
 // Define the props and access them at `$.props`. They are wrapped into signal accessors and
 // update whenever someone modifies the component property. These props are initially provided
 // at hydration time and can be modified on the component properties afterwards.
-const RequiredPropsCounter = component(($: ComponentDef<{ count: number }>) => {
+const RequiredPropsCounter = component('required-props-counter', ($: ComponentDef<{ count: number }>) => {
   // Bind the count prop to the `<span />` element prerendered as empty.
   //
   // While HydroActive APIs will require that `count` is provided via types, it can't
@@ -15,15 +15,13 @@ const RequiredPropsCounter = component(($: ComponentDef<{ count: number }>) => {
   $.bind('span', () => assertDefined($.props.count()));
 });
 
-customElements.define('required-props-counter', RequiredPropsCounter);
-
 declare global {
   interface HTMLElementTagNameMap {
     'required-props-counter': InstanceType<typeof RequiredPropsCounter>;
   }
 }
 
-const Initializer = component(($) => {
+const Initializer = component('my-initializer', ($) => {
   const counterTemplate = $.query('template');
   const list = $.query('ul');
 
@@ -46,8 +44,6 @@ const Initializer = component(($) => {
     list.appendChild(item);
   });
 });
-
-customElements.define('my-initializer', Initializer);
 
 declare global {
   interface HTMLElementTagNameMap {

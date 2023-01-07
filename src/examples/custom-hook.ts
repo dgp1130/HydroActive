@@ -1,7 +1,7 @@
 import { component, ComponentDef } from 'hydroactive';
 import { Accessor } from 'hydroactive/signal.js';
 
-const CustomHook = component(($) => {
+const CustomHook = component('custom-hook', ($) => {
   // `timer()` hook encapsulates the desired behavior.
   const count = timer($, 'span');
 
@@ -10,8 +10,6 @@ const CustomHook = component(($) => {
     console.log(`custom-hook: The current count is ${count()}.`);
   });
 });
-
-customElements.define('custom-hook', CustomHook);
 
 declare global {
   interface HTMLElementTagNameMap {

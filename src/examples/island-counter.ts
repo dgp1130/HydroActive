@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const IslandCounter = component(($) => {
+const IslandCounter = component('island-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   const decrement = $.query('button#decrement');
@@ -11,8 +11,6 @@ const IslandCounter = component(($) => {
   $.listen(increment, 'click', () => { setCount(count() + 1); });
   increment.disabled = false;
 });
-
-customElements.define('island-counter', IslandCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const SafeCounter = component(($) => {
+const SafeCounter = component('safe-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   // Same as before, but no memory leak!
@@ -14,8 +14,6 @@ const SafeCounter = component(($) => {
     return () => { clearInterval(id); };
   });
 });
-
-customElements.define('safe-counter', SafeCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

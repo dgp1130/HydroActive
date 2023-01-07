@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const ListenCounter = component(($) => {
+const ListenCounter = component('listen-counter', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   // `$.query()` queries the shadow DOM, asserts an element is found, and returns it.
@@ -16,8 +16,6 @@ const ListenCounter = component(($) => {
   $.listen(decrementBtn, 'click', () => { setCount(count() - 1); });
   $.listen(incrementBtn, 'click', () => { setCount(count() + 1); });
 });
-
-customElements.define('listen-counter', ListenCounter);
 
 declare global {
   interface HTMLElementTagNameMap {

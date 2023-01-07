@@ -22,12 +22,10 @@ function countBy2($: ComponentDef, initial: number): Accessor<number> {
   return () => initial + (accessor() * 2);
 }
 
-const ComposedHooks = component(($) => {
+const ComposedHooks = component('composed-hooks', ($) => {
   const doubledCount = countBy2($, $.hydrate('span', Number));
   $.bind('span', doubledCount);
 });
-
-customElements.define('composed-hooks', ComposedHooks);
 
 declare global {
   interface HTMLElementTagNameMap {

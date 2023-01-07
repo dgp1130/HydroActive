@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const DisposedEffect = component(($) => {
+const DisposedEffect = component('disposed-effect', ($) => {
   const [ count, setCount ] = $.live('span', Number);
 
   $.effect(() => {
@@ -15,8 +15,6 @@ const DisposedEffect = component(($) => {
     return () => { delete window.counter; };
   });
 });
-
-customElements.define('disposed-effect', DisposedEffect);
 
 declare global {
   interface HTMLElementTagNameMap {

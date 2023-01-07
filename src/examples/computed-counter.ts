@@ -1,6 +1,6 @@
 import { component } from 'hydroactive';
 
-const ComputedCounter = component(($) => {
+const ComputedCounter = component('computed-counter', ($) => {
   const [ count, setCount ] = $.live('#count', Number);
 
   $.listen($.query('#decrement'), 'click', () => { setCount(count() - 1); });
@@ -9,8 +9,6 @@ const ComputedCounter = component(($) => {
   // Bind a computed signal.
   $.bind('#parity', () => count() % 2 === 0 ? 'even' : 'odd');
 });
-
-customElements.define('computed-counter', ComputedCounter);
 
 declare global {
   interface HTMLElementTagNameMap {
