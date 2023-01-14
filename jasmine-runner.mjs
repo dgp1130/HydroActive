@@ -6,75 +6,72 @@
 
 import { getConfig, sessionStarted, sessionFinished, sessionFailed } from '@web/test-runner-core/browser/session.js';
 
-async function run(entryPoint, testFramework) {
-  const jasmine = jasmineRequire.core(window.jasmineRequire);
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = testFramework?.config?.timeout ?? jasmine.DEFAULT_TIMEOUT_INTERVAL;
-  const global = jasmine.getGlobal();
-  global.jasmine = jasmine;
-  const env = jasmine.getEnv();
-  Object.assign(window, jasmineRequire.interface(jasmine, env));
-  window.onload = function () {};
+const jasmine = jasmineRequire.core(window.jasmineRequire);
+const global = jasmine.getGlobal();
+global.jasmine = jasmine;
+const env = jasmine.getEnv();
+Object.assign(window, jasmineRequire.interface(jasmine, env));
+window.onload = function () {};
 
-  const failedSpecs = [];
-  const allSpecs = [];
-  const failedImports = [];
+const failedSpecs = [];
+const allSpecs = [];
+const failedImports = [];
 
-  env.addReporter({
-    jasmineStarted: () => {},
-    suiteStarted: () => {},
-    specStarted: () => {},
-    suiteDone: () => {},
-    specDone: result => {
-      [...result.passedExpectations, ...result.failedExpectations].forEach(e => {
-        allSpecs.push({
+env.addReporter({
+  jasmineStarted: () => {},
+  suiteStarted: () => {},
+  specStarted: () => {},
+  suiteDone: () => {},
+  specDone: result => {
+    [...result.passedExpectations, ...result.failedExpectations].forEach(e => {
+      allSpecs.push({
+        name: e.description,
+        passed: e.passed,
+      });
+    });
+
+    if (result.status !== 'passed' || result.status !== 'incomplete') {
+      result.failedExpectations.forEach(e => {
+        const message = result.description + ': ' + e.stack;
+        console.error(message);
+        failedSpecs.push({
+          message,
           name: e.description,
-          passed: e.passed,
+          stack: e.stack,
+          expected: e.expected,
+          actual: e.actual,
         });
       });
+    }
+  },
+  jasmineDone: result => {
+    console.log(`Tests ${result.overallStatus}`);
+    sessionFinished({
+      passed: result.overallStatus === 'passed',
+      errors: [...failedSpecs, ...failedImports],
+      testResults: {
+        name: '',
+        suites: [],
+        tests: allSpecs,
+      },
+    });
+  },
+});
 
-      if (result.status !== 'passed' || result.status !== 'incomplete') {
-        result.failedExpectations.forEach(e => {
-          const message = result.description + ': ' + e.stack;
-          console.error(message);
-          failedSpecs.push({
-            message,
-            name: e.description,
-            stack: e.stack,
-            expected: e.expected,
-            actual: e.actual,
-          });
-        });
-      }
-    },
-    jasmineDone: result => {
-      console.log(`Tests ${result.overallStatus}`);
-      sessionFinished({
-        passed: result.overallStatus === 'passed',
-        errors: [...failedSpecs, ...failedImports],
-        testResults: {
-          name: '',
-          suites: [],
-          tests: allSpecs,
-        },
-      });
-    },
-  });
+sessionStarted();
+const { testFile: htmlFile, testFrameworkConfig } = await getConfig();
+const config = { defaultTimeoutInterval: 60000, ...(testFrameworkConfig ?? {}) };
+const testFile = htmlFile.replace(/\.html(?=\?|$)/, '.js');
 
-  sessionStarted();
-  const { testFile, testFrameworkConfig } = await getConfig();
-  const config = { defaultTimeoutInterval: 60000, ...(testFrameworkConfig ?? {}) };
+jasmine.DEFAULT_TIMEOUT_INTERVAL = config.defaultTimeoutInterval;
 
-  jasmine.DEFAULT_TIMEOUT_INTERVAL = config.defaultTimeoutInterval;
+await import(testFile).catch(error => {
+  failedImports.push({ file: testFile, error: { message: error.message, stack: error.stack } });
+});
 
-  await import(entryPoint).catch(error => {
-    failedImports.push({ file: testFile, error: { message: error.message, stack: error.stack } });
-  });
-
-  try {
-    env.execute();
-  } catch (error) {
-    console.error(error);
-    sessionFailed(error);
-    return;
-  }
+try {
+  env.execute();
+} catch (error) {
+  console.error(error);
+  sessionFailed(error);
 }
