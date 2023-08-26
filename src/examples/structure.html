@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>HydroActive Structure</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/index.js",
+                    "hydroactive/": "/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Structure Examples</h1>
+
+        <header>
+            <a href="/">Home</a>
+        </header>
+
+        <show-hide>
+            <template shadowroot="open">
+                <h2>Show / hide.</h2>
+                <button>Toggle content</button>
+                <div id="label">Hello, World!</div>
+                <script src="/examples/show-hide.js" type="module"></script>
+            </template>
+        </show-hide>
+    </body>
+</html>
