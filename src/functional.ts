@@ -258,6 +258,10 @@ function proxyProps(host: HTMLElement, elementState: ElementInternalState): {} {
 }
 
 type SignalsOf<Props extends {}> = { [Key in keyof Props]-?: Accessor<Props[Key]> };
+type QueryOrElement<T extends string | Element> = T extends string
+    ? QueriedElement<T>
+    : T;
+
 class Component<
   Host extends HTMLElement = HTMLElement,
   Props extends {} = {},
@@ -367,14 +371,31 @@ class Component<
   }
 
   // TODO: How should `$.live('.foo', HTMLSpanElement)` work?
-  public live<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
-    selector: Selector,
-    type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
+  public live<
+    SelectorOrElement extends string | Element,
+    Result = QueryOrElement<SelectorOrElement>,
+    Source extends HydrateSource = ElementSource,
+  >(
+    selectorOrElement: SelectorOrElement,
+    type: HydrateConverter<Source, Result, QueryOrElement<SelectorOrElement>>,
     source: Source = element as Source,
   ): Signal<Result> {
-    const initialValue = this.read(selector, type, source);
+    // Read the current content from the actual DOM element.
+    const initialValue = selectorOrElement instanceof Element
+        ? readEl(
+          selectorOrElement,
+          type as HydrateConverter<Source, Result, Element>,
+          source,
+        )
+        : this.read(
+          selectorOrElement,
+          type as HydrateConverter<Source, Result, Element>,
+          source,
+        );
+
+    // Create a two-way live binding to the content.
     const [ accessor, setter ] = createSignal(initialValue);
-    this.bind(selector, accessor, source);
+    this.bind(selectorOrElement, accessor, source);
 
     return [ accessor, setter ];
   }
@@ -387,10 +408,7 @@ class Component<
     source: Source = element as Source,
   ): Result {
     const el = queryAsserted(this.host, selector);
-    const content = getSource(el, source);
-    const coerce = getCoercer(type);
-    const value = coerce(content);
-    return value;
+    return readEl(el, type, source);
   }
 
   // TODO: Consider adding `$.hydrateChildren()`.
@@ -409,11 +427,13 @@ class Component<
 
   // TODO: Require `T` be a stringifiable primitive.
   public bind<T>(
-    selector: string,
+    selectorOrElement: string | Element,
     signal: Accessor<T> | Promise<Accessor<T>>,
     source: HydrateSource = element,
   ): void {
-    const el = this.query(selector);
+    const el = selectorOrElement instanceof Element
+        ? selectorOrElement
+        : this.query(selectorOrElement);
     const setDom = getSetter(source);
 
     const bindValue = (accessor: Accessor<T>): void => {
@@ -514,6 +534,7 @@ class Component<
     this.host.dispatchEvent(event);
   }
 
+  // TODO: Could this optimize to `$.listen($.host)` with a filter? Maybe if `target` is a selector?
   public listen(target: EventTarget, event: string, handler: (evt: Event) => void): void {
     this.lifecycle(() => {
       target.addEventListener(event, handler);
@@ -544,6 +565,21 @@ function queryAllAsserted<Selector extends string>(host: Element, selector: Sele
 type OneOrMore<T> = [ T, ...T[] ];
 
 type HydrateSetter<T> = (el: Element, value: T) => void;
+
+function readEl<
+  El extends Element,
+  Result,
+  Source extends HydrateSource = ElementSource,
+>(
+  el: El,
+  type: HydrateConverter<Source, Result, El>,
+  source: Source = element as Source,
+): Result {
+  const content = getSource(el, source);
+  const coerce = getCoercer(type);
+  const value = coerce(content);
+  return value;
+}
 
 function getSetter(source: HydrateSource): HydrateSetter<unknown> {
   switch (source.kind) {
