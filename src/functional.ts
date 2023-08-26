@@ -138,7 +138,7 @@ abstract class HydroActiveComponent<Props extends {}, Def extends ComponentDefin
 /**
  * Hydrates the given element by assigning all the given properties and then removing the
  * `defer-hydration` attribute.
- * 
+ *
  * Asserts that `defer-hydration` is present prior to removing it to ensure the element was
  * not previously hydrated.
  * Also asserts that the given element is actually an instance of the provided class.
@@ -243,7 +243,7 @@ function proxyProps(host: HTMLElement, elementState: ElementInternalState): {} {
     get: (_target: {}, prop: string, _receiver: unknown): unknown => {
       const signal = elementState.propSignals.get(prop);
       if (signal) return signal;
-      
+
       const [ value, setValue ] = createSignal((host as any)[prop]);
       elementState.propSignals.set(prop, value);
 
@@ -286,12 +286,12 @@ class Component<
    * Schedules the lifecycle function to be executed for this component. The initializer
    * callback is invoked when the component is hydrated / connected to the DOM. It may
    * optionally return a `Disposer` which is invoked when the component is disconnected.
-   * 
+   *
    * Use this function to run operations at hydration but which require a cleanup
    * operation when the component is not in use. Note that the initializer can be called
    * multiple times if the component is disconnected from and then reconnected to the
    * document.
-   * 
+   *
    * In particular, this function does *not* have any knowledge of signals and will not
    * rerun when they change. If that is what you want, use {@link effect}.
    */
@@ -312,7 +312,7 @@ class Component<
    * Schedules an effect to be run on the component. An effect is a side-effectful
    * function which uses signals. It run immediately during hydration, and then again
    * any time one of its signals have changed.
-   * 
+   *
    * Use this function to run reactive operations which should rerun when any used
    * signal changes.
    */
@@ -330,7 +330,7 @@ class Component<
    *
    * ```typescript
    * const [ value, setValue ] = createSignal(0);
-   * 
+   *
    * $.asyncEffect(value, async (value, signal: AbortSignal) => {
    *   // Do something asynchronous with `value`.
    * });
@@ -418,7 +418,7 @@ class Component<
 
     const bindValue = (accessor: Accessor<T>): void => {
       this.effect(() => {
-        setDom(el, safeToString(accessor()));
+        setDom(el, accessor());
       });
     };
 
@@ -442,7 +442,7 @@ class Component<
    * Returns a signal accessor which updates whenever the given context changes.
    * Requires an initial value, but also accepts a timeout which will emit an error if
    * a context is not received in time.
-   * 
+   *
    * See {@link waitContext} for an asynchronous version which does *not* require an
    * initial value.
    */
@@ -464,7 +464,7 @@ class Component<
    * provided *after* initial hydration while still treating them as signals. Signals
    * *require* an initial value so they are never in an invalid state. This function
    * avoids creating the signal until a context value is available.
-   * 
+   *
    * See {@link useContext} for a synchronous version which requires an initial value.
    */
   public async waitContext<T>(ctx: Context<T>, timeout: Timeout = 'task'):
@@ -543,12 +543,29 @@ function queryAllAsserted<Selector extends string>(host: Element, selector: Sele
 
 type OneOrMore<T> = [ T, ...T[] ];
 
-type HydrateSetter = (el: Element, content: string) => void;
+type HydrateSetter<T> = (el: Element, value: T) => void;
 
-function getSetter(source: HydrateSource): HydrateSetter {
+function getSetter(source: HydrateSource): HydrateSetter<unknown> {
   switch (source.kind) {
-    case 'element': return (el, content) => { el.textContent = content; };
-    case 'attr': return (el, content) => { el.setAttribute(source.name, content); };
+    case 'element': return (el, content) => {
+      // TODO: Type error? Just `.toString()`?
+      if (typeof content === 'boolean') {
+        throw new Error('Cannot set element text to a boolean.');
+      }
+
+      el.textContent = safeToString(content);
+    };
+    case 'attr': return (el, content) => {
+      if (typeof content === 'boolean') {
+        if (content) {
+          el.setAttribute(source.name, '');
+        } else {
+          el.removeAttribute(source.name);
+        }
+      } else {
+        el.setAttribute(source.name, safeToString(content));
+      }
+    };
     default: assertNever(source);
   }
 }
