@@ -52,7 +52,7 @@ integrations, all they need to do is render something like:
 
 ```html
 <my-counter>
-    <template shadowroot="open">
+    <template shadowrootmode="open">
         <div>The current count is <span>5</span>.</div>
         <button>Increment</button>
     </template>

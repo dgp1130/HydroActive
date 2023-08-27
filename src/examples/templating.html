@@ -21,7 +21,7 @@
         </header>
 
         <my-spawner>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Spawned counter</h2>
 
                 <button>Spawn</button>
@@ -30,7 +30,7 @@
                 <!-- Render inactive components in a <template /> to be cloned later. -->
                 <template>
                     <spawn-counter>
-                        <template shadowroot="open">
+                        <template shadowrootmode="open">
                             <div>The current count is: <span>5</span>.</div>
                             <button id="decrement">-</button>
                             <button id="increment">+</button>
@@ -43,7 +43,7 @@
         </my-spawner>
 
         <my-initializer>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Counter with props</h2>
 
                 <form>
@@ -56,7 +56,7 @@
                      `<template />` element. -->
                 <template>
                     <required-props-counter>
-                        <template shadowroot="open">
+                        <template shadowrootmode="open">
                             <!-- Leave the count blank at render time. -->
                             <div>The count is: <span></span>.</div>
                         </template>

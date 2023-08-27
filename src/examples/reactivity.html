@@ -23,7 +23,7 @@
         <!-- Pre-rendered HTML defines the UI. -->
         <live-counter>
             <!-- Declarative shadow DOM for improved encapsulation. -->
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Live updates.</h2>
                 <div>The count is: <span>5</span>.</div>
                 <script src="/examples/live-counter.js" type="module"></script>
@@ -31,7 +31,7 @@
         </live-counter>
 
         <bind-counter>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Bound value.</h2>
                 <div>The count is: <span>10</span>.</div>
                 <script src="/examples/bind-counter.js" type="module"></script>
@@ -39,7 +39,7 @@
         </bind-counter>
 
         <listen-counter>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Listen counter</h2>
                 <div>The count is: <span>15</span>.</div>
                 <button id="decrement">-</button>

@@ -21,10 +21,10 @@
         </header>
 
         <outer-counter-class>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Nested counter</h2>
                 <inner-counter-class>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>5</span>.</div>
                     </template>
                 </inner-counter-class>
@@ -35,10 +35,10 @@
         </outer-counter-class>
 
         <state-host-counter-class>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>State host counter</h2>
                 <counter-display-class>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>10</span>.</div>
                     </template>
                 </counter-display-class>
@@ -50,27 +50,27 @@
 
         <!-- No actual JS implementation, DSD just works! -->
         <higher-order-class>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Higher-order component</h2>
                 <slot></slot>
             </template>
-            
+
             <lower-order-class>
-                <template shadowroot="open">
+                <template shadowrootmode="open">
                     <div>Hello from the lower-order component!</div>
                 </template>
             </lower-order-class>
         </higher-order-class>
 
         <event-handler-class>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Event handler</h2>
                 <div>The count is: <span>15</span>.</div>
                 <slot></slot>
             </template>
 
             <event-dispatcher-class>
-                <template shadowroot="open">
+                <template shadowrootmode="open">
                     <button id="decrement">-</button>
                     <button id="increment">+</button>
                 </template>
@@ -80,7 +80,7 @@
         </event-handler-class>
 
         <count-provider-class count="20">
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Context counter</h2>
                 <slot></slot>
                 <button id="decrement">-</button>
@@ -89,7 +89,7 @@
 
             <div>
                 <count-context-display-class>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>-</span></div>
                     </template>
                 </count-context-display-class>

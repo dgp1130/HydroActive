@@ -6,21 +6,21 @@
     </head>
     <body>
         <counter-display id="hydrates" defer-hydration>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <div>The count is: <span>5</span>.</div>
             </template>
         </counter-display>
 
         <counter-display id="prop" defer-hydration>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <div>The count is: <span>5</span>.</div>
             </template>
         </counter-display>
 
         <state-host-counter id="increments" defer-hydration>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <counter-display>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>5</span>.</div>
                     </template>
                 </counter-display>
@@ -31,9 +31,9 @@
         </state-host-counter>
 
         <state-host-counter id="decrements" defer-hydration>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <counter-display>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>5</span>.</div>
                     </template>
                 </counter-display>

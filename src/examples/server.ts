@@ -22,7 +22,7 @@ interface Toot {
 function renderInfiniteTootList(initialToots: Toot[]): string {
     return `
         <infinite-toot-list>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <style>
                     :host {
                         display: block;
@@ -58,7 +58,7 @@ function renderInfiniteTootList(initialToots: Toot[]): string {
 function renderToot({ id, content }: Toot): string {
     return `
 <toot-view toot-id="${id}">
-    <template shadowroot="open">
+    <template shadowrootmode="open">
         <style>span { color: red; }</style>
 
         <span>${content}</span>
@@ -165,7 +165,7 @@ function renderImportMap(): string {
 function renderEditToot(): string {
     return `
 <editable-toot>
-    <template shadowroot="open">
+    <template shadowrootmode="open">
         <form>
             <input type="text" />
             <button type="submit">Save</button>

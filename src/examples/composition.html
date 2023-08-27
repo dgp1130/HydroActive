@@ -22,12 +22,12 @@
 
         <!-- Outer component holds the buttons and event listeners. -->
         <outer-counter>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Nested counter</h2>
 
                 <!-- Inner component holds the current count. -->
                 <inner-counter>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>5</span>.</div>
                     </template>
                 </inner-counter>
@@ -40,12 +40,12 @@
 
         <!-- Outer component wants the count, but can't get it from under inner component. -->
         <state-host-counter>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Props counter</h2>
 
                 <!-- Count is hidden in the inner component's shadow DOM. -->
                 <counter-display>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>10</span>.</div>
                     </template>
                 </counter-display>
@@ -59,15 +59,15 @@
         <!-- No actual JS implementation, DSD just works! -->
         <higher-order>
             <!-- Declarative shadow DOM defines the internal structure. -->
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Higher-order component</h2>
                 <slot></slot> <!-- Light DOM elements are slotted in here. -->
                 <div>Hello from the higher-order component!</div>
             </template>
-            
+
             <!-- Light DOM provided by users of `higher-order`. -->
             <lower-order>
-                <template shadowroot="open">
+                <template shadowrootmode="open">
                     <div>Hello from the lower-order component!</div>
                 </template>
             </lower-order>
@@ -75,7 +75,7 @@
 
         <!-- Receives and handles events from children. -->
         <event-handler>
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Event handler</h2>
                 <div>The count is: <span>15</span>.</div>
                 <slot></slot>
@@ -83,7 +83,7 @@
 
             <!-- Sends events about user interactions. -->
             <event-dispatcher>
-                <template shadowroot="open">
+                <template shadowrootmode="open">
                     <button id="decrement">-</button>
                     <button id="increment">+</button>
                 </template>
@@ -94,7 +94,7 @@
 
         <!-- Provides the current count to all descendants via context. -->
         <context-provider count="20">
-            <template shadowroot="open">
+            <template shadowrootmode="open">
                 <h2>Context counter</h2>
                 <slot></slot>
                 <button id="decrement">-</button>
@@ -105,7 +105,7 @@
             <div>
                 <!-- Receives the current count and displays it to users. -->
                 <context-receiver>
-                    <template shadowroot="open">
+                    <template shadowrootmode="open">
                         <div>The count is: <span>-</span></div>
                     </template>
                 </context-receiver>
