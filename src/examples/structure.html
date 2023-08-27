@@ -49,5 +49,77 @@
                 <script src="/examples/reactive-list.js" type="module"></script>
             </template>
         </reactive-list>
+
+        <sortable-table>
+            <template shadowroot="open">
+                <h2>Sortable user table.</h2>
+
+                <select>
+                    <option value="id" selected>ID</option>
+                    <option value="first-name">First name</option>
+                    <option value="last-name">Last name</option>
+                </select>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-key="id">ID</th>
+                            <th data-key="first-name">First name</th>
+                            <th data-key="last-name">Last name</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Tim</td>
+                            <td>Berners-Lee</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Alan</td>
+                            <td>Turing</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Grace</td>
+                            <td>Hopper</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <script src="/examples/sortable-table.js" type="module"></script>
+            </template>
+        </sortable-table>
+
+        <!-- A second sortable table with completely different schema. -->
+        <sortable-table>
+            <template shadowroot="open">
+                <h2>Sortable food table.</h2>
+
+                <select>
+                    <option value="name" selected>Name</option>
+                    <option value="favorite-food">Favorite food</option>
+                </select>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-key="name">Name</th>
+                            <th data-key="favorite-food">Favorite food</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Michelangelo</td>
+                            <td>Pizza</td>
+                        </tr>
+                        <tr>
+                            <td>Ollie</td>
+                            <td>Kibbles</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <script src="/examples/sortable-table.js" type="module"></script>
+            </template>
+        </sortable-table>
     </body>
 </html>
