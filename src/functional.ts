@@ -267,23 +267,40 @@ class Component<
   Props extends {} = {},
 > {
   public readonly host: Host & Partial<Props>;
+  private queryScope?: Element;
 
   // `$.props` always includes `undefined`, because the component can be created outside of
   // any HydroActive APIs without any required parameters set.
   public readonly props: SignalsOf<Partial<Props>>;
 
-  private constructor({ el, props }: { el: Host & Partial<Props>, props: SignalsOf<Props> }) {
-    this.host = el;
+  private constructor({ host, props, queryScope }: {
+    host: Host & Partial<Props>,
+    props: SignalsOf<Props>,
+    queryScope?: Element,
+  }) {
+    this.host = host;
     this.props = props;
+    this.queryScope = queryScope;
+
     componentInternalStateMap.set(this, { initializers: [] });
   }
 
   public static from<
     Host extends HTMLElement,
     Props extends Record<string, Accessor<unknown>>,
-  >(el: Host & Partial<Props>): Component<Host> {
-    const props = proxyProps(el, elementInternalStateMap.get(el)!) as SignalsOf<Props>;
-    return new Component({ el, props });
+  >(host: Host & Partial<Props>): Component<Host> {
+    const props = proxyProps(host, elementInternalStateMap.get(host)!) as SignalsOf<Props>;
+    return new Component({ host, props });
+  }
+
+  public scope(selectorOrElement: string | Element): Component<Host, Partial<Props>> {
+    return new Component<Host, Partial<Props>>({
+      host: this.host,
+      props: this.props,
+      queryScope: selectorOrElement instanceof Element
+          ? selectorOrElement
+          : this.query(selectorOrElement),
+    });
   }
 
   /**
@@ -407,8 +424,17 @@ class Component<
     type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
     source: Source = element as Source,
   ): Result {
-    const el = queryAsserted(this.host, selector);
+    const el = queryAsserted(this.host, this.queryScope, selector);
     return readEl(el, type, source);
+  }
+
+  public readAll<Selector extends string, Result = QueriedElement<Selector>, Source extends HydrateSource = ElementSource>(
+    selector: Selector,
+    type: HydrateConverter<Source, Result, QueriedElement<Selector>>,
+    source: Source = element as Source,
+  ): Result[] {
+    const els = queryAllAsserted(this.host, this.queryScope, selector);
+    return els.map((el) => readEl(el, type, source));
   }
 
   // TODO: Consider adding `$.hydrateChildren()`.
@@ -420,7 +446,7 @@ class Component<
         ? [ props?: GetProps<Clazz> ]
         : [ props: GetProps<Clazz> ]
   ): InstanceType<Clazz> {
-    const el = queryAsserted(this.host, selector);
+    const el = queryAsserted(this.host, this.queryScope, selector);
     hydrate(el, clazz, props);
     return el;
   }
@@ -497,7 +523,7 @@ class Component<
 
   public query<Selector extends string>(selector: Selector):
       QueriedElement<Selector, HTMLElement> {
-    const el = queryAsserted(this.host, selector);
+    const el = queryAsserted(this.host, this.queryScope, selector);
 
     // Assert the result does not contain a custom element, because it may not be hydrated.
     // Ignore this check for the host element because that's we're not worried about hydration
@@ -513,7 +539,7 @@ class Component<
 
   public queryAll<Selector extends string>(selector: Selector):
       OneOrMore<QueriedElement<Selector, HTMLElement>> {
-    const els = queryAllAsserted(this.host, selector);
+    const els = queryAllAsserted(this.host, this.queryScope, selector);
 
     // Skip custom element check for the host element.
     if (selector === ':host') return els;
@@ -543,20 +569,34 @@ class Component<
   }
 }
 
-function queryAsserted<Selector extends string>(host: Element, selector: Selector):
-    QueriedElement<Selector, HTMLElement> {
-  const [ el, ...rest ] = queryAllAsserted(host, selector);
+type QueryScope = Element | ShadowRoot;
+
+function scope(host: Element, queryScope?: Element): QueryScope {
+  if (queryScope) return queryScope;
+
+  return host.shadowRoot!;
+}
+
+function queryAsserted<Selector extends string>(
+  host: Element,
+  scope: QueryScope | undefined,
+  selector: Selector,
+): QueriedElement<Selector, HTMLElement> {
+  const [ el, ...rest ] = queryAllAsserted(host, scope, selector);
 
   if (rest.length !== 0) throw new Error(`Found multiple instances of selector \`${selector}\` in the shadow DOM, only one was expected.`);
 
   return el;
 }
 
-function queryAllAsserted<Selector extends string>(host: Element, selector: Selector):
-    OneOrMore<QueriedElement<Selector, HTMLElement>> {
+function queryAllAsserted<Selector extends string>(
+  host: Element,
+  scope: QueryScope | undefined,
+  selector: Selector,
+): OneOrMore<QueriedElement<Selector, HTMLElement>> {
   if (selector === ':host') return [ host as QueriedElement<Selector, HTMLElement> ];
 
-  const els = Array.from(host.shadowRoot!.querySelectorAll(selector));
+  const els = Array.from((scope ?? host.shadowRoot!).querySelectorAll(selector));
   if (els.length === 0) throw new Error(`Selector \`${selector}\` not in shadow DOM.`);
 
   return els as OneOrMore<QueriedElement<Selector, HTMLElement>>;
