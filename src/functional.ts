@@ -34,7 +34,10 @@ const componentInternalStateMap = new WeakMap<Component, ComponentInternalState>
 export type ComponentDef<Props extends {} = {}, Element extends HTMLElement = HTMLElement> =
   Component<Element, Props>;
 
-export function component<Props extends {}, Def extends ComponentDefinition>(
+export function component<
+  Props extends {} = Record<string | number | symbol, never>,
+  Def extends ComponentDefinition = {},
+>(
   tagName: `${string}-${string}`,
   hydrate: ($: ComponentDef<Props, HTMLElement>) => Def | void,
 ): Class<HTMLElement & Def & Partial<Props>> & InternalProps<Props> {
@@ -146,7 +149,7 @@ abstract class HydroActiveComponent<Props extends {}, Def extends ComponentDefin
 export function hydrate<Clazz extends Class<Element>>(el: Element, clazz: Clazz,
   // `props` can be omitted if the element does not have any required properties.
   ...[ props = {} as any ]: (
-    {} extends GetProps<Clazz>
+    IsEmptyObj<GetProps<Clazz>> extends true
       ? [ props?: GetProps<Clazz> ]
       : [ props: GetProps<Clazz> ]
   )
@@ -227,7 +230,7 @@ export function hydrate<Clazz extends Class<Element>>(el: Element, clazz: Clazz,
 
 // Store props types on the component class so we can use them for type inference.
 type InternalProps<Props extends {}> = { __internalHydroActivePropsType_doNotUseOrElse__?: Props };
-type GetProps<Clazz extends Class<Element> & InternalProps<{}>> =
+type GetProps<Clazz extends Class<Element> & InternalProps<Record<string, never>>> =
   Clazz extends InternalProps<infer Props> ? Props : never;
 
 type Accessed<Signal> = Signal extends Accessor<infer T> ? T : never;
@@ -442,12 +445,12 @@ class Component<
     selector: string,
     clazz: Clazz,
     // `props` is optional if the class does not have any required props.
-    ...[ props = {} as any ]: {} extends GetProps<Clazz>
+    ...rest: IsEmptyObj<GetProps<Clazz>> extends true
         ? [ props?: GetProps<Clazz> ]
         : [ props: GetProps<Clazz> ]
   ): InstanceType<Clazz> {
     const el = queryAsserted(this.host, this.queryScope, selector);
-    hydrate(el, clazz, props);
+    hydrate(el, clazz, ...rest);
     return el;
   }
 
@@ -764,6 +767,13 @@ function getCoercer<Source extends HydrateSource, Result, El extends Element>(
     return type as Coercer<Result>;
   }
 }
+
+/** Returns whether or not the given type is exactly an empty object `{}`. */
+type IsEmptyObj<T> = T extends {}
+  ? {} extends T
+    ? true
+    : false
+  : false;
 
 type Class<T> = new (...args: unknown[]) => T;
 function classExtends(child: unknown, parent: Class<unknown>): child is Class<unknown> {

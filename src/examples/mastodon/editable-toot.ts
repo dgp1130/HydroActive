@@ -2,7 +2,12 @@ import { component, ComponentDef } from 'hydroactive';
 import { Accessor, createSignal } from 'hydroactive/signal.js';
 import { parseDomFragment } from '../html-fragments/dom.js';
 
-export const EditableToot = component('editable-toot', ($: ComponentDef<{ tootId: number, content: string }>) => {
+interface Props {
+  tootId: number;
+  content: string;
+}
+
+export const EditableToot = component('editable-toot', ($: ComponentDef<Props>) => {
   const tootId = $.host.tootId!;
   const content = useInput($, 'input', $.host.content!);
 
