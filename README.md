@@ -1,7 +1,7 @@
 # HydroActive
 
-HydroActive is a experimental component library for hydrating web components and adding
-interactivity to pre-rendered HTML.
+HydroActive is a experimental library for hydrating web components and adding
+"sprinkles of reactivity" to pre-rendered HTML.
 
 Check out the [YouTube video](https://www.youtube.com/watch?v=zL0TzFY6aj0) for an in-depth
 discussion and demo of HydroActive's features.
