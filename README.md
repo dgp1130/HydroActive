@@ -61,16 +61,17 @@ integrations, all they need to do is render something like:
 
 Any server can do that, exactly how it does so is unimportant to HydroActive. From
 here, HydroActive makes it easy to load from this component and make it interactable.
-It does this by providing a number of useful decorators and lifecycle hooks. One
-example would be:
+It does this by providing an API to define custom elements useful lifecycle and
+convenient DOM APIs. One example would be:
 
 ```typescript
 import { component } from 'hydroactive';
 
-// `component()` creates a web component based on the given hydrate function. The
+// `component()` creates a web component class based on the given hydrate function. The
 // callback is invoked on hydration and provides a `$` variable with additional
-// functionality to provide interactivity to the pre-rendered component.
-const MyCounter = component(($) => {
+// functionality to provide interactivity to the pre-rendered component. Automatically
+// calls `customElements.define` under the hood.
+const MyCounter = component('my-counter', ($) => {
   // `$.live()` automatically hydrates this property by doing
   // `this.shadowRoot!.querySelector('span')!.textContent!` and parsing the result as a
   // `Number`. Returns a `Signal` to provide reactive reads and writes.
@@ -88,6 +89,13 @@ const MyCounter = component(($) => {
     setCount(count() + 1);
   });
 });
+
+// For TypeScript, don't forget to type `my-counter` tags as an instance of the class.
+declare global {
+    interface HTMLElementTagNameMap {
+        'my-counter': InstanceType<typeof MyCounter>;
+    }
+}
 ```
 
 See [examples](/src/examples/) for more cool features. The HTML pages contain hard-coded,
