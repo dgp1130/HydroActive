@@ -35,9 +35,22 @@ abstract class HydroActiveComponent extends HTMLElement {
     this.#requestHydration();
   }
 
+  // Trigger hydration when the `defer-hydration` attribute is removed.
+  static get observedAttributes(): string[] { return ['defer-hydration']; }
+  attributeChangedCallback(
+    name: string,
+    _oldValue: string | null,
+    newValue: string | null,
+  ): void {
+    if (name === 'defer-hydration' && newValue === null) {
+      this.#requestHydration();
+    }
+  }
+
   /** Hydrates the component if not already hydrated. Otherwise does nothing. */
   #requestHydration(): void {
     if (this.#hydrated) return;
+    if (this.hasAttribute('defer-hydration')) return;
 
     this.#hydrated = true;
     this.hydrate();

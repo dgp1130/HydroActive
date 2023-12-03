@@ -77,5 +77,71 @@ describe('component', () => {
         expect(Comp.name).toBe('FooBar');
       }
     });
+
+    describe('`defer-hydration`', () => {
+      it('defers hydration', testCase('deferred', (el) => {
+        const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+        component('deferred-component', hydrate);
+
+        // Should not implicitly hydrate due to `defer-hydration`.
+        expect(hydrate).not.toHaveBeenCalled();
+
+        // Should synchronously hydrate when `defer-hydration` is removed.
+        el.removeAttribute('defer-hydration');
+        expect(hydrate).toHaveBeenCalledOnceWith();
+      }));
+
+      it('does not hydrate when imperatively created', () => {
+        const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+        component('imperative-creation', hydrate);
+
+        document.createElement('imperative-creation');
+        expect(hydrate).not.toHaveBeenCalled();
+      });
+
+      it('does not hydrate when a component is upgraded while disconnected', () => {
+        const el = document.createElement('disconnected-upgrade');
+
+        const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+        component('disconnected-upgrade', hydrate);
+        expect(hydrate).not.toHaveBeenCalled();
+
+        customElements.upgrade(el);
+        expect(hydrate).not.toHaveBeenCalled();
+      });
+
+      it('hydrates when `defer-hydration` is removed while disconnected from the DOM', testCase('disconnected-hydration', (el) => {
+        const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+        component('disconnected-hydration', hydrate);
+        expect(hydrate).not.toHaveBeenCalled();
+
+        el.remove();
+        expect(hydrate).not.toHaveBeenCalled();
+
+        // Removing `defer-hydration` should trigger hydration even though the
+        // element is disconnected.
+        el.removeAttribute('defer-hydration');
+        expect(hydrate).toHaveBeenCalledOnceWith();
+        hydrate.calls.reset();
+
+        // Should not re-hydrate when connected to the DOM.
+        document.body.appendChild(el);
+        expect(hydrate).not.toHaveBeenCalled();
+      }));
+
+      it('does not hydrate when imperatively connected with `defer-hydration`', () => {
+        const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+        component('imperative-connect', hydrate);
+
+        const el = document.createElement('imperative-connect');
+        el.setAttribute('defer-hydration', '');
+        expect(hydrate).not.toHaveBeenCalled();
+
+        // Since the element has `defer-hydration` set, this should *not*
+        // trigger hydration.
+        document.body.appendChild(el);
+        expect(hydrate).not.toHaveBeenCalled();
+      });
+    });
   });
 });
