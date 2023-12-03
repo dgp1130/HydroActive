@@ -11,7 +11,12 @@ export function component(tagName: string, hydrate: HydrateLifecycle):
     Class<HTMLElement> {
   const Component = class extends HydroActiveComponent {
     override hydrate = hydrate.bind(undefined /* strip `this` value */);
-  }
+  };
+
+  // Set `name` for improved debug-ability.
+  Object.defineProperty(Component, 'name', {
+    value: skewerCaseToPascalCase(tagName),
+  });
 
   customElements.define(tagName, Component);
 
@@ -44,3 +49,9 @@ abstract class HydroActiveComponent extends HTMLElement {
  * instance type.
  */
 type Class<Instance> = { new(): Instance };
+
+function skewerCaseToPascalCase(skewerCase: string): string {
+  return skewerCase.split('-')
+      .map((word) => `${word[0]?.toUpperCase() ?? ''}${word.slice(1)}`)
+      .join('');
+}

@@ -60,5 +60,22 @@ describe('component', () => {
 
       expect(self).toBeUndefined();
     });
+
+    it('sets the class name', () => {
+      {
+        const Comp = component('foo-bar-baz', () => {});
+        expect(Comp.name).toBe('FooBarBaz');
+      }
+
+      {
+        const Comp = component('foo-bar-', () => {});
+        expect(Comp.name).toBe('FooBar');
+      }
+
+      {
+        const Comp = component('foo-----bar', () => {});
+        expect(Comp.name).toBe('FooBar');
+      }
+    });
   });
 });
