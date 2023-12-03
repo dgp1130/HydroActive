@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+    - rewrite
+
+    # Run CI for the `ci` branch. This branch isn't special in any way, it just
+    # does not enforce linear history, so edits to the CI workflow can be tested
+    # there where commits can still be amended before they are immutably pushed
+    # to main.
+    - ci
+
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    # Checkout the repository.
+    - uses: actions/checkout@v3
+
+    # Install Node.js.
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+
+    # Install dependencies.
+    - name: Install
+      run: npm ci
+
+    # Run tests.
+    - name: Test
+      run: npm test
