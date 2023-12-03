@@ -1,1 +1,1 @@
-export * from './functional.js';
+export {};
