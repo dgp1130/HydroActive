@@ -20,6 +20,8 @@ ${fs.readFileSync('jasmine-runner.mjs', 'utf8')}
 const testFramework = {
   config: {
     defaultTimeoutInterval: 1_000,
+    failSpecWithNoExpectations: true,
+    autoCleanClosures: true,
   },
 };
 
