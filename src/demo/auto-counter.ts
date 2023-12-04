@@ -1,12 +1,18 @@
 import { component } from 'hydroactive';
 
 /** Automatically increments the count over time. */
-export const AutoCounter = component('auto-counter', (host) => {
-  const label = host.query('span')!;
+export const AutoCounter = component('auto-counter', (comp) => {
+  const label = comp.host.query('span')!;
   let count = Number(label.text);
 
-  setInterval(() => {
-    count++;
-    label.native.textContent = count.toString();
-  }, 1_000);
+  comp.connected(() => {
+    const id = setInterval(() => {
+      count++;
+      label.native.textContent = count.toString();
+    }, 1_000);
+
+    return () => {
+      clearInterval(id);
+    };
+  });
 });

@@ -1,5 +1,7 @@
 import { component, HydrateLifecycle } from './component.js';
+import { ComponentRef } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
+import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 
 describe('component', () => {
@@ -52,21 +54,12 @@ describe('component', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
       component('host-component', hydrate);
 
-      const comp = document.createElement('host-component');
+      const comp =
+          document.createElement('host-component') as HydroActiveComponent;
       document.body.appendChild(comp);
 
-      expect(hydrate).toHaveBeenCalledOnceWith(ElementRef.from(comp));
-    });
-
-    it('invokes hydrate callback with an `ElementRef` typed to `HTMLElement`', () => {
-      // Type-only test, only needs to compile, not execute.
-      expect().nothing();
-      () => {
-        const Comp = component('host-type', (host) => {
-          // Host is assignable to an `ElementRef<HTMLElement>`.
-          const ref: ElementRef<HTMLElement> = host;
-        });
-      };
+      expect(hydrate).toHaveBeenCalledOnceWith(
+          ComponentRef._from(ElementRef.from(comp)));
     });
 
     it('sets the class name', () => {
