@@ -2,11 +2,15 @@
   "name": "hydroactive",
   "version": "0.0.5",
   "type": "module",
-  "main": "index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./signals.js": "./src/signals.js"
+  },
   "scripts": {
     "start": "npm run -s demo",
     "build": "npm run -s clean && npm run -s build-lib",
-    "build-lib": "tsc --project tsconfig.lib.json",
+    "build-lib": "tsc --project tsconfig.lib.json && npm run -s build-package",
+    "build-package": "cp package.json dist/",
     "build-tests": "npm run -s clean && npm run -s build-tests-ts && npm run -s build-tests-html",
     "build-tests-ts": "tsc -p tsconfig.test.json",
     "build-tests-html": "(cd src/ && find . -name '*.test.html' -exec cp --parents '{}' ../dist/ \\;)",

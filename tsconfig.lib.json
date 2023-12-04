@@ -5,6 +5,7 @@
   "include": ["src/**/*.ts"],
   "compilerOptions": {
     "composite": false,
+    "outDir": "dist/src/",
   },
   "exclude": [
     "src/**/*.test.ts",
