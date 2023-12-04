@@ -1,5 +1,6 @@
-import { testCase, useTestCases } from './testing/test-cases.js';
 import { component, HydrateLifecycle } from './component.js';
+import { ElementRef } from './element-ref.js';
+import { testCase, useTestCases } from './testing/test-cases.js';
 
 describe('component', () => {
   useTestCases();
@@ -15,7 +16,7 @@ describe('component', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
       component('already-rendered', hydrate);
 
-      expect(hydrate).toHaveBeenCalledOnceWith();
+      expect(hydrate).toHaveBeenCalledTimes(1);
     }));
 
     it('upgrades components rendered after definition', () => {
@@ -28,7 +29,7 @@ describe('component', () => {
       expect(hydrate).not.toHaveBeenCalled();
 
       document.body.appendChild(comp);
-      expect(hydrate).toHaveBeenCalledOnceWith();
+      expect(hydrate).toHaveBeenCalledTimes(1);
     });
 
     it('does not hydrate a second time when moved in the DOM', () => {
@@ -37,7 +38,7 @@ describe('component', () => {
 
       const comp = document.createElement('another-component');
       document.body.appendChild(comp);
-      expect(hydrate).toHaveBeenCalledOnceWith();
+      expect(hydrate).toHaveBeenCalledTimes(1);
       hydrate.calls.reset();
 
       comp.remove();
@@ -59,6 +60,27 @@ describe('component', () => {
       document.body.appendChild(comp);
 
       expect(self).toBeUndefined();
+    });
+
+    it('invokes hydrate callback with an `ElementRef` of the component host', () => {
+      const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+      component('host-component', hydrate);
+
+      const comp = document.createElement('host-component');
+      document.body.appendChild(comp);
+
+      expect(hydrate).toHaveBeenCalledOnceWith(ElementRef.from(comp));
+    });
+
+    it('invokes hydrate callback with an `ElementRef` typed to `HTMLElement`', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const Comp = component('host-type', (host) => {
+          // Host is assignable to an `ElementRef<HTMLElement>`.
+          const ref: ElementRef<HTMLElement> = host;
+        });
+      };
     });
 
     it('sets the class name', () => {
@@ -88,7 +110,7 @@ describe('component', () => {
 
         // Should synchronously hydrate when `defer-hydration` is removed.
         el.removeAttribute('defer-hydration');
-        expect(hydrate).toHaveBeenCalledOnceWith();
+        expect(hydrate).toHaveBeenCalledTimes(1);
       }));
 
       it('does not hydrate when imperatively created', () => {
@@ -121,7 +143,7 @@ describe('component', () => {
         // Removing `defer-hydration` should trigger hydration even though the
         // element is disconnected.
         el.removeAttribute('defer-hydration');
-        expect(hydrate).toHaveBeenCalledOnceWith();
+        expect(hydrate).toHaveBeenCalledTimes(1);
         hydrate.calls.reset();
 
         // Should not re-hydrate when connected to the DOM.

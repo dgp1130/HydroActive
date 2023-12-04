@@ -1,7 +1,9 @@
 /** @fileoverview Defines symbols related to HydroActive components. */
 
+import { ElementRef } from './element-ref.js';
+
 /** The type of the lifecycle hook invoked when the component hydrates. */
-export type HydrateLifecycle = () => void;
+export type HydrateLifecycle = (host: ElementRef<HTMLElement>) => void;
 
 /**
  * Defines a component of the given tag name with the provided hydration
@@ -10,7 +12,9 @@ export type HydrateLifecycle = () => void;
 export function component(tagName: string, hydrate: HydrateLifecycle):
     Class<HTMLElement> {
   const Component = class extends HydroActiveComponent {
-    override hydrate = hydrate.bind(undefined /* strip `this` value */);
+    override hydrate(): void {
+      hydrate(ElementRef.from(this));
+    }
   };
 
   // Set `name` for improved debug-ability.
