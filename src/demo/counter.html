@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Counter Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Counter Demo</h1>
+
+        <div><a href="/">Home</a></div>
+
+        <auto-counter>
+            <h2>Auto Counter</h2>
+
+            <div>The current count is: <span>5</span>.</div>
+
+            <script src="./auto-counter.js" type="module"></script>
+        </auto-counter>
+    </body>
+</html>

@@ -1,0 +1,6 @@
+/** @fileoverview Config for the demo compilation. */
+
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["src/demo/**/*.ts"],
+}

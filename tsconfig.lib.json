@@ -3,5 +3,12 @@
 {
   "extends": "./tsconfig.base.json",
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**/*.test.ts", "src/testing/**/*.ts"],
+  "compilerOptions": {
+    "composite": false,
+  },
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/testing/**/*.ts",
+    "src/demo/**.ts",
+  ],
 }
