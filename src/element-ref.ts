@@ -57,4 +57,36 @@ export class ElementRef<El extends Element> {
   public attr(name: string): string | null {
     return this.native.getAttribute(name);
   }
+
+  /**
+   * Queries light DOM descendants for the provided selector and returns the
+   * first matching element wrapped in an {@link ElementRef}. Returns
+   * `undefined` if no element is found.
+   *
+   * @param selector The selector to query for.
+   * @returns An {@link ElementRef} which wraps the query result, or `null` if
+   *     no element is found.
+   */
+  public query(selector: string): ElementRef<Element> | null {
+    const child = this.native.querySelector(selector);
+    if (!child) return null;
+
+    return ElementRef.from(child);
+  }
+
+  /**
+   * Queries light DOM descendants for the provided selector and returns all
+   * matching elements, each wrapped in an {@link ElementRef}. Always returns a
+   * real {@link Array}, not a {@link NodeListOf} like
+   * {@link Element.prototype.querySelectorAll}. Returns an empty array when no
+   * elements match the given query.
+   *
+   * @param selector The selector to query for.
+   * @returns An {@link Array} of the queried elements, each wrapped in an
+   *     {@link ElementRef}.
+   */
+  public queryAll(selector: string): Array<ElementRef<Element>> {
+    return Array.from(this.native.querySelectorAll(selector))
+        .map((el) => ElementRef.from(el));
+  }
 }

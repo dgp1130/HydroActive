@@ -93,5 +93,82 @@ describe('element-ref', () => {
         expect(el.attr('bar')).toBe('');
       });
     });
+
+    describe('query', () => {
+      it('returns the queried element', () => {
+        const el = ElementRef.from(
+            parseHtml(`<div><span>Hello, World!</span></div>`));
+
+        expect(el.query('span')!.text).toBe('Hello, World!');
+      });
+
+      it('returns `null` when no element is found', () => {
+        const el = ElementRef.from(document.createElement('div'));
+
+        expect(el.query('span')).toBeNull();
+      });
+
+      it('scopes to the native element', () => {
+        const el = ElementRef.from(parseHtml(`
+<div>
+  <div>
+    <!-- Should be skipped by \`:scope >\` -->
+    <span>Descendant</span>
+  </div>
+  <span>Child</span>
+</div>
+        `.trim()));
+
+        expect(el.query(':scope > span')!.text).toBe('Child');
+      });
+    });
+
+    describe('queryAll', () => {
+      it('returns the queried elements', () => {
+        const el = ElementRef.from(parseHtml(`
+<div>
+  <span>Hello, World!</span>
+  <span>Hello again!</span>
+  <span>Hello once more!</span>
+</div>
+        `.trim()));
+
+        expect(el.queryAll('span').map((el) => el.text)).toEqual([
+          'Hello, World!',
+          'Hello again!',
+          'Hello once more!',
+        ]);
+      });
+
+      it('returns an empty array when no element is found', () => {
+        const el = ElementRef.from(document.createElement('div'));
+
+        expect(el.queryAll('span')).toEqual([]);
+      });
+
+      it('returns a *real* array', () => {
+        const el = ElementRef.from(document.createElement('div'));
+
+        expect(el.queryAll('span')).toBeInstanceOf(Array);
+      });
+
+      it('scopes to the native element', () => {
+        const el = ElementRef.from(parseHtml(`
+<div>
+  <div>
+    <!-- Should be skipped by \`:scope >\` -->
+    <span>Descendant</span>
+  </div>
+  <span>Child 1</span>
+  <span>Child 2</span>
+</div>
+        `.trim()));
+
+        expect(el.queryAll(':scope > span').map((el) => el.text)).toEqual([
+          'Child 1',
+          'Child 2',
+        ]);
+      });
+    });
   });
 });
