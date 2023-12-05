@@ -6,4 +6,7 @@
     "[html]": {
         "editor.tabSize": 4
     },
+    "cSpell.words": [
+        "Macrotask"
+    ],
 }
