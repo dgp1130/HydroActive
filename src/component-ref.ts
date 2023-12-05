@@ -1,5 +1,7 @@
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
+import { effect } from './signals/effect.js';
+import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /**
  * The type of the function invoked on connect. May optionally return a
@@ -9,6 +11,8 @@ export type OnConnect = () => OnDisconnect | void;
 
 /** The type of the function invoked on disconnect. */
 export type OnDisconnect = () => void;
+
+const scheduler = UiScheduler.from();
 
 /**
  * Provides an ergonomic API for accessing the internal content and lifecycle
@@ -99,6 +103,22 @@ export class ComponentRef {
     this.#connectedCallbacks.push(onConnect);
 
     if (this.#host.native.isConnected) this.#invokeOnConnect(onConnect);
+  }
+
+  /**
+   * Schedules the side-effectful callback to be invoked and tracks signal usage
+   * within it. When any dependency signal changes, the effect is re-run on the
+   * next animation frame.
+   *
+   * The effect is disabled when the component is removed from the DOM, and
+   * re-enabled when the component is re-attached.
+   *
+   * @param callback The side-effectful callback to be invoked.
+   */
+  public effect(callback: () => void): void {
+    this.connected(() => {
+      return effect(callback, scheduler);
+    });
   }
 
   /**
