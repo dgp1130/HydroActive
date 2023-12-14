@@ -1,6 +1,7 @@
 export { AttrAccessor } from './attribute-accessor.js';
 export { type BaseHydrateLifecycle, defineBaseComponent } from './base-component.js';
 export { type SignalHydrateLifecycle, defineSignalComponent } from './signal-component.js';
+export { Component, type ComponentHost, type Descriptor, type Initializer, type PropertyFactory, type ProxyDescriptor, type ValueDescriptor, required, query, hydrate as hydrateEl, use } from './component-class.js';
 export { type Connectable, type OnConnect, type OnDisconnect } from './connectable.js';
 export { Dehydrated } from './dehydrated.js';
 export { ElementAccessor } from './element-accessor.js';
