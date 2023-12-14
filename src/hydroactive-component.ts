@@ -6,29 +6,29 @@ export abstract class HydroActiveComponent extends HTMLElement {
   #hydrated = false;
 
   /** The associated {@link ComponentRef} for this component. */
-  #ref?: ComponentRef;
+  protected comp?: ComponentRef;
 
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
 
   public /* internal */ _registerComponentRef(ref: ComponentRef): void {
     if (ref.host.native !== this) throw new Error('Registered `ComponentRef` must be associated with this component.');
-    if (this.#ref) throw new Error('Already registered a `ComponentRef`.');
+    if (this.comp) throw new Error('Already registered a `ComponentRef`.');
 
-    this.#ref = ref;
+    this.comp = ref;
   }
 
   connectedCallback(): void {
     // The "connect" event triggers _before_ the "hydrate" event when they
     // happen simultaneously. `ComponentRef` should know to invoke connect
     // callbacks discovered post-connection time, such as during hydration.
-    this.#ref?._onConnect();
+    this.comp?._onConnect();
 
     this.#requestHydration();
   }
 
   disconnectedCallback(): void {
-    this.#ref?._onDisconnect();
+    this.comp?._onDisconnect();
   }
 
   // Trigger hydration when the `defer-hydration` attribute is removed.
@@ -51,7 +51,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
     this.#hydrated = true;
     this.hydrate();
 
-    if (!this.#ref) throw new Error('No registered `ComponentRef` after hydration.');
+    if (!this.comp) throw new Error('No registered `ComponentRef` after hydration.');
   }
 
   /**
@@ -61,9 +61,9 @@ export abstract class HydroActiveComponent extends HTMLElement {
    * @returns A {@link Promise} which resolves when this component is stable.
    */
   public async stable(): Promise<void> {
-    if (!this.#ref) throw new Error('No registered `ComponentRef`.');
+    if (!this.comp) throw new Error('No registered `ComponentRef`.');
 
-    return await this.#ref._stable();
+    return await this.comp._stable();
 
   }
 }

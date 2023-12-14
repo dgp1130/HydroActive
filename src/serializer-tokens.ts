@@ -128,3 +128,21 @@ export type ResolveSerializer<
             ? typeof bigintSerializer
             : never
 ;
+
+type PrimitiveSerializer<Value> =
+    ElementSerializer<Value, Element> & AttrSerializer<Value>;
+
+/**
+ * Given the type of the provided value, returns a serializer which can
+ * serialize it or `undefined` if no serializer can.
+ */
+export function inferSerializer<Value>(value: Value):
+    PrimitiveSerializer<Value> | undefined {
+  switch (typeof value) {
+    case 'string': return stringSerializer as any;
+    case 'number': return numberSerializer as any;
+    case 'boolean': return booleanSerializer as any;
+    case 'bigint': return bigintSerializer as any;
+    default: return undefined;
+  }
+}

@@ -3,7 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
-import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
+import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, resolveSerializer, inferSerializer } from './serializer-tokens.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
@@ -53,6 +53,30 @@ export class ElementRef<El extends Element> {
     >(token);
 
     return serializer.deserializeFrom(this.native) as any;
+  }
+
+  /** TODO */
+  public write<Primitive extends string | number | boolean | bigint>(
+    value: Primitive,
+    token?: ElementSerializerToken<Primitive, El>,
+  ): void;
+  public write<Value, Token extends ElementSerializerToken<Value, El>>(
+    value: Value,
+    token: Token,
+  ): void;
+  public write<Value, Token extends ElementSerializerToken<Value, El>>(
+    value: Value,
+    token?: Token,
+  ): void {
+    const serializer: ElementSerializer<unknown, El> | undefined = token
+      ? resolveSerializer(token)
+      : inferSerializer(value);
+    if (!serializer) {
+      throw new Error(`No default serializer for type "${
+        typeof value}". Either provide a primitive type (string, number, boolean, bigint) or provide an explicit serializer.`);
+    }
+
+    serializer.serializeTo(value, this.native);
   }
 
   /**

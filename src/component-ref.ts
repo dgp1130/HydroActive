@@ -1,7 +1,7 @@
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { QueriedElement } from './query.js';
-import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, type SerializerToken, resolveSerializer } from './serializer-tokens.js';
+import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, type SerializerToken, resolveSerializer, inferSerializer } from './serializer-tokens.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
 import { type Signal, type WriteableSignal, effect, signal } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
@@ -127,6 +127,10 @@ export class ComponentRef {
     this.connected(() => {
       return effect(callback, this.#scheduler);
     });
+  }
+
+  public schedule(callback: () => void): void {
+    this.#scheduler.schedule(callback);
   }
 
   /**
@@ -466,24 +470,6 @@ export class ComponentRef {
   #invokeOnConnect(onConnect: OnConnect): void {
     const onDisconnect = onConnect();
     if (onDisconnect) this.#disconnectedCallbacks.push(onDisconnect);
-  }
-}
-
-type PrimitiveSerializer<Value> =
-    ElementSerializer<Value, Element> & AttrSerializer<Value>;
-
-/**
- * Given the type of the provided value, returns a serializer which can
- * serialize it or `undefined` if no serializer can.
- */
-function inferSerializer<Value>(value: Value):
-    PrimitiveSerializer<Value> | undefined {
-  switch (typeof value) {
-    case 'string': return stringSerializer as any;
-    case 'number': return numberSerializer as any;
-    case 'boolean': return booleanSerializer as any;
-    case 'bigint': return bigintSerializer as any;
-    default: return undefined;
   }
 }
 
