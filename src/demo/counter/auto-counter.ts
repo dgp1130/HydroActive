@@ -1,38 +1,77 @@
-import { defineSignalComponent } from 'hydroactive';
-import { live } from 'hydroactive/signal-accessors.js';
+import { Component, ElementAccessor } from 'hydroactive';
+import { bind, live } from 'hydroactive/signal-accessors.js';
+import { reactiveProp, WriteableSignal } from 'hydroactive/signals.js';
 
-/** Automatically increments the count over time. */
-export const AutoCounter = defineSignalComponent('auto-counter', (host) => {
-  // Create a "live" binding of the `<span>` element's text content, but
-  // interpreted as a `number`. Automatically parses the value.
-  const count = live(host.query('span').access(), host, Number);
+class InternalComp extends Component {
+  public log(msg: string): void {
+    console.log(msg);
+  }
+}
 
-  // This is the `hydrate` function, it is only called once per-component
-  // instance on hydration.
-
-  // Run some code when the component is connected to or disconnected from the
-  // document. This can be used to clean up resources which might cause the
-  // component to leak memory when not in use.
-  host.connected(() => {
-    // Executed when the component is connected to the DOM (or on hydration if
-    // already connected). Create a timer to automatically update the count
-    // every second.
-    const handle = setInterval(() => {
-      count.set(count() + 1);
-    }, 1_000);
-
-    // Executed when the component is disconnected from the DOM. Used to clean
-    // up resources created above.
-    return () => {
-      // Disable the timer so the component stops incrementing and allow the
-      // component to be garbage collected if no longer in use.
-      clearInterval(handle);
-    };
-  });
-});
+customElements.define('internal-comp', InternalComp);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'auto-counter': InstanceType<typeof AutoCounter>;
+    'internal-comp': InternalComp;
+  }
+}
+
+class AutoCounter extends Component {
+  @reactiveProp()
+  private accessor incrementBy = 2;
+
+  // NOTE: Property does not *look* reactive, no `()` needed.
+  // NOTE: Cannot diverge the internal API for a property (signal) from its
+  // public API (accessor).
+  @reactiveProp()
+  public accessor factor = 2; // Secret reactive property.
+
+  private count!: WriteableSignal<number>;
+  private internalComp!: ElementAccessor<InternalComp>;
+
+  protected override onHydrate(): void {
+    // NOTE: Is `defer` worth it to stay at hydration time? No easy way to enforce
+    // this beyond having `this.host` throw.
+    // NOTE: Formatting is likely to be weird.
+    this.count = live(this.host.query('span').access(), this.host, Number);
+
+    this.internalComp = this.host.query('internal-comp').access(InternalComp);
+
+    bind(
+      this.host.query('#double').access(),
+      this.host,
+      Number,
+      () => this.count() * 2,
+    );
+
+    this.host.connected(() => {
+      const id = setInterval(() => {
+        // Too easy to use `count` here, though `const` should stop it?
+        // Weird that we're using `this.state` in `onHydrate`, but it's ok
+        // because it's a closure invoked later.
+        this.count.set(this.count() + this.incrementBy);
+      }, 1_000);
+
+      return () => clearInterval(id);
+    });
+  }
+
+  // Have to prefix `this.state` everywhere except the `hydrate` function.
+  public increment(): void {
+    this.count.set(this.count() + 1);
+    this.internalComp.element.log('Incrementing!');
+  }
+
+  public decrement(): void {
+    this.count.set(this.count() - 1);
+    this.internalComp.element.log('Decrementing!');
+  }
+}
+
+customElements.define('auto-counter', AutoCounter);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'auto-counter': AutoCounter;
   }
 }
