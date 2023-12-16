@@ -1,6 +1,6 @@
 /** @fileoverview Defines the creation of the core signal primitive. */
 
-import { Producer, getCurrentConsumer } from './graph.js';
+import { Producer, bindProducer } from './graph.js';
 import { WriteableSignal } from './types.js';
 
 /**
@@ -18,11 +18,7 @@ export function signal<Value>(initial: Value, { equals = Object.is }: {
   const sig: WriteableSignal<Value> = () => {
     // On read, check if any consumer is watching the execution. If so, link it
     // to this signal's producer.
-    const consumer = getCurrentConsumer();
-    if (consumer) {
-      producer.addConsumer(consumer);
-      consumer.addProducer(producer);
-    }
+    bindProducer(producer);
 
     return producer.poll();
   };

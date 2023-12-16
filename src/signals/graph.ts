@@ -23,7 +23,7 @@ const consumerStack: Consumer[] = [];
  * @returns Returns the {@link Consumer} observing the current execution or
  *     `undefined` if no {@link Consumer} is observing.
  */
-export function getCurrentConsumer(): Consumer | undefined {
+function getCurrentConsumer(): Consumer | undefined {
   return consumerStack.at(-1);
 }
 
@@ -42,6 +42,26 @@ export function observe<Value>(consumer: Consumer, cb: () => Value): Value {
   } finally {
     consumerStack.pop();
   }
+}
+
+/**
+ * Binds the provided {@link Producer} to the currently observing
+ * {@link Consumer}, if present. This will configure the {@link Producer} to
+ * notify the currently observing {@link Consumer} whenever its produced value
+ * changes.
+ *
+ * If there is no currently observing {@link Consumer}, no action is taken.
+ *
+ * @param producer The {@link Producer} to bind to the current {@link Consumer}.
+ */
+export function bindProducer(producer: Producer<unknown>): void {
+  // Get the currently observing consumer of this stack frame.
+  const consumer = getCurrentConsumer();
+  if (!consumer) return;
+
+  // Bind the producer and consumer together.
+  producer.addConsumer(consumer);
+  consumer.addProducer(producer);
 }
 
 /**

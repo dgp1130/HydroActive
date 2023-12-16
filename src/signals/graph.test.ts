@@ -1,46 +1,75 @@
-import { Consumer, getCurrentConsumer, observe, Producer } from './graph.js';
+import { bindProducer, Consumer, observe, Producer } from './graph.js';
 import { signal } from './signal.js';
 
 describe('graph', () => {
-  describe('consumer stack', () => {
-    it('returns no current consumers when none is observing', () => {
-      expect(getCurrentConsumer()).toBeUndefined();
+  describe('bindProducer', () => {
+    it('does nothing when invoked outside of `observe`', () => {
+      const producer = Producer.from(() => undefined);
+      spyOn(producer, 'addConsumer');
+
+      bindProducer(producer);
+      expect(producer.addConsumer).not.toHaveBeenCalled();
 
       observe(Consumer.from(), () => {});
 
-      expect(getCurrentConsumer()).toBeUndefined();
+      bindProducer(producer);
+      expect(producer.addConsumer).not.toHaveBeenCalled();
     });
 
-    it('tracks the current consumer', () => {
+    it('binds to the observing consumer', () => {
       const consumer = Consumer.from();
+      spyOn(consumer, 'addProducer');
 
-      const observedConsumer = observe(consumer, () => getCurrentConsumer());
+      const producer = Producer.from(() => undefined);
+      spyOn(producer, 'addConsumer');
 
-      expect(observedConsumer).toBe(consumer);
+      observe(consumer, () => { bindProducer(producer); });
+
+      expect(consumer.addProducer).toHaveBeenCalledOnceWith(producer);
+      expect(producer.addConsumer).toHaveBeenCalledOnceWith(consumer);
     });
 
-    it('tracks nested consumers', () => {
+    it('binds to the most nested observing consumer', () => {
       const consumer1 = Consumer.from();
+      spyOn(consumer1, 'addProducer');
       const consumer2 = Consumer.from();
+      spyOn(consumer2, 'addProducer');
       const consumer3 = Consumer.from();
+      spyOn(consumer3, 'addProducer');
 
-      let observedConsumer1: Consumer | undefined;
-      let observedConsumer2: Consumer | undefined;
-      let observedConsumer3: Consumer | undefined;
+      const producer1 = Producer.from(() => undefined);
+      spyOn(producer1, 'addConsumer');
+      const producer2 = Producer.from(() => undefined);
+      spyOn(producer2, 'addConsumer');
+      const producer3 = Producer.from(() => undefined);
+      spyOn(producer3, 'addConsumer');
 
       observe(consumer1, () => {
-        observedConsumer1 = getCurrentConsumer();
+        bindProducer(producer1);
         observe(consumer2, () => {
-          observedConsumer2 = getCurrentConsumer();
+          bindProducer(producer2);
           observe(consumer3, () => {
-            observedConsumer3 = getCurrentConsumer();
+            bindProducer(producer3);
           });
         });
       });
 
-      expect(observedConsumer1).toBe(consumer1);
-      expect(observedConsumer2).toBe(consumer2);
-      expect(observedConsumer3).toBe(consumer3);
+      expect(consumer1.addProducer).toHaveBeenCalledOnceWith(producer1);
+      expect(producer1.addConsumer).toHaveBeenCalledOnceWith(consumer1);
+
+      expect(consumer2.addProducer).toHaveBeenCalledOnceWith(producer2);
+      expect(producer2.addConsumer).toHaveBeenCalledOnceWith(consumer2);
+
+      expect(consumer3.addProducer).toHaveBeenCalledOnceWith(producer3);
+      expect(producer3.addConsumer).toHaveBeenCalledOnceWith(consumer3);
+    });
+  });
+
+  describe('observe', () => {
+    it('returns the value returned in the callback', () => {
+      const observed = observe(Consumer.from(), () => 'test');
+
+      expect(observed).toBe('test');
     });
   });
 
