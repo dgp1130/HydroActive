@@ -102,10 +102,70 @@ describe('element-ref', () => {
         expect(el.query('span')!.text).toBe('Hello, World!');
       });
 
-      it('returns `null` when no element is found', () => {
+      it('throws an error when no element is found and not marked `optional`', () => {
         const el = ElementRef.from(document.createElement('div'));
 
-        expect(el.query('span')).toBeNull();
+        // Explicitly required.
+        expect(() => el.query('span', { optional: false }))
+            .toThrowError(/Selector "span" did not resolve to an element\./);
+
+        // Implicitly required.
+        expect(() => el.query('span', {}))
+            .toThrowError(/Selector "span" did not resolve to an element\./);
+        expect(() => el.query('span'))
+            .toThrowError(/Selector "span" did not resolve to an element\./);
+      });
+
+      it('returns non-nullable type for required query', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          // Explicitly required.
+          {
+            let result = el.query('span', { optional: false });
+
+            // @ts-expect-error `null` should not be assignable to `result`.
+            result = null;
+          }
+
+          // Implicitly required via default `optional`.
+          {
+            let result = el.query('span', {});
+
+            // @ts-expect-error `null` should not be assignable to `result`.
+            result = null;
+          }
+
+          // Implicitly required via default `options`.
+          {
+            let result = el.query('span');
+
+            // @ts-expect-error `null` should not be assignable to `result`.
+            result = null;
+          }
+        };
+      });
+
+      it('returns `null` when no element is found and marked `optional`', () => {
+        const el = ElementRef.from(document.createElement('div'));
+
+        expect(el.query('span', { optional: true })).toBeNull();
+      });
+
+      it('returns nullable type for `optional` query', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          // `ElementRef<Element> | null`
+          let result = el.query('span', { optional: true });
+
+          // `null` should be assignable to implicit return type.
+          result = null;
+        };
       });
 
       it('scopes to the native element', () => {
@@ -140,16 +200,30 @@ describe('element-ref', () => {
         ]);
       });
 
-      it('returns an empty array when no element is found', () => {
+      it('throws an error when no element is found and not marked `optional`', () => {
         const el = ElementRef.from(document.createElement('div'));
 
-        expect(el.queryAll('span')).toEqual([]);
+        // Explicitly required.
+        expect(() => el.queryAll('span', { optional: false }))
+            .toThrowError(/Selector "span" did not resolve to any elements\./);
+
+        // Implicitly required.
+        expect(() => el.queryAll('span'))
+            .toThrowError(/Selector "span" did not resolve to any elements\./);
+        expect(() => el.queryAll('span', {}))
+            .toThrowError(/Selector "span" did not resolve to any elements\./);
+      });
+
+      it('returns an empty array when no element is found and marked `optional`', () => {
+        const el = ElementRef.from(document.createElement('div'));
+
+        expect(el.queryAll('span', { optional: true })).toEqual([]);
       });
 
       it('returns a *real* array', () => {
         const el = ElementRef.from(document.createElement('div'));
 
-        expect(el.queryAll('span')).toBeInstanceOf(Array);
+        expect(el.queryAll('span', { optional: true })).toBeInstanceOf(Array);
       });
 
       it('scopes to the native element', () => {

@@ -67,9 +67,21 @@ export class ElementRef<El extends Element> {
    * @returns An {@link ElementRef} which wraps the query result, or `null` if
    *     no element is found.
    */
-  public query(selector: string): ElementRef<Element> | null {
+  public query(selector: string, options?: { readonly optional?: false }):
+      ElementRef<Element>;
+  public query(selector: string, options: { readonly optional: true }):
+      ElementRef<Element> | null;
+  public query(selector: string, { optional = false }: {
+    readonly optional?: boolean,
+  } = {}): ElementRef<Element> | null {
     const child = this.native.querySelector(selector);
-    if (!child) return null;
+    if (!child) {
+      if (optional) {
+        return null;
+      } else {
+        throw new Error(`Selector "${selector}" did not resolve to an element. Is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${selector}', { optional: true })\` to ignore this error.`);
+      }
+    }
 
     return ElementRef.from(child);
   }
@@ -85,8 +97,14 @@ export class ElementRef<El extends Element> {
    * @returns An {@link Array} of the queried elements, each wrapped in an
    *     {@link ElementRef}.
    */
-  public queryAll(selector: string): Array<ElementRef<Element>> {
-    return Array.from(this.native.querySelectorAll(selector))
-        .map((el) => ElementRef.from(el));
+  public queryAll(selector: string, { optional = false }: {
+    optional?: boolean,
+  } = {}): Array<ElementRef<Element>> {
+    const elements = this.native.querySelectorAll(selector);
+    if (!optional && elements.length === 0) {
+      throw new Error(`Selector "${selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${selector}', { optional: true })\` to ignore this error.`);
+    }
+
+    return Array.from(elements).map((el) => ElementRef.from(el));
   }
 }
