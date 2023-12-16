@@ -9,7 +9,9 @@ import { WriteableSignal } from './types.js';
  * @param initial The initial value to use for the signal.
  * @returns A {@link WriteableSignal} which can be read and mutated.
  */
-export function signal<Value>(initial: Value): WriteableSignal<Value> {
+export function signal<Value>(initial: Value, { equals = Object.is }: {
+  equals?: Equals<Value>,
+} = {}): WriteableSignal<Value> {
   let value = initial;
   const producer = Producer.from(() => value);
 
@@ -25,12 +27,34 @@ export function signal<Value>(initial: Value): WriteableSignal<Value> {
     return producer.poll();
   };
   sig.set = (val: Value) => {
-    // On write, update the value and notify all consumers that the value has
-    // changed.
+    // Check if the new values are equivalent, so we can skip rerunning
+    // downstream computations.
+    const dirty = !equals(val, value);
+
+    // Update the current value. Even if the new value is equivalent to the old
+    // one, it could still be different in observable ways, so we always want to
+    // update this, even if it isn't actually "dirty".
     value = val;
-    producer.notifyConsumers();
+
+    // Notify consumers only if the value has actually changed.
+    if (dirty) producer.notifyConsumers();
   };
   sig.readonly = () => () => sig();
 
   return sig as WriteableSignal<Value>;
 }
+
+/**
+ * An equality comparator. Returns whether or not the two values are considered
+ * "equivalent".
+ *
+ * The precise semantics of what "equivalent" means is up to the implementation.
+ * Generally speaking "equivalent" means that the two values represent the same
+ * underlying content.
+ *
+ * @param left The first value to compare.
+ * @param right The second value to compare.
+ * @returns `true` if the two values are considered "equivalent", `false`
+ *     otherwise.
+ */
+export type Equals<Value> = (left: Value, right: Value) => boolean;

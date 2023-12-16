@@ -81,5 +81,153 @@ describe('signal', () => {
           expect(get.readonly).toBeUndefined();
       });
     });
+
+    describe('equals', () => {
+      it('does not notify consumers when set with an equivalent object per the custom equality operator', () => {
+        const consumer = Consumer.from();
+        spyOn(consumer, 'notifyListeners');
+
+        const sig = signal(1, { equals: () => true });
+        observe(consumer, () => { sig(); });
+        expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+        sig.set(2);
+        expect(consumer.notifyListeners).not.toHaveBeenCalled();
+      });
+
+      it('does not notify consumers when set with an equivalent primitive by default', () => {
+        // Number
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(1);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(1);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // String
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal('test');
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set('test');
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // Boolean
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(true);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(true);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // BigInt
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(1n);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(1n);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // Symbol
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(Symbol.for('test'));
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(Symbol.for('test'));
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // undefined
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(undefined);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(undefined);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // null
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const sig = signal(null);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(null);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+      });
+
+      it('does not notify consumers when set with the same reference by default', () => {
+        // Object
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const obj = {};
+          const sig = signal(obj);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(obj);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+
+        // Array
+        {
+          const consumer = Consumer.from();
+          spyOn(consumer, 'notifyListeners');
+
+          const array: unknown[] = [];
+          const sig = signal(array);
+          observe(consumer, () => { sig(); });
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+
+          sig.set(array);
+          expect(consumer.notifyListeners).not.toHaveBeenCalled();
+        }
+      });
+
+      it('updates the value even when custom equality operator returns true', () => {
+        const consumer = Consumer.from();
+        spyOn(consumer, 'notifyListeners');
+
+        const sig = signal(1, { equals: () => true });
+        observe(consumer, () => { sig(); });
+        sig.set(2);
+
+        expect(sig()).toBe(2);
+      });
+    });
   });
 });
