@@ -2,6 +2,8 @@
  * @fileoverview Defines the {@link ElementRef} class and associated utilities.
  */
 
+import { type QueriedElement } from './query.js';
+
 /**
  * A wrapper class of {@link Element} which provides more ergonomic API access
  * conducive to chaining.
@@ -67,14 +69,19 @@ export class ElementRef<El extends Element> {
    * @returns An {@link ElementRef} which wraps the query result, or `null` if
    *     no element is found.
    */
-  public query(selector: string, options?: { readonly optional?: false }):
-      ElementRef<Element>;
-  public query(selector: string, options: { readonly optional: true }):
-      ElementRef<Element> | null;
-  public query(selector: string, { optional = false }: {
+  public query<Query extends string>(
+    selector: Query,
+    options?: { readonly optional?: false },
+  ): QueryResult<Query, El>;
+  public query<Query extends string>(
+    selector: Query,
+    options: { readonly optional: boolean },
+  ): QueryResult<Query, El> | null;
+  public query<Query extends string>(selector: Query, { optional = false }: {
     readonly optional?: boolean,
-  } = {}): ElementRef<Element> | null {
-    const child = this.native.querySelector(selector);
+  } = {}): QueryResult<Query, El> | null {
+    const child = this.native.querySelector(selector) as
+        QueriedElement<Query, El> | null;
     if (!child) {
       if (optional) {
         return null;
@@ -83,7 +90,7 @@ export class ElementRef<El extends Element> {
       }
     }
 
-    return ElementRef.from(child);
+    return ElementRef.from(child) as QueryResult<Query, El>;
   }
 
   /**
@@ -97,10 +104,12 @@ export class ElementRef<El extends Element> {
    * @returns An {@link Array} of the queried elements, each wrapped in an
    *     {@link ElementRef}.
    */
-  public queryAll(selector: string, { optional = false }: {
-    optional?: boolean,
-  } = {}): Array<ElementRef<Element>> {
-    const elements = this.native.querySelectorAll(selector);
+  public queryAll<Selector extends string>(
+    selector: Selector,
+    { optional = false }: { optional?: boolean } = {},
+  ): Array<ElementRef<QueryAllResult<Selector, El>>> {
+    const elements = this.native.querySelectorAll(selector) as
+        NodeListOf<QueryAllResult<Selector, El>>;
     if (!optional && elements.length === 0) {
       throw new Error(`Selector "${selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${selector}', { optional: true })\` to ignore this error.`);
     }
@@ -108,3 +117,20 @@ export class ElementRef<El extends Element> {
     return Array.from(elements).map((el) => ElementRef.from(el));
   }
 }
+
+// `QueriedElement` returns `null` when given a pseudo-element selector. Need to
+// avoid boxing this `null` into `ElementRef<null>`.
+type QueryResult<Query extends string, Host extends Element> =
+    QueriedElement<Query, Host> extends null
+        ? null
+        : ElementRef<QueriedElement<Query, Host>>
+;
+
+// `QueriedElement` returns `null` when given a pseudo-element selector. Need to
+// avoid boxing this `null` into `null[]`, when any such values would be
+// filtered out of the result.
+type QueryAllResult<Query extends string, Host extends Element> =
+    QueriedElement<Query, Host> extends null
+        ? Element
+        : QueriedElement<Query, Host>
+;

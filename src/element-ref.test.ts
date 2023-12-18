@@ -99,7 +99,7 @@ describe('element-ref', () => {
         const el = ElementRef.from(
             parseHtml(`<div><span>Hello, World!</span></div>`));
 
-        expect(el.query('span')!.text).toBe('Hello, World!');
+        expect(el.query('span').text).toBe('Hello, World!');
       });
 
       it('throws an error when no element is found and not marked `optional`', () => {
@@ -148,6 +148,52 @@ describe('element-ref', () => {
         };
       });
 
+      it('types the result based on a required query', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          let _result1: ElementRef<HTMLInputElement> = el.query('input#id');
+          let _result2: ElementRef<HTMLInputElement> = el.query('input#id', {});
+          let _result3: ElementRef<HTMLInputElement> = el.query('input#id', {
+            optional: false,
+          });
+        };
+      });
+
+      it('types the result as nullable based on an optional query', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          let _result: ElementRef<HTMLInputElement> | null =
+              el.query('input#id', { optional: true });
+        };
+      });
+
+      it('types the result as nullable based on unknown optionality', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          let _result: ElementRef<HTMLInputElement> | null =
+              el.query('input#id', { optional: true as boolean });
+        };
+      });
+
+      it('types the result as `null` for impossible queries', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          let _result: null = el.query('input::before');
+        };
+      });
+
       it('returns `null` when no element is found and marked `optional`', () => {
         const el = ElementRef.from(document.createElement('div'));
 
@@ -168,6 +214,20 @@ describe('element-ref', () => {
         };
       });
 
+      it('returns possibly nullable type for unknown optionality', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el: ElementRef<HTMLDivElement> = {} as any;
+
+          // `ElementRef<Element> | null`
+          let result = el.query('span', { optional: true as boolean });
+
+          // `null` should be assignable to implicit return type.
+          result = null;
+        };
+      });
+
       it('scopes to the native element', () => {
         const el = ElementRef.from(parseHtml(`
 <div>
@@ -179,7 +239,7 @@ describe('element-ref', () => {
 </div>
         `.trim()));
 
-        expect(el.query(':scope > span')!.text).toBe('Child');
+        expect(el.query(':scope > span').text).toBe('Child');
       });
     });
 
@@ -242,6 +302,33 @@ describe('element-ref', () => {
           'Child 1',
           'Child 2',
         ]);
+      });
+
+      it('types the result based on query', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const _result: ElementRef<HTMLInputElement>[] = el.queryAll('input');
+        };
+      });
+
+      it('type the result without `null` pollution', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          // `Array<ElementRef<Element>>` because pseudo-selectors always
+          // resolve to `null`. At runtime, this will always be an empty `[]`,
+          // so we type this as `Array<ElementRef<Element>>`.
+          const result = el.queryAll('input::before');
+
+          // @ts-expect-error `result` contains an array of `Element`, not an
+          // array of `HTMLInputElement`.
+          const _inputs: ElementRef<HTMLInputElement>[] = result;
+        };
       });
     });
   });
