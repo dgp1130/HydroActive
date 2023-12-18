@@ -1,4 +1,5 @@
 import { ElementRef } from './element-ref.js';
+import { type Serializable, type Serializer, toSerializer } from './serializers.js';
 import { parseHtml } from './testing/html-parser.js';
 
 describe('element-ref', () => {
@@ -73,24 +74,240 @@ describe('element-ref', () => {
       });
     });
 
+    describe('read', () => {
+      it('reads the text content of the element and deserializes with the given primitive serializer', () => {
+        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        expect(el.read(String)).toBe('Hello, World!');
+
+        const el2 = ElementRef.from(parseHtml(`<div>12345</div>`));
+        expect(el2.read(Number)).toBe(12345);
+
+        const el3 = ElementRef.from(parseHtml(`<div>true</div>`));
+        expect(el3.read(Boolean)).toBeTrue();
+
+        const el4 = ElementRef.from(parseHtml(`<div>12345</div>`));
+        expect(el4.read(BigInt)).toBe(12345n);
+      });
+
+      it('reads the text content of the element with the given custom serializer', () => {
+        const serializer: Serializer<{ foo: string }> = {
+          serialize(value: { foo: string }): string {
+            return value.foo;
+          },
+
+          deserialize(): { foo: string } {
+            return { foo: 'bar' };
+          }
+        };
+
+        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        expect(el.read(serializer)).toEqual({ foo: 'bar' });
+      });
+
+      it('reads the text content of the element with the given serializable', () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): Serializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              },
+            };
+          }
+        }
+
+        const el = ElementRef.from(parseHtml(`<div>Devel</div>`));
+        expect(el.read(User)).toEqual(new User('Devel'));
+      });
+
+      it('throws an error if the deserialization process throws', () => {
+        const err = new Error('Failed to deserialize.');
+        const serializer: Serializer<string> = {
+          serialize(value: string): string {
+            return value;
+          },
+
+          deserialize(): string {
+            throw err;
+          }
+        };
+
+        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        expect(() => el.read(serializer)).toThrow(err);
+      });
+
+      it('resolves return type from input primitive serializer type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const _resultStr: string = el.read(String);
+          const _resultNum: number = el.read(Number);
+          const _resultBool: boolean = el.read(Boolean);
+          const _resultBigInt: bigint = el.read(BigInt);
+        };
+      });
+
+      it('resolves return type from input custom serializer type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+          const serializer = {} as Serializer<number>;
+
+          const _result: number = el.read(serializer);
+        };
+      });
+
+      it('resolves return type from input custom serializable type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+          const serializable = {} as Serializable<number>;
+
+          const _result: number = el.read(serializable);
+        };
+      });
+    });
+
     describe('attr', () => {
       it('returns the attribute value for the given name', () => {
         const el = ElementRef.from(parseHtml(`<div foo="bar"></div>`));
 
-        expect(el.attr('foo')).toBe('bar');
+        expect(el.attr('foo', String)).toBe('bar');
       });
 
       it('returns `null` when the attribute is not set', () => {
         const el = ElementRef.from(document.createElement('div'));
 
-        expect(el.attr('foo')).toBeNull();
+        expect(el.attr('foo', String)).toBeNull();
       });
 
-      it('returns empty string when the attribute is set with no value', () => {
+      it('deserializes empty string when the attribute is set with no value', () => {
         const el = ElementRef.from(parseHtml(`<div foo bar=""></div>`));
 
-        expect(el.attr('foo')).toBe('');
-        expect(el.attr('bar')).toBe('');
+        expect(el.attr('foo', String)).toBe('');
+        expect(el.attr('bar', String)).toBe('');
+      });
+
+      it('deserializes the attribute with the given primitive serializer', () => {
+        const el = ElementRef.from(parseHtml(`<div name="Devel"></div>`));
+        expect(el.attr('name', String)).toBe('Devel');
+
+        const el2 = ElementRef.from(parseHtml(`<div id="12345"></div>`));
+        expect(el2.attr('id', Number)).toBe(12345);
+
+        const el3 = ElementRef.from(parseHtml(`<div id="12345"></div>`));
+        expect(el3.attr('id', BigInt)).toBe(12345n);
+      });
+
+      it('deserializes booleans based on text value, not attribute presence', () => {
+        const el = ElementRef.from(parseHtml(`<div enabled="true"></div>`));
+        expect(el.attr('enabled', Boolean)).toBeTrue();
+
+        const el2 = ElementRef.from(parseHtml(`<div enabled="false"></div>`));
+        expect(el2.attr('enabled', Boolean)).toBeFalse();
+
+        const el3 = ElementRef.from(parseHtml(`<div enabled></div>`));
+        expect(() => el3.attr('enabled', Boolean)).toThrow();
+
+        const el4 = ElementRef.from(parseHtml(`<div enabled=""></div>`));
+        expect(() => el4.attr('enabled', Boolean)).toThrow();
+
+        const el5 = ElementRef.from(parseHtml(`<div></div>`));
+        expect(el5.attr('enabled', Boolean)).toBeNull();
+      });
+
+      it('deserializes the attribute with the given custom serializer', () => {
+        const serializer: Serializer<{ foo: string }> = {
+          serialize(value: { foo: string }): string {
+            return value.foo;
+          },
+
+          deserialize(): { foo: string } {
+            return { foo: 'bar' };
+          }
+        };
+
+        const el = ElementRef.from(parseHtml(`<div hello="world"></div>`));
+        expect(el.attr('hello', serializer)).toEqual({ foo: 'bar' });
+      });
+
+      it('deserializes the attribute with the given serializable', () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): Serializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              },
+            };
+          }
+        }
+
+        const el = ElementRef.from(parseHtml(`<div name="Devel"></div>`));
+        expect(el.attr('name', User)).toEqual(new User('Devel'));
+      });
+
+      it('throws an error if the deserialization process throws', () => {
+        const err = new Error('Failed to deserialize.');
+        const serializer: Serializer<string> = {
+          serialize(value: string): string {
+            return value;
+          },
+
+          deserialize(): string {
+            throw err;
+          }
+        };
+
+        const el = ElementRef.from(parseHtml(`<div hello="world"></div>`));
+        expect(() => el.attr('hello', serializer)).toThrow(err);
+      });
+
+      it('resolves return type from input primitive serializer type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const _resultStr: string | null = el.attr('test', String);
+          const _resultNum: number | null = el.attr('test', Number);
+          const _resultBool: boolean | null = el.attr('test', Boolean);
+          const _resultBigInt: bigint | null = el.attr('test', BigInt);
+        };
+      });
+
+      it('resolves return type from input custom serializer type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+          const serializer = {} as Serializer<number>;
+
+          const _result: number | null = el.attr('test', serializer);
+        };
+      });
+
+      it('resolves return type from input custom serializable type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+          const serializable = {} as Serializable<number>;
+
+          const _result: number | null = el.attr('test', serializable);
+        };
       });
     });
 

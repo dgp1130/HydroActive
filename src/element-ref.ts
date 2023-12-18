@@ -3,6 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
+import { type Serialized, type Serializer, type Serializable, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
  * A wrapper class of {@link Element} which provides more ergonomic API access
@@ -46,6 +47,28 @@ export class ElementRef<El extends Element> {
   }
 
   /**
+   * Provides the value of the text content on the underlying element.
+   *
+   * @param serializerToken A "token" which identifiers a {@link Serializer} to
+   *     deserialize the read attribute string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   * @returns The value of the text content for this element deserialized based
+   *     on the input token.
+   */
+  public read<SerializerToken extends
+      | PrimitiveSerializerToken
+      | Serializer<unknown>
+      | Serializable<unknown>
+  >(serializerToken: SerializerToken):
+      Serialized<ResolveSerializer<SerializerToken>> {
+    const serializer = resolveSerializer(serializerToken);
+    return serializer.deserialize(this.text) as any;
+  }
+
+  /**
    * Provides the value of the attribute with the given name on the underlying
    * element.
    *
@@ -54,10 +77,26 @@ export class ElementRef<El extends Element> {
    * if an attribute exists is: `attr('foo') !== null`.
    *
    * @param name The name of the attribute to read.
-   * @returns The value of the attribute, or `null` if not set.
+   * @param serializerToken A "token" which identifiers a {@link Serializer} to
+   *     deserialize the read attribute string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   * @returns The value of the attribute deserialized based on the input token,
+   *     or `null` if not set.
    */
-  public attr(name: string): string | null {
-    return this.native.getAttribute(name);
+  public attr<SerializerToken extends
+      | PrimitiveSerializerToken
+      | Serializer<unknown>
+      | Serializable<unknown>
+  >(name: string, serializerToken: SerializerToken):
+      Serialized<ResolveSerializer<SerializerToken>> | null {
+    const serialized = this.native.getAttribute(name);
+    if (serialized === null) return null;
+
+    const serializer = resolveSerializer(serializerToken);
+    return serializer.deserialize(serialized) as any;
   }
 
   /**
@@ -133,4 +172,61 @@ type QueryAllResult<Query extends string, Host extends Element> =
     QueriedElement<Query, Host> extends null
         ? Element
         : QueriedElement<Query, Host>
+;
+
+// Tokens which reference `Serializer` objects for primitive types.
+type PrimitiveSerializerToken =
+    | typeof String
+    | typeof Number
+    | typeof Boolean
+    | typeof BigInt
+;
+
+/**
+ * Resolves and returns the {@link Serializer} referenced by the provided token.
+ */
+function resolveSerializer<SerializerToken extends
+    | PrimitiveSerializerToken
+    | Serializer<unknown>
+    | Serializable<unknown>
+>(serializerToken: SerializerToken): ResolveSerializer<typeof serializerToken> {
+  switch (serializerToken) {
+    case String: {
+      return stringSerializer as ResolveSerializer<SerializerToken>;
+    } case Number: {
+      return numberSerializer as ResolveSerializer<SerializerToken>;
+    } case Boolean: {
+      return booleanSerializer as ResolveSerializer<SerializerToken>;
+    } case BigInt: {
+      return bigintSerializer as ResolveSerializer<SerializerToken>;
+    } default: {
+      if (toSerializer in serializerToken) {
+        return (serializerToken as Serializable<unknown>)[toSerializer]() as
+            ResolveSerializer<SerializerToken>;
+      } else {
+        // Already a serializer.
+        return serializerToken as ResolveSerializer<SerializerToken>;
+      }
+    }
+  }
+}
+
+// Computes the return type of a resolved `Serializer` object for a given token.
+type ResolveSerializer<Input extends
+    | Serializable<unknown>
+    | Serializer<unknown>
+    | PrimitiveSerializerToken
+> = Input extends Serializable<unknown>
+    ? ReturnType<Input[typeof toSerializer]>
+    : Input extends Serializer<unknown>
+        ? Input
+        : Input extends typeof String
+            ? typeof stringSerializer
+            : Input extends typeof Number
+                ? typeof numberSerializer
+                : Input extends typeof Boolean
+                    ? typeof booleanSerializer
+                    : Input extends typeof BigInt
+                        ? typeof bigintSerializer
+                        : never
 ;
