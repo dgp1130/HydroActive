@@ -1,7 +1,7 @@
-import { ElementRef, resolveSerializer, type SerializerToken } from './element-ref.js';
+import { ElementRef, type ResolveSerializer, type SerializerToken, resolveSerializer } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, type Serializer } from './serializers.js';
-import { type Signal, effect } from './signals.js';
+import { type Serialized, type Serializer, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
+import { type Signal, type WriteableSignal, effect, signal } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /**
@@ -126,6 +126,116 @@ export class ComponentRef {
     this.connected(() => {
       return effect(callback, scheduler);
     });
+  }
+
+  /**
+   * Creates a live binding to an element's text content. Returns a
+   * {@link WriteableSignal} initialized to the current state of the specified
+   * element in the DOM and bound such that all future writes to the signal are
+   * automatically propagated back to the DOM.
+   *
+   * *   Uses the provided element directly, or queries the component for the
+   *     given selector.
+   * *   Reads and binds to the text content of the provided element.
+   * *   Uses the provided serializer token to serialize to and deserialize from
+   *     the DOM.
+   *
+   * MISCONCEPTION: This is *not* a two-way binding. It is a one-way binding
+   * with automatic initialization. If the bound element's text content is
+   * modified outside of this binding, that change will *not* be reflected
+   * automatically in the returned signal.
+   *
+   * @param elementOrSelector An {@link ElementRef} or a selector to look up in
+   *     the component to get an element. Used to read and bind the return
+   *     signal to.
+   * @param token A "token" which identifiers a {@link Serializer} to
+   *     serialize the `signal` result to a string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   * @returns A {@link WriteableSignal} initialized to the current text content
+   *     of the specified element. When the signal is mutated, the value is
+   *     automatically propagated back to the DOM.
+   */
+  public live<Token extends SerializerToken<any>>(
+    elementOrSelector: ElementRef<Element> | string,
+    token: Token,
+  ): WriteableSignal<Serialized<ResolveSerializer<Token>>> {
+    // Query for a selector if provided.
+    const element = elementOrSelector instanceof ElementRef
+        ? elementOrSelector
+        : this.host.query(elementOrSelector);
+
+    // Read the initial value from the DOM.
+    const initial = element.read(token);
+
+    // Wrap the value in a reactive signal.
+    const value = signal(initial);
+
+    // Bind the signal back to the DOM to reflect future changes.
+    this.bind(element, value, token);
+
+    // Return a writeable version of the signal.
+    return value;
+  }
+
+
+  /**
+   * Creates a live binding to an element's attribute. Returns a
+   * {@link WriteableSignal} initialized to the current state of the specified
+   * element in the DOM and bound such that all future writes to the signal are
+   * automatically propagated back to the DOM.
+   *
+   * *   Uses the provided element directly, or queries the component for the
+   *     given selector.
+   * *   Reads and binds to the named attribute of the provided element.
+   * *   Uses the provided serializer token to serialize to and deserialize from
+   *     the DOM.
+   *
+   * MISCONCEPTION: This is *not* a two-way binding. It is a one-way binding
+   * with automatic initialization. If the bound element's attribute is modified
+   * outside of this binding, that change will *not* be reflected automatically
+   * in the returned signal.
+   *
+   * Note that an attribute without a value such as `<div foo></div>` will
+   * return an empty string which is considered falsy.
+   *
+   * @param elementOrSelector An {@link ElementRef} or a selector to look up in
+   *     the component to get an element. Used to read and bind the return
+   *     signal to.
+   * @param name The name of the attribute to bind to.
+   * @param token A "token" which identifiers a {@link Serializer} to
+   *     serialize the `signal` result to a string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   * @returns A {@link WriteableSignal} initialized to the current value of the
+   *     named attribute for the specified element. When the signal is mutated,
+   *     the value is automatically propagated back to the DOM.
+   */
+  public liveAttr<Token extends SerializerToken<any>>(
+    elementOrSelector: ElementRef<Element> | string,
+    name: string,
+    token: Token,
+  ): WriteableSignal<Serialized<ResolveSerializer<Token>>> {
+    // Query for a selector if provided.
+    const element = elementOrSelector instanceof ElementRef
+        ? elementOrSelector
+        : this.host.query(elementOrSelector);
+
+    // Read the initial value from the DOM.
+    const initial = element.attr(name, token);
+
+    // Wrap the value in a reactive signal.
+    const value = signal(initial);
+
+    // Bind the signal back to the DOM to reflect future changes.
+    this.bindAttr(element, name, value, token);
+
+    // Return a writeable version of the signal.
+    return value;
   }
 
   /**

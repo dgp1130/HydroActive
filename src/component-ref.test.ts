@@ -2,7 +2,7 @@ import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { type Serializable, type Serializer, toSerializer } from './serializers.js';
-import { signal } from './signals/signal.js';
+import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
 
 class NoopComponent extends HydroActiveComponent {
@@ -285,6 +285,433 @@ describe('component-ref', () => {
         document.body.appendChild(el);
         await waitForNextAnimationFrame();
         expect(effect).toHaveBeenCalledOnceWith();
+      });
+    });
+
+    describe('live', () => {
+      it('returns an initialized signal', () => {
+        const el = parseHtml(`<noop-component>Hello!</noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        const text = ref.live(ref.host, String);
+        expect(text()).toBe('Hello!');
+      });
+
+      it('binds to the provided DOM element', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span>test</span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const text = ref.live(ref.host.query('span'), String);
+        expect(text()).toBe('test');
+
+        text.set('test2');
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.textContent!).toBe('test2');
+      });
+
+      it('binds to the element returned by the provided selector query', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span>test</span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const text = ref.live('span', String);
+        expect(text()).toBe('test');
+
+        text.set('test2');
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.textContent!).toBe('test2');
+      });
+
+      it('processes the DOM element based on the provided primitive serializer token', async () => {
+        {
+          const el = parseHtml(`<noop-component>test1</noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.live(ref.host, String);
+          expect(value()).toBe('test1');
+
+          value.set('test2');
+          await waitForNextAnimationFrame();
+          expect(el.textContent!).toBe('test2');
+        }
+
+        {
+          const el = parseHtml(`<noop-component>1234</noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.live(ref.host, Number);
+          expect(value()).toBe(1234);
+
+          value.set(4321);
+          await waitForNextAnimationFrame();
+          expect(el.textContent!).toBe('4321');
+        }
+
+        {
+          const el = parseHtml(`<noop-component>true</noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.live(ref.host, Boolean);
+          expect(value()).toBe(true);
+
+          value.set(false);
+          await waitForNextAnimationFrame();
+          expect(el.textContent!).toBe('false');
+        }
+
+        {
+          const el = parseHtml(`<noop-component>1234</noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.live(ref.host, BigInt);
+          expect(value()).toBe(1234n);
+
+          value.set(4321n);
+          await waitForNextAnimationFrame();
+          expect(el.textContent!).toBe('4321');
+        }
+      });
+
+      it('processes the DOM element based on the provided custom serializer', async () => {
+        const el = parseHtml(`<noop-component></noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const serializer: Serializer<string> = {
+          serialize(value: string): string {
+            return `serialized: ${value}`;
+          },
+
+          deserialize(): string {
+            return 'deserialized';
+          },
+        };
+
+        const value = ref.live(ref.host, serializer);
+        expect(value()).toBe('deserialized');
+
+        value.set('test');
+        await waitForNextAnimationFrame();
+        expect(el.textContent!).toBe('serialized: test');
+      });
+
+      it('processes the DOM element based on the provided serializable', async () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): Serializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              }
+            };
+          }
+        }
+
+        const el = parseHtml(`<noop-component>Devel</noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const value = ref.live(ref.host, User);
+        expect(value()).toEqual(new User('Devel'));
+
+        value.set(new User('Devel without a Cause'));
+        await waitForNextAnimationFrame();
+        expect(el.textContent!).toBe('Devel without a Cause');
+      });
+
+      it('throws an error when binding to the same element multiple times', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span id="my-span"></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        ref.live('span', String);
+        expect(() => ref.live('#my-span', String))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('throws an error when binding to the same element multiple times from different components', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <noop-component></noop-component>
+          </noop-component>
+        `) as NoopComponent;
+        const outerRef = ComponentRef._from(ElementRef.from(el));
+        const innerRef =
+            ComponentRef._from(outerRef.host.query('noop-component'));
+
+        outerRef.live('noop-component', String);
+        expect(() => innerRef.live(innerRef.host, String))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('infers the return type based on the serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          // Primitive serializer tokens.
+          const _signal1: WriteableSignal<string> = ref.live(ref.host, String);
+          const _signal2: WriteableSignal<number> = ref.live(ref.host, Number);
+          const _signal3: WriteableSignal<boolean> =
+              ref.live(ref.host, Boolean);
+          const _signal4: WriteableSignal<bigint> = ref.live(ref.host, BigInt);
+
+          // Custom `Serializer` type.
+          const serializer = {} as Serializer<string>;
+          const _signal5: WriteableSignal<string> =
+              ref.live(ref.host, serializer);
+
+          // Custom `Serializable` type.
+          const serializable = {} as Serializable<string>;
+          const _signal6: WriteableSignal<string> =
+              ref.live(ref.host, serializable);
+        };
+      });
+    });
+
+    describe('liveAttr', () => {
+      it('returns an initialized signal', () => {
+        const el = parseHtml(`
+          <noop-component value="Hello!"></noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        const text = ref.liveAttr(ref.host, 'value', String);
+        expect(text()).toBe('Hello!');
+      });
+
+      it('binds to the provided DOM element', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span value="test"></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const text = ref.liveAttr(ref.host.query('span'), 'value', String);
+        expect(text()).toBe('test');
+
+        text.set('test2');
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
+      });
+
+      it('binds to the element returned by the provided selector query', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span value="test"></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const text = ref.liveAttr('span', 'value', String);
+        expect(text()).toBe('test');
+
+        text.set('test2');
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
+      });
+
+      it('processes the DOM element based on the provided primitive serializer token', async () => {
+        {
+          const el = parseHtml(`
+            <noop-component value="test1"></noop-component>
+          `) as NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.liveAttr(ref.host, 'value', String);
+          expect(value()).toBe('test1');
+
+          value.set('test2');
+          await waitForNextAnimationFrame();
+          expect(el.getAttribute('value')).toBe('test2');
+        }
+
+        {
+          const el = parseHtml(`
+            <noop-component value="1234"></noop-component>
+          `) as NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.liveAttr(ref.host, 'value', Number);
+          expect(value()).toBe(1234);
+
+          value.set(4321);
+          await waitForNextAnimationFrame();
+          expect(el.getAttribute('value')).toBe('4321');
+        }
+
+        {
+          const el = parseHtml(`
+            <noop-component value="true"></noop-component>
+          `) as NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.liveAttr(ref.host, 'value', Boolean);
+          expect(value()).toBe(true);
+
+          value.set(false);
+          await waitForNextAnimationFrame();
+          expect(el.getAttribute('value')).toBe('false');
+        }
+
+        {
+          const el = parseHtml(`
+            <noop-component value="1234"></noop-component>
+          `) as NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          const value = ref.liveAttr(ref.host, 'value', BigInt);
+          expect(value()).toBe(1234n);
+
+          value.set(4321n);
+          await waitForNextAnimationFrame();
+          expect(el.getAttribute('value')).toBe('4321');
+        }
+      });
+
+      it('processes the DOM element based on the provided custom serializer', async () => {
+        const el = parseHtml(`<noop-component value></noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const serializer: Serializer<string> = {
+          serialize(value: string): string {
+            return `serialized: ${value}`;
+          },
+
+          deserialize(): string {
+            return 'deserialized';
+          },
+        };
+
+        const value = ref.liveAttr(ref.host, 'value', serializer);
+        expect(value()).toBe('deserialized');
+
+        value.set('test');
+        await waitForNextAnimationFrame();
+        expect(el.getAttribute('value')).toBe('serialized: test');
+      });
+
+      it('processes the DOM element based on the provided serializable', async () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): Serializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              }
+            };
+          }
+        }
+
+        const el = parseHtml(`
+          <noop-component user="Devel"></noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const value = ref.liveAttr(ref.host, 'user', User);
+        expect(value()).toEqual(new User('Devel'));
+
+        value.set(new User('Devel without a Cause'));
+        await waitForNextAnimationFrame();
+        expect(el.getAttribute('user')).toBe('Devel without a Cause');
+      });
+
+      it('throws an error when binding to the same element attribute multiple times', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span id="my-span" value></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        ref.liveAttr('span', 'value', String);
+        expect(() => ref.liveAttr('#my-span', 'value', String))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('throws an error when binding to the same element attribute multiple times from different components', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <noop-component value></noop-component>
+          </noop-component>
+        `) as NoopComponent;
+        const outerRef = ComponentRef._from(ElementRef.from(el));
+        const innerRef =
+            ComponentRef._from(outerRef.host.query('noop-component'));
+
+        outerRef.liveAttr('noop-component', 'value', String);
+        expect(() => innerRef.liveAttr(innerRef.host, 'value', String))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('infers the return type based on the serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          // Primitive serializer tokens.
+          const _signal1: WriteableSignal<string> =
+              ref.liveAttr(ref.host, 'value', String);
+          const _signal2: WriteableSignal<number> =
+              ref.liveAttr(ref.host, 'value', Number);
+          const _signal3: WriteableSignal<boolean> =
+              ref.liveAttr(ref.host, 'value', Boolean);
+          const _signal4: WriteableSignal<bigint> =
+              ref.liveAttr(ref.host, 'value', BigInt);
+
+          // Custom `Serializer` type.
+          const serializer = {} as Serializer<string>;
+          const _signal5: WriteableSignal<string> =
+              ref.liveAttr(ref.host, 'value', serializer);
+
+          // Custom `Serializable` type.
+          const serializable = {} as Serializable<string>;
+          const _signal6: WriteableSignal<string> =
+              ref.liveAttr(ref.host, 'value', serializable);
+        };
       });
     });
 

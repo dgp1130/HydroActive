@@ -227,7 +227,7 @@ export function resolveSerializer<Token extends SerializerToken<any>>(
 }
 
 // Computes the return type of a resolved `Serializer` object for a given token.
-type ResolveSerializer<Token extends SerializerToken<any>> =
+export type ResolveSerializer<Token extends SerializerToken<any>> =
     Token extends Serializable<unknown>
         ? ReturnType<Token[typeof toSerializer]>
         : Token extends Serializer<unknown>
