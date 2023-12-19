@@ -16,7 +16,5 @@ export const AutoCounter = component('auto-counter', (comp) => {
     };
   });
 
-  comp.effect(() => {
-    label.native.textContent = count().toString();
-  });
+  comp.bind(label, () => count());
 });

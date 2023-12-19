@@ -24,5 +24,10 @@ export function parseHtml(html: string): Element {
         `Expected parsed HTML to have exactly *one* root element:\n\n${html}`);
   }
 
-  return document.adoptNode(rootEl) as Element;
+  const el = document.adoptNode(rootEl) as Element;
+
+  // Root node might be a root element, upgrade it before returning.
+  customElements.upgrade(el);
+
+  return el;
 }

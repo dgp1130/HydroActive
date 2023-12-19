@@ -30,7 +30,7 @@ export class ElementRef<El extends Element> {
   /**
    * Provides the value of the text content on the underlying element.
    *
-   * @param serializerToken A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers a {@link Serializer} to
    *     deserialize the read attribute string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
@@ -39,12 +39,8 @@ export class ElementRef<El extends Element> {
    * @returns The value of the text content for this element deserialized based
    *     on the input token.
    */
-  public read<SerializerToken extends
-      | PrimitiveSerializerToken
-      | Serializer<unknown>
-      | Serializable<unknown>
-  >(serializerToken: SerializerToken):
-      Serialized<ResolveSerializer<SerializerToken>> {
+  public read<Token extends SerializerToken<any>>(token: Token):
+      Serialized<ResolveSerializer<Token>> {
     const text = this.native.textContent;
 
     // This should only happen when the native element is a `Document` or a
@@ -54,7 +50,7 @@ export class ElementRef<El extends Element> {
       throw new Error('`textContent` was `null`.');
     }
 
-    const serializer = resolveSerializer(serializerToken);
+    const serializer = resolveSerializer(token);
     return serializer.deserialize(text) as any;
   }
 
@@ -67,7 +63,7 @@ export class ElementRef<El extends Element> {
    * if an attribute exists is: `attr('foo') !== null`.
    *
    * @param name The name of the attribute to read.
-   * @param serializerToken A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers a {@link Serializer} to
    *     deserialize the read attribute string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
@@ -76,42 +72,26 @@ export class ElementRef<El extends Element> {
    * @returns The value of the attribute deserialized based on the input token,
    *     or `null` if not set.
    */
-  public attr<SerializerToken extends
-      | PrimitiveSerializerToken
-      | Serializer<unknown>
-      | Serializable<unknown>
-  >(
+  public attr<Token extends SerializerToken<any>>(
     name: string,
-    serializerToken: SerializerToken,
+    token: Token,
     options: { optional: true },
-  ): Serialized<ResolveSerializer<SerializerToken>> | undefined;
-  public attr<SerializerToken extends
-      | PrimitiveSerializerToken
-      | Serializer<unknown>
-      | Serializable<unknown>
-  >(
+  ): Serialized<ResolveSerializer<Token>> | undefined;
+  public attr<Token extends SerializerToken<any>>(
     name: string,
-    serializerToken: SerializerToken,
+    token: Token,
     options?: { optional?: false },
-  ): Serialized<ResolveSerializer<SerializerToken>>;
-  public attr<SerializerToken extends
-      | PrimitiveSerializerToken
-      | Serializer<unknown>
-      | Serializable<unknown>
-  >(
+  ): Serialized<ResolveSerializer<Token>>;
+  public attr<Token extends SerializerToken<any>>(
     name: string,
-    serializerToken: SerializerToken,
+    token: Token,
     options?: { optional?: boolean },
-  ): Serialized<ResolveSerializer<SerializerToken>> | undefined;
-  public attr<SerializerToken extends
-      | PrimitiveSerializerToken
-      | Serializer<unknown>
-      | Serializable<unknown>
-  >(
+  ): Serialized<ResolveSerializer<Token>> | undefined;
+  public attr<Token extends SerializerToken<any>>(
     name: string,
-    serializerToken: SerializerToken,
+    token: Token,
     { optional }: { optional?: boolean } = {},
-  ): Serialized<ResolveSerializer<SerializerToken>> | undefined {
+  ): Serialized<ResolveSerializer<Token>> | undefined {
     const serialized = this.native.getAttribute(name);
     if (serialized === null) {
       if (optional) {
@@ -121,7 +101,7 @@ export class ElementRef<El extends Element> {
       }
     }
 
-    const serializer = resolveSerializer(serializerToken);
+    const serializer = resolveSerializer(token);
     return serializer.deserialize(serialized) as any;
   }
 
@@ -200,59 +180,65 @@ type QueryAllResult<Query extends string, Host extends Element> =
         : QueriedElement<Query, Host>
 ;
 
-// Tokens which reference `Serializer` objects for primitive types.
-type PrimitiveSerializerToken =
-    | typeof String
-    | typeof Number
-    | typeof Boolean
-    | typeof BigInt
+// Tokens which reference `Serializer` objects for primitive types, filtered
+// down only to those which extend the given input type.
+type PrimitiveSerializerToken<Value> =
+    | Value extends string ? typeof String : never
+    | Value extends number ? typeof Number : never
+    | Value extends boolean ? typeof Boolean : never
+    | Value extends bigint ? typeof BigInt : never
+;
+
+/**
+ * Tokens which can be exchanged for {@link Serializer} object.
+ * {@link Serializer} objects are treated as tokens which can be exchanged for
+ * themselves.
+ */
+export type SerializerToken<Value> =
+    | PrimitiveSerializerToken<Value>
+    | Serializer<Value>
+    | Serializable<Value>
 ;
 
 /**
  * Resolves and returns the {@link Serializer} referenced by the provided token.
  */
-function resolveSerializer<SerializerToken extends
-    | PrimitiveSerializerToken
-    | Serializer<unknown>
-    | Serializable<unknown>
->(serializerToken: SerializerToken): ResolveSerializer<typeof serializerToken> {
-  switch (serializerToken) {
+export function resolveSerializer<Token extends SerializerToken<any>>(
+    token: Token): ResolveSerializer<typeof token> {
+  switch (token) {
     case String: {
-      return stringSerializer as ResolveSerializer<SerializerToken>;
+      return stringSerializer as ResolveSerializer<Token>;
     } case Number: {
-      return numberSerializer as ResolveSerializer<SerializerToken>;
+      return numberSerializer as ResolveSerializer<Token>;
     } case Boolean: {
-      return booleanSerializer as ResolveSerializer<SerializerToken>;
+      return booleanSerializer as ResolveSerializer<Token>;
     } case BigInt: {
-      return bigintSerializer as ResolveSerializer<SerializerToken>;
+      return bigintSerializer as ResolveSerializer<Token>;
     } default: {
-      if (toSerializer in serializerToken) {
-        return (serializerToken as Serializable<unknown>)[toSerializer]() as
-            ResolveSerializer<SerializerToken>;
+      if (toSerializer in token) {
+        return (token as Serializable<unknown>)[toSerializer]() as
+            ResolveSerializer<Token>;
       } else {
         // Already a serializer.
-        return serializerToken as ResolveSerializer<SerializerToken>;
+        return token as ResolveSerializer<Token>;
       }
     }
   }
 }
 
 // Computes the return type of a resolved `Serializer` object for a given token.
-type ResolveSerializer<Input extends
-    | Serializable<unknown>
-    | Serializer<unknown>
-    | PrimitiveSerializerToken
-> = Input extends Serializable<unknown>
-    ? ReturnType<Input[typeof toSerializer]>
-    : Input extends Serializer<unknown>
-        ? Input
-        : Input extends typeof String
-            ? typeof stringSerializer
-            : Input extends typeof Number
-                ? typeof numberSerializer
-                : Input extends typeof Boolean
-                    ? typeof booleanSerializer
-                    : Input extends typeof BigInt
-                        ? typeof bigintSerializer
-                        : never
+type ResolveSerializer<Token extends SerializerToken<any>> =
+    Token extends Serializable<unknown>
+        ? ReturnType<Token[typeof toSerializer]>
+        : Token extends Serializer<unknown>
+            ? Token
+            : Token extends typeof String
+                ? typeof stringSerializer
+                : Token extends typeof Number
+                    ? typeof numberSerializer
+                    : Token extends typeof Boolean
+                        ? typeof booleanSerializer
+                        : Token extends typeof BigInt
+                            ? typeof bigintSerializer
+                            : never
 ;

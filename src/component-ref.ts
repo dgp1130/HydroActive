@@ -1,6 +1,7 @@
-import { ElementRef } from './element-ref.js';
+import { ElementRef, resolveSerializer, type SerializerToken } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { effect } from './signals/effect.js';
+import { bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, type Serializer } from './serializers.js';
+import { type Signal, effect } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /**
@@ -13,6 +14,9 @@ export type OnConnect = () => OnDisconnect | void;
 export type OnDisconnect = () => void;
 
 const scheduler = UiScheduler.from();
+
+/** Elements whose text content is currently bound to a reactive signal. */
+const boundElements = new WeakSet<Element>();
 
 /**
  * Provides an ergonomic API for accessing the internal content and lifecycle
@@ -122,11 +126,91 @@ export class ComponentRef {
   }
 
   /**
+   * Invokes the given callback in a reactive context, serializes the result,
+   * and renders it to the provided element's text content. Automatically
+   * re-renders whenever a dependency of `signal` is modified.
+   *
+   * A default {@link Serializer} is inferred from the return value of
+   * `signal` if no token is provided.
+   *
+   * @param elementOrSelector The element to render to or a selector of the
+   *     element to render to.
+   * @param signal The signal to invoke in a reactive context.
+   * @param token A "token" which identifiers a {@link Serializer} to
+   *     serialize the `signal` result to a string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   */
+  public bind<Primitive extends string | number | boolean | bigint>(
+    elementOrSelector: ElementRef<Element> | string,
+    signal: Signal<Primitive>,
+    token?: SerializerToken<Primitive>,
+  ): void;
+  public bind<Value>(
+    elementOrSelector: ElementRef<Element> | string,
+    signal: Signal<Value>,
+    token: SerializerToken<Value>,
+  ): void;
+  public bind<Value>(
+    elementOrSelector: ElementRef<Element> | string,
+    signal: Signal<Value>,
+    token?: SerializerToken<Value>,
+  ): void {
+    // Query for a selector if provided.
+    const element = elementOrSelector instanceof ElementRef
+        ? elementOrSelector
+        : this.host.query(elementOrSelector);
+
+    // Assert that the element is not already bound to another signal.
+    if (boundElements.has(element.native)) {
+      throw new Error(`Element is already bound to another signal, cannot bind it again.`);
+    }
+    boundElements.add(element.native);
+
+    // Resolve an explicit serializer immediately, since that isn't dependent on
+    // the value and we don't want to do this for every invocation of effect.
+    const explicitSerializer = token
+        ? resolveSerializer(token) as Serializer<Value>
+        : undefined;
+
+    this.effect(() => {
+      // Invoke the user-defined callback in a reactive context.
+      const value = signal();
+
+      // Infer a default serializer if necessary.
+      const serializer = explicitSerializer ?? inferSerializer(value);
+      if (!serializer) {
+        throw new Error(`No default serializer for type "${
+            typeof value}". Either provide a primitive type (string, number, boolean, bigint) or provide an explicit serializer.`);
+      }
+
+      // Render the new value.
+      element.native.textContent = serializer.serialize(value);
+    });
+  }
+
+  /**
    * Invokes the given {@link OnConnect} handler and registers its disconnect
    * callback if provided.
    */
   #invokeOnConnect(onConnect: OnConnect): void {
     const onDisconnect = onConnect();
     if (onDisconnect) this.#disconnectedCallbacks.push(onDisconnect);
+  }
+}
+
+/**
+ * Given the type of the provided value, returns a serializer which can
+ * serialize it or `undefined` if no serializer can.
+ */
+function inferSerializer(value: unknown): Serializer<unknown> | undefined {
+  switch (typeof value) {
+    case 'string': return stringSerializer;
+    case 'number': return numberSerializer;
+    case 'boolean': return booleanSerializer;
+    case 'bigint': return bigintSerializer;
+    default: return undefined;
   }
 }
