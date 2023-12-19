@@ -627,6 +627,371 @@ describe('component-ref', () => {
         };
       });
     });
+
+    describe('bindAttr', () => {
+      it('updates the provided element\'s named attribute reactively', async () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        expect(el.textContent).toBe('');
+
+        const value = signal('1');
+        ref.bindAttr(ref.host, 'count', () => value(), String);
+        await waitForNextAnimationFrame();
+        expect(el.getAttribute('count')).toBe('1');
+
+        value.set('2');
+        await waitForNextAnimationFrame();
+        expect(el.getAttribute('count')).toBe('2');
+      });
+
+      it('does not invoke the signal until connected', async () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        const sig = jasmine.createSpy<() => string>('sig')
+            .and.returnValue('test');
+
+        ref.bindAttr(ref.host, 'hello', sig, String);
+        await waitForNextAnimationFrame();
+        expect(sig).not.toHaveBeenCalled();
+
+        document.body.appendChild(el);
+
+        await waitForNextAnimationFrame();
+        expect(sig).toHaveBeenCalledOnceWith();
+      });
+
+      it('pauses updates while disconnected', async () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const value = signal('1');
+        const sig = jasmine.createSpy<() => string>('sig')
+            .and.callFake(() => value());
+
+        ref.bindAttr(ref.host, 'count', sig, String);
+        await waitForNextAnimationFrame();
+        expect(sig).toHaveBeenCalledOnceWith();
+        expect(el.getAttribute('count')).toBe('1');
+        sig.calls.reset();
+
+        el.remove();
+
+        value.set('2');
+        await waitForNextAnimationFrame();
+        expect(sig).not.toHaveBeenCalled();
+        expect(el.getAttribute('count')).toBe('1'); // Does not update.
+      });
+
+      it('updates the explicitly provided element', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        ref.bindAttr(ref.host.query('span'), 'name', () => 'test');
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
+      });
+
+      it('queries for the given selector and updates that element', async () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span></span>
+          </noop-component>`
+        ) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        ref.bindAttr('span', 'name', () => 'test', String);
+        await waitForNextAnimationFrame();
+        expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
+      });
+
+      it('throws when the given selector is not found', () => {
+        const el = parseHtml(`<noop-component></noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        expect(() => ref.bindAttr('span', 'name', () => 'test', String))
+            .toThrow();
+      });
+
+      it('serializes with an implicit primitive serializer', async () => {
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 'test');
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('test');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 1234);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('1234');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => true);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('true');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 1234n);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('1234');
+        }
+      });
+
+      it('serializes with an explicit primitive serializer', async () => {
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 'test', String);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('test');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 1234, Number);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('1234');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => true, Boolean);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('true');
+        }
+
+        {
+          const el = parseHtml(`<noop-component></noop-component>`) as
+              NoopComponent;
+          const ref = ComponentRef._from(ElementRef.from(el));
+          document.body.appendChild(el);
+
+          ref.bindAttr(ref.host, 'name', () => 1234n, BigInt);
+          await waitForNextAnimationFrame();
+          expect(ref.host.native.getAttribute('name')).toBe('1234');
+        }
+      });
+
+      it('serializes with a custom `Serializer`', async () => {
+        const el = parseHtml(`<noop-component></noop-component>`) as
+            NoopComponent;
+        document.body.appendChild(el);
+
+        const serializer: Serializer<undefined> = {
+          serialize(): string {
+            return 'undefined';
+          },
+
+          deserialize(): undefined {
+            return undefined;
+          },
+        };
+
+        const ref = ComponentRef._from(ElementRef.from(el));
+        ref.bindAttr(ref.host, 'name', () => undefined, serializer);
+        await waitForNextAnimationFrame();
+        expect(ref.host.native.getAttribute('name')).toBe('undefined');
+      });
+
+      it('serializes with a custom `Serializable`', async () => {
+        class User {
+          public constructor(private name: string) {}
+
+          public static [toSerializer](): Serializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              }
+            };
+          }
+        }
+
+        const el = parseHtml(`<noop-component></noop-component>`) as
+            NoopComponent;
+        document.body.appendChild(el);
+
+        const ref = ComponentRef._from(ElementRef.from(el));
+        ref.bindAttr(ref.host, 'user', () => new User('Devel'), User);
+        await waitForNextAnimationFrame();
+        expect(ref.host.native.getAttribute('user')).toBe('Devel');
+      });
+
+      it('throws an error when binding to the same element attribute multiple times', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span id="my-span"></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        ref.bindAttr('span', 'name', () => 'test1');
+        expect(() => ref.bindAttr('#my-span', 'name', () => 'test2'))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('throws an error when binding to the same element attribute multiple times from different components', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <noop-component></noop-component>
+          </noop-component>
+        `) as NoopComponent;
+        const outerRef = ComponentRef._from(ElementRef.from(el));
+        const innerRef =
+            ComponentRef._from(outerRef.host.query('noop-component'));
+
+        outerRef.bindAttr('noop-component', 'name', () => 'test1');
+        expect(() => innerRef.bindAttr(innerRef.host, 'name', () => 'test2'))
+            .toThrowError(/cannot bind it again/);
+      });
+
+      it('allows binding to different attributes of the same element', () => {
+        const el = parseHtml(`<noop-component></noop-component>`) as
+            NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        ref.bindAttr(ref.host, 'name1', () => 'test1');
+        expect(() => ref.bindAttr(ref.host, 'name2', () => 'test2'))
+            .not.toThrow();
+      });
+
+      it('allows binding to the same attribute of different elements', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <span id="first"></span>
+            <span id="second"></span>
+          </noop-component>
+        `) as NoopComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        ref.bindAttr('#first', 'name', () => 'test1');
+        expect(() => ref.bindAttr('#second', 'name', () => 'test2'))
+            .not.toThrow();
+      });
+
+      it('restricts the signal result and serializer to be the same type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          // Correct implicit primitive types.
+          ref.bindAttr(ref.host, 'data', () => 'test');
+          ref.bindAttr(ref.host, 'data', () => 1234);
+          ref.bindAttr(ref.host, 'data', () => true);
+          ref.bindAttr(ref.host, 'data', () => 1234n);
+
+          // Incorrect implicit types.
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => ({}));
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => []);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => undefined);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => null);
+
+          // Incorrect types with explicitly `undefined` serializer.
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => ({}), undefined);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => [], undefined);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => undefined, undefined);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => null, undefined);
+
+          // Incorrect types with possibly `undefined` serializer.
+          const maybeSerializer = {} as Serializer<{}> | undefined;
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => ({}), maybeSerializer);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => [], maybeSerializer);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => undefined, maybeSerializer);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => null, maybeSerializer);
+
+          // Correct explicit primitive types.
+          ref.bindAttr(ref.host, 'data', () => 'test', String);
+          ref.bindAttr(ref.host, 'data', () => 1234, Number);
+          ref.bindAttr(ref.host, 'data', () => true, Boolean);
+          ref.bindAttr(ref.host, 'data', () => 1234n, BigInt);
+
+          // Incorrect explicit primitive types.
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 'test', Number);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 1234, String);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => true, String);
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 1234n, String);
+
+          // Correct explicit serializer types.
+          const serializer = {} as Serializer<string>;
+          ref.bindAttr(ref.host, 'data', () => 'test', serializer);
+
+          // Incorrect explicit serializer types.
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 1234, serializer);
+
+          // Correct explicit serializable types.
+          const serializable = {} as Serializable<string>;
+          ref.bindAttr(ref.host, 'data', () => 'test', serializable);
+
+          // Incorrect explicit serializable types.
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 1234, serializable);
+        };
+      });
+    });
   });
 });
 

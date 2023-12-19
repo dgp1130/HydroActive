@@ -18,6 +18,9 @@ const scheduler = UiScheduler.from();
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
 
+/** Element attributes whose content is currently bound to a reactive signal. */
+const boundElementAttrs = new WeakMap<Element, Set<string>>();
+
 /**
  * Provides an ergonomic API for accessing the internal content and lifecycle
  * of a HydroActive component. {@link ComponentRef} should be kept internal to
@@ -126,12 +129,12 @@ export class ComponentRef {
   }
 
   /**
-   * Invokes the given callback in a reactive context, serializes the result,
-   * and renders it to the provided element's text content. Automatically
-   * re-renders whenever a dependency of `signal` is modified.
+   * Invokes the given signal in a reactive context, serializes the result, and
+   * renders it to the provided element's text content. Automatically re-renders
+   * whenever a dependency of `signal` is modified.
    *
-   * A default {@link Serializer} is inferred from the return value of
-   * `signal` if no token is provided.
+   * A default {@link Serializer} is inferred from the return value of `signal`
+   * if no token is provided.
    *
    * @param elementOrSelector The element to render to or a selector of the
    *     element to render to.
@@ -158,16 +161,98 @@ export class ComponentRef {
     signal: Signal<Value>,
     token?: SerializerToken<Value>,
   ): void {
+    this.#bindToDom(
+      elementOrSelector,
+      signal,
+      token,
+      /* boundCheck */ (element) => {
+        if (boundElements.has(element)) {
+          throw new Error(`Element is already bound to another signal, cannot bind it again.`);
+        }
+        boundElements.add(element);
+      },
+      /* updateDom */ (element, serialized) => {
+        element.textContent = serialized;
+      },
+    );
+  }
+
+  /**
+   * Invokes the given signal in a reactive context, serializes the result, and
+   * renders it to the named attribute of the provided element. Automatically
+   * re-renders whenever a dependency of `signal` is modified.
+   *
+   * A default {@link Serializer} is inferred from the return value of `signal`
+   * if no token is provided.
+   *
+   * @param elementOrSelector The element to render to or a selector of the
+   *     element to render to.
+   * @param name The name of the attribute to bind to.
+   * @param signal The signal to invoke in a reactive context.
+   * @param token A "token" which identifiers a {@link Serializer} to
+   *     serialize the `signal` result to a string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   A {@link Serializer} object.
+   *     *   A {@link Serializable} object.
+   */
+  public bindAttr<Primitive extends string | number | boolean | bigint>(
+    elementOrSelector: ElementRef<Element> | string,
+    name: string,
+    signal: Signal<Primitive>,
+    token?: SerializerToken<Primitive>,
+  ): void;
+  public bindAttr<Value>(
+    elementOrSelector: ElementRef<Element> | string,
+    name: string,
+    signal: Signal<Value>,
+    token: SerializerToken<Value>,
+  ): void;
+  public bindAttr<Value>(
+    elementOrSelector: ElementRef<Element> | string,
+    name: string,
+    signal: Signal<Value>,
+    token?: SerializerToken<Value>,
+  ): void {
+    this.#bindToDom(
+      elementOrSelector,
+      signal,
+      token,
+      /* boundCheck */ (element) => {
+        const boundAttrs = boundElementAttrs.get(element) ?? new Set();
+        if (boundAttrs.has(name)) {
+          throw new Error(`Element attribute (${name}) is already bound to another signal, cannot bind it again.`);
+        }
+        boundAttrs.add(name);
+        boundElementAttrs.set(element, boundAttrs);
+      },
+      /* updateDom */ (element, serialized) => {
+        element.setAttribute(name, serialized);
+      },
+    );
+  }
+
+  /**
+   * Creates an effect which invokes `updateDom` with the associated element and
+   * serialized value whenever the signal changes.
+   *
+   * Also calls `boundCheck` with the element immediately so the caller can
+   * determine whether or not a binding already exists.
+   */
+  #bindToDom<Value>(
+    elementOrSelector: ElementRef<Element> | string,
+    signal: Signal<Value>,
+    token: SerializerToken<Value> | undefined,
+    boundCheck: (el: Element) => void,
+    updateDom: (el: Element, serialized: string) => void,
+  ): void {
     // Query for a selector if provided.
     const element = elementOrSelector instanceof ElementRef
         ? elementOrSelector
         : this.host.query(elementOrSelector);
 
     // Assert that the element is not already bound to another signal.
-    if (boundElements.has(element.native)) {
-      throw new Error(`Element is already bound to another signal, cannot bind it again.`);
-    }
-    boundElements.add(element.native);
+    boundCheck(element.native);
 
     // Resolve an explicit serializer immediately, since that isn't dependent on
     // the value and we don't want to do this for every invocation of effect.
@@ -186,8 +271,8 @@ export class ComponentRef {
             typeof value}". Either provide a primitive type (string, number, boolean, bigint) or provide an explicit serializer.`);
       }
 
-      // Render the new value.
-      element.native.textContent = serializer.serialize(value);
+      // Update the DOM with the new value.
+      updateDom(element.native, serializer.serialize(value));
     });
   }
 
