@@ -1,4 +1,4 @@
-import { type Serializer } from './serializer.js';
+import { type AttrSerializer } from './serializer.js';
 
 /** A single value in a JSON expression. */
 export type JsonValue =
@@ -19,7 +19,7 @@ interface JsonArray extends Array<JsonValue> {}
  * Note that `JSON.parse('null')` does return `null`. Same for `'true'`,
  * `'"test"'`, and `'123'`. The same behavior applies to `deserialize`.
  */
-export const jsonSerializer: Serializer<JsonValue> = {
+export const jsonSerializer: AttrSerializer<JsonValue> = {
   serialize(value: JsonValue): string {
     return JSON.stringify(value);
   },

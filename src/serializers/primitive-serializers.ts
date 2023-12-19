@@ -1,10 +1,10 @@
-import { type Serializer } from './serializer.js';
+import { type AttrSerializer } from './serializer.js';
 
 /**
  * Serializes `boolean` type as either "true" or "false", case sensitive. Throws
  * an error if any other string is deserialized.
  */
-export const booleanSerializer: Serializer<boolean> = {
+export const booleanSerializer: AttrSerializer<boolean> = {
   serialize(value: boolean): string {
     return value.toString();
   },
@@ -23,7 +23,7 @@ export const booleanSerializer: Serializer<boolean> = {
  * {@link Number.prototype.toString}. See those functions to understand
  * edge-case behavior such as `NaN`.
  */
-export const numberSerializer: Serializer<number> = {
+export const numberSerializer: AttrSerializer<number> = {
   serialize(value: number): string {
     return value.toString();
   },
@@ -38,7 +38,7 @@ export const numberSerializer: Serializer<number> = {
  * {@link BigInt.prototype.toString}. See those functions to understand
  * edge-case behavior.
  */
-export const bigintSerializer: Serializer<bigint> = {
+export const bigintSerializer: AttrSerializer<bigint> = {
   serialize(value: bigint): string {
     return value.toString();
   },
@@ -51,7 +51,7 @@ export const bigintSerializer: Serializer<bigint> = {
 /**
  * Serializes `string` type. Actually a no-op since string are already strings.
  */
-export const stringSerializer: Serializer<string> = {
+export const stringSerializer: AttrSerializer<string> = {
   serialize(value: string): string {
     return value;
   },

@@ -9,7 +9,7 @@
  * `serializer.deserialize(serializer.serialize(value))`, as the serialized
  * representation may be slightly different.
  */
-export interface Serializer<Value> {
+export interface AttrSerializer<Value> {
   /**
    * Serializes the given value to a string.
    *
@@ -28,26 +28,27 @@ export interface Serializer<Value> {
 }
 
 /**
- * Returns the serialized type wrapped by the given {@link Serializer} or
+ * Returns the serialized type wrapped by the given {@link AttrSerializer} or
  * {@link Serializable} type.
  */
 export type Serialized<
-    Serial extends Serializer<unknown> | Serializable<unknown>,
+    Serial extends AttrSerializer<unknown> | Serializable<unknown>,
 > = Serial extends Serializable<infer Value>
     ? Value
-    : Serial extends Serializer<infer Value>
+    : Serial extends AttrSerializer<infer Value>
         ? Value
         : never
 ;
 
 /**
- * A symbol which maps an object to a {@link Serializer} which can serialize and
- * deserialize that type.
+ * A symbol which maps an object to an {@link AttrSerializer} which can
+ * serialize and deserialize that type.
  */
 export const toSerializer = Symbol('toSerializer');
 
 /**
  * Serializable objects contain a {@link toSerializer} property which maps an
- * object to a {@link Serializer} which can serialize and deserialize that type.
+ * object to an {@link AttrSerializer} which can serialize and deserialize that
+ * type.
  */
-export type Serializable<Value> = { [toSerializer](): Serializer<Value> };
+export type Serializable<Value> = { [toSerializer](): AttrSerializer<Value> };

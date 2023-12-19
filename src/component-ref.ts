@@ -1,6 +1,6 @@
 import { ElementRef, type ResolveSerializer, type SerializerToken, resolveSerializer } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { type Serialized, type Serializer, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
+import { type AttrSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
 import { type Signal, type WriteableSignal, effect, signal } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
@@ -148,11 +148,11 @@ export class ComponentRef {
    * @param elementOrSelector An {@link ElementRef} or a selector to look up in
    *     the component to get an element. Used to read and bind the return
    *     signal to.
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     serialize the `signal` result to a string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    * @returns A {@link WriteableSignal} initialized to the current text content
    *     of the specified element. When the signal is mutated, the value is
@@ -205,11 +205,11 @@ export class ComponentRef {
    *     the component to get an element. Used to read and bind the return
    *     signal to.
    * @param name The name of the attribute to bind to.
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     serialize the `signal` result to a string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    * @returns A {@link WriteableSignal} initialized to the current value of the
    *     named attribute for the specified element. When the signal is mutated,
@@ -243,17 +243,17 @@ export class ComponentRef {
    * renders it to the provided element's text content. Automatically re-renders
    * whenever a dependency of `signal` is modified.
    *
-   * A default {@link Serializer} is inferred from the return value of `signal`
+   * A default {@link AttrSerializer} is inferred from the return value of `signal`
    * if no token is provided.
    *
    * @param elementOrSelector The element to render to or a selector of the
    *     element to render to.
    * @param signal The signal to invoke in a reactive context.
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     serialize the `signal` result to a string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    */
   public bind<Primitive extends string | number | boolean | bigint>(
@@ -292,18 +292,18 @@ export class ComponentRef {
    * renders it to the named attribute of the provided element. Automatically
    * re-renders whenever a dependency of `signal` is modified.
    *
-   * A default {@link Serializer} is inferred from the return value of `signal`
+   * A default {@link AttrSerializer} is inferred from the return value of `signal`
    * if no token is provided.
    *
    * @param elementOrSelector The element to render to or a selector of the
    *     element to render to.
    * @param name The name of the attribute to bind to.
    * @param signal The signal to invoke in a reactive context.
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers a {@link AttrSerializer} to
    *     serialize the `signal` result to a string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    */
   public bindAttr<Primitive extends string | number | boolean | bigint>(
@@ -367,7 +367,7 @@ export class ComponentRef {
     // Resolve an explicit serializer immediately, since that isn't dependent on
     // the value and we don't want to do this for every invocation of effect.
     const explicitSerializer = token
-        ? resolveSerializer(token) as Serializer<Value>
+        ? resolveSerializer(token) as AttrSerializer<Value>
         : undefined;
 
     this.effect(() => {
@@ -400,7 +400,7 @@ export class ComponentRef {
  * Given the type of the provided value, returns a serializer which can
  * serialize it or `undefined` if no serializer can.
  */
-function inferSerializer(value: unknown): Serializer<unknown> | undefined {
+function inferSerializer(value: unknown): AttrSerializer<unknown> | undefined {
   switch (typeof value) {
     case 'string': return stringSerializer;
     case 'number': return numberSerializer;

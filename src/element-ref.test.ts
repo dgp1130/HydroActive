@@ -1,5 +1,5 @@
 import { ElementRef } from './element-ref.js';
-import { type Serializable, type Serializer, toSerializer } from './serializers.js';
+import { type AttrSerializer, type Serializable, toSerializer } from './serializers.js';
 import { parseHtml } from './testing/html-parser.js';
 
 describe('element-ref', () => {
@@ -71,7 +71,7 @@ describe('element-ref', () => {
       });
 
       it('reads the text content of the element with the given custom serializer', () => {
-        const serializer: Serializer<{ foo: string }> = {
+        const serializer: AttrSerializer<{ foo: string }> = {
           serialize(value: { foo: string }): string {
             return value.foo;
           },
@@ -88,7 +88,7 @@ describe('element-ref', () => {
       it('reads the text content of the element with the given serializable', () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -107,7 +107,7 @@ describe('element-ref', () => {
 
       it('throws an error if the deserialization process throws', () => {
         const err = new Error('Failed to deserialize.');
-        const serializer: Serializer<string> = {
+        const serializer: AttrSerializer<string> = {
           serialize(value: string): string {
             return value;
           },
@@ -139,7 +139,7 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializer = {} as Serializer<number>;
+          const serializer = {} as AttrSerializer<number>;
 
           const _result: number = el.read(serializer);
         };
@@ -200,7 +200,7 @@ describe('element-ref', () => {
       });
 
       it('deserializes the attribute with the given custom serializer', () => {
-        const serializer: Serializer<{ foo: string }> = {
+        const serializer: AttrSerializer<{ foo: string }> = {
           serialize(value: { foo: string }): string {
             return value.foo;
           },
@@ -217,7 +217,7 @@ describe('element-ref', () => {
       it('deserializes the attribute with the given serializable', () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -236,7 +236,7 @@ describe('element-ref', () => {
 
       it('throws an error if the deserialization process throws', () => {
         const err = new Error('Failed to deserialize.');
-        const serializer: Serializer<string> = {
+        const serializer: AttrSerializer<string> = {
           serialize(value: string): string {
             return value;
           },
@@ -280,7 +280,7 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializer = {} as Serializer<number>;
+          const serializer = {} as AttrSerializer<number>;
 
           const _result1: number = el.attr('test', serializer);
           const _result2: number = el.attr('test', serializer, {});

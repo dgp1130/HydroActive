@@ -1,7 +1,7 @@
 import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { type Serializable, type Serializer, toSerializer } from './serializers.js';
+import { type AttrSerializer, type Serializable, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
 
@@ -396,7 +396,7 @@ describe('component-ref', () => {
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
-        const serializer: Serializer<string> = {
+        const serializer: AttrSerializer<string> = {
           serialize(value: string): string {
             return `serialized: ${value}`;
           },
@@ -417,7 +417,7 @@ describe('component-ref', () => {
       it('processes the DOM element based on the provided serializable', async () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -484,8 +484,8 @@ describe('component-ref', () => {
               ref.live(ref.host, Boolean);
           const _signal4: WriteableSignal<bigint> = ref.live(ref.host, BigInt);
 
-          // Custom `Serializer` type.
-          const serializer = {} as Serializer<string>;
+          // Custom `AttrSerializer` type.
+          const serializer = {} as AttrSerializer<string>;
           const _signal5: WriteableSignal<string> =
               ref.live(ref.host, serializer);
 
@@ -610,7 +610,7 @@ describe('component-ref', () => {
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
-        const serializer: Serializer<string> = {
+        const serializer: AttrSerializer<string> = {
           serialize(value: string): string {
             return `serialized: ${value}`;
           },
@@ -631,7 +631,7 @@ describe('component-ref', () => {
       it('processes the DOM element based on the provided serializable', async () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -702,8 +702,8 @@ describe('component-ref', () => {
           const _signal4: WriteableSignal<bigint> =
               ref.liveAttr(ref.host, 'value', BigInt);
 
-          // Custom `Serializer` type.
-          const serializer = {} as Serializer<string>;
+          // Custom `AttrSerializer` type.
+          const serializer = {} as AttrSerializer<string>;
           const _signal5: WriteableSignal<string> =
               ref.liveAttr(ref.host, 'value', serializer);
 
@@ -906,7 +906,7 @@ describe('component-ref', () => {
             NoopComponent;
         document.body.appendChild(el);
 
-        const serializer: Serializer<undefined> = {
+        const serializer: AttrSerializer<undefined> = {
           serialize(): string {
             return 'undefined';
           },
@@ -926,7 +926,7 @@ describe('component-ref', () => {
         class User {
           public constructor(private name: string) {}
 
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -1010,7 +1010,7 @@ describe('component-ref', () => {
           ref.bind(ref.host, () => null, undefined);
 
           // Incorrect types with possibly `undefined` serializer.
-          const maybeSerializer = {} as Serializer<{}> | undefined;
+          const maybeSerializer = {} as AttrSerializer<{}> | undefined;
           // @ts-expect-error
           ref.bind(ref.host, () => ({}), maybeSerializer);
           // @ts-expect-error
@@ -1037,7 +1037,7 @@ describe('component-ref', () => {
           ref.bind(ref.host, () => 1234n, String);
 
           // Correct explicit serializer types.
-          const serializer = {} as Serializer<string>;
+          const serializer = {} as AttrSerializer<string>;
           ref.bind(ref.host, () => 'test', serializer);
 
           // Incorrect explicit serializer types.
@@ -1247,7 +1247,7 @@ describe('component-ref', () => {
             NoopComponent;
         document.body.appendChild(el);
 
-        const serializer: Serializer<undefined> = {
+        const serializer: AttrSerializer<undefined> = {
           serialize(): string {
             return 'undefined';
           },
@@ -1267,7 +1267,7 @@ describe('component-ref', () => {
         class User {
           public constructor(private name: string) {}
 
-          public static [toSerializer](): Serializer<User> {
+          public static [toSerializer](): AttrSerializer<User> {
             return {
               serialize(user: User): string {
                 return user.name;
@@ -1375,7 +1375,7 @@ describe('component-ref', () => {
           ref.bindAttr(ref.host, 'data', () => null, undefined);
 
           // Incorrect types with possibly `undefined` serializer.
-          const maybeSerializer = {} as Serializer<{}> | undefined;
+          const maybeSerializer = {} as AttrSerializer<{}> | undefined;
           // @ts-expect-error
           ref.bindAttr(ref.host, 'data', () => ({}), maybeSerializer);
           // @ts-expect-error
@@ -1402,7 +1402,7 @@ describe('component-ref', () => {
           ref.bindAttr(ref.host, 'data', () => 1234n, String);
 
           // Correct explicit serializer types.
-          const serializer = {} as Serializer<string>;
+          const serializer = {} as AttrSerializer<string>;
           ref.bindAttr(ref.host, 'data', () => 'test', serializer);
 
           // Incorrect explicit serializer types.

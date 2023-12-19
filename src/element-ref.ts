@@ -3,7 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
-import { type Serialized, type Serializer, type Serializable, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
+import { type AttrSerializer, type Serialized, type Serializable, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
  * A wrapper class of {@link Element} which provides more ergonomic API access
@@ -30,11 +30,11 @@ export class ElementRef<El extends Element> {
   /**
    * Provides the value of the text content on the underlying element.
    *
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     deserialize the read attribute string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    * @returns The value of the text content for this element deserialized based
    *     on the input token.
@@ -63,11 +63,11 @@ export class ElementRef<El extends Element> {
    * if an attribute exists is: `attr('foo') !== null`.
    *
    * @param name The name of the attribute to read.
-   * @param token A "token" which identifiers a {@link Serializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     deserialize the read attribute string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   A {@link Serializer} object.
+   *     *   An {@link AttrSerializer} object.
    *     *   A {@link Serializable} object.
    * @returns The value of the attribute deserialized based on the input token,
    *     or `null` if not set.
@@ -190,18 +190,19 @@ type PrimitiveSerializerToken<Value> =
 ;
 
 /**
- * Tokens which can be exchanged for {@link Serializer} object.
- * {@link Serializer} objects are treated as tokens which can be exchanged for
- * themselves.
+ * Tokens which can be exchanged for an {@link AttrSerializer} object.
+ * {@link AttrSerializer} objects are treated as tokens which can be exchanged
+ * for themselves.
  */
 export type SerializerToken<Value> =
     | PrimitiveSerializerToken<Value>
-    | Serializer<Value>
+    | AttrSerializer<Value>
     | Serializable<Value>
 ;
 
 /**
- * Resolves and returns the {@link Serializer} referenced by the provided token.
+ * Resolves and returns the {@link AttrSerializer} referenced by the provided
+ * token.
  */
 export function resolveSerializer<Token extends SerializerToken<any>>(
     token: Token): ResolveSerializer<typeof token> {
@@ -230,7 +231,7 @@ export function resolveSerializer<Token extends SerializerToken<any>>(
 export type ResolveSerializer<Token extends SerializerToken<any>> =
     Token extends Serializable<unknown>
         ? ReturnType<Token[typeof toSerializer]>
-        : Token extends Serializer<unknown>
+        : Token extends AttrSerializer<unknown>
             ? Token
             : Token extends typeof String
                 ? typeof stringSerializer
