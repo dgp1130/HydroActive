@@ -55,25 +55,6 @@ describe('element-ref', () => {
       });
     });
 
-    describe('text', () => {
-      it('returns the `textContent` of the underlying element', () => {
-        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
-
-        expect(el.text).toBe('Hello, World!');
-      });
-
-      it('throws an error when `textContent` is `null`', () => {
-        // `textContent` is only `null` for `document` or a Doctype node,
-        // which should be disallowed at construction time. So the only way to
-        // simulate this is by overriding `textContent` directly.
-        const div = document.createElement('div');
-        spyOnProperty(div, 'textContent').and.returnValue(null);
-
-        const el = ElementRef.from(div);
-        expect(() => el.text).toThrowError(/`textContent` was `null`\./);
-      });
-    });
-
     describe('read', () => {
       it('reads the text content of the element and deserializes with the given primitive serializer', () => {
         const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
@@ -316,7 +297,7 @@ describe('element-ref', () => {
         const el = ElementRef.from(
             parseHtml(`<div><span>Hello, World!</span></div>`));
 
-        expect(el.query('span').text).toBe('Hello, World!');
+        expect(el.query('span').read(String)).toBe('Hello, World!');
       });
 
       it('throws an error when no element is found and not marked `optional`', () => {
@@ -456,7 +437,7 @@ describe('element-ref', () => {
 </div>
         `.trim()));
 
-        expect(el.query(':scope > span').text).toBe('Child');
+        expect(el.query(':scope > span').read(String)).toBe('Child');
       });
     });
 
@@ -470,7 +451,7 @@ describe('element-ref', () => {
 </div>
         `.trim()));
 
-        expect(el.queryAll('span').map((el) => el.text)).toEqual([
+        expect(el.queryAll('span').map((el) => el.read(String))).toEqual([
           'Hello, World!',
           'Hello again!',
           'Hello once more!',
@@ -515,10 +496,11 @@ describe('element-ref', () => {
 </div>
         `.trim()));
 
-        expect(el.queryAll(':scope > span').map((el) => el.text)).toEqual([
-          'Child 1',
-          'Child 2',
-        ]);
+        expect(el.queryAll(':scope > span').map((el) => el.read(String)))
+            .toEqual([
+              'Child 1',
+              'Child 2',
+            ]);
       });
 
       it('types the result based on query', () => {

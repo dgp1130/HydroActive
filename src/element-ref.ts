@@ -28,25 +28,6 @@ export class ElementRef<El extends Element> {
   }
 
   /**
-   * Provides the {@link Element.prototype.textContent} value of the underlying
-   * element, asserted to be non-null.
-   *
-   * @returns The text content of the underlying element.
-   */
-  public get text(): string {
-    const text = this.native.textContent;
-
-    // This should only happen when the native element is a `Document` or a
-    // DocType. Neither should be allowed to be constructed, but even if so, we
-    // assert here to be sure.
-    if (text === null) {
-      throw new Error('`textContent` was `null`.');
-    }
-
-    return text;
-  }
-
-  /**
    * Provides the value of the text content on the underlying element.
    *
    * @param serializerToken A "token" which identifiers a {@link Serializer} to
@@ -64,8 +45,17 @@ export class ElementRef<El extends Element> {
       | Serializable<unknown>
   >(serializerToken: SerializerToken):
       Serialized<ResolveSerializer<SerializerToken>> {
+    const text = this.native.textContent;
+
+    // This should only happen when the native element is a `Document` or a
+    // DocType. Neither should be allowed to be constructed, but even if so, we
+    // assert here to be sure.
+    if (text === null) {
+      throw new Error('`textContent` was `null`.');
+    }
+
     const serializer = resolveSerializer(serializerToken);
-    return serializer.deserialize(this.text) as any;
+    return serializer.deserialize(text) as any;
   }
 
   /**
