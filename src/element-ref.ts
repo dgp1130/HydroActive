@@ -80,10 +80,46 @@ export class ElementRef<El extends Element> {
       | PrimitiveSerializerToken
       | Serializer<unknown>
       | Serializable<unknown>
-  >(name: string, serializerToken: SerializerToken):
-      Serialized<ResolveSerializer<SerializerToken>> | null {
+  >(
+    name: string,
+    serializerToken: SerializerToken,
+    options: { optional: true },
+  ): Serialized<ResolveSerializer<SerializerToken>> | undefined;
+  public attr<SerializerToken extends
+      | PrimitiveSerializerToken
+      | Serializer<unknown>
+      | Serializable<unknown>
+  >(
+    name: string,
+    serializerToken: SerializerToken,
+    options?: { optional?: false },
+  ): Serialized<ResolveSerializer<SerializerToken>>;
+  public attr<SerializerToken extends
+      | PrimitiveSerializerToken
+      | Serializer<unknown>
+      | Serializable<unknown>
+  >(
+    name: string,
+    serializerToken: SerializerToken,
+    options?: { optional?: boolean },
+  ): Serialized<ResolveSerializer<SerializerToken>> | undefined;
+  public attr<SerializerToken extends
+      | PrimitiveSerializerToken
+      | Serializer<unknown>
+      | Serializable<unknown>
+  >(
+    name: string,
+    serializerToken: SerializerToken,
+    { optional }: { optional?: boolean } = {},
+  ): Serialized<ResolveSerializer<SerializerToken>> | undefined {
     const serialized = this.native.getAttribute(name);
-    if (serialized === null) return null;
+    if (serialized === null) {
+      if (optional) {
+        return undefined;
+      } else {
+        throw new Error(`Attribute "${name}" did not exist on element. Is the name wrong, or does the attribute not exist? If it is expected that the attribute may not exist, consider calling \`attr\` with \`{ optional: true }\` to ignore this error.`);
+      }
+    }
 
     const serializer = resolveSerializer(serializerToken);
     return serializer.deserialize(serialized) as any;

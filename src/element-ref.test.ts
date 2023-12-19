@@ -164,12 +164,6 @@ describe('element-ref', () => {
         expect(el.attr('foo', String)).toBe('bar');
       });
 
-      it('returns `null` when the attribute is not set', () => {
-        const el = ElementRef.from(document.createElement('div'));
-
-        expect(el.attr('foo', String)).toBeNull();
-      });
-
       it('deserializes empty string when the attribute is set with no value', () => {
         const el = ElementRef.from(parseHtml(`<div foo bar=""></div>`));
 
@@ -202,7 +196,7 @@ describe('element-ref', () => {
         expect(() => el4.attr('enabled', Boolean)).toThrow();
 
         const el5 = ElementRef.from(parseHtml(`<div></div>`));
-        expect(el5.attr('enabled', Boolean)).toBeNull();
+        expect(() => el5.attr('enabled', Boolean)).toThrow();
       });
 
       it('deserializes the attribute with the given custom serializer', () => {
@@ -256,16 +250,28 @@ describe('element-ref', () => {
         expect(() => el.attr('hello', serializer)).toThrow(err);
       });
 
+      it('returns `undefined` if the attribute does not exist and is marked optional', () => {
+        const el = ElementRef.from(parseHtml(`<div></div>`));
+        expect(el.attr('hello', String, { optional: true })).toBeUndefined();
+      });
+
       it('resolves return type from input primitive serializer type', () => {
         // Type-only test, only needs to compile, not execute.
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
 
-          const _resultStr: string | null = el.attr('test', String);
-          const _resultNum: number | null = el.attr('test', Number);
-          const _resultBool: boolean | null = el.attr('test', Boolean);
-          const _resultBigInt: bigint | null = el.attr('test', BigInt);
+          const _result1: string = el.attr('test', String);
+          const _result2: string = el.attr('test', String, {});
+          const _result3: string =
+              el.attr('test', String, { optional: false });
+
+          let optional = el.attr('test', String, { optional: true });
+          optional = 'test' as string | undefined;
+
+          let unknown =
+              el.attr('test', String, { optional: true as boolean });
+          unknown = 'test' as string | undefined;
         };
       });
 
@@ -276,7 +282,17 @@ describe('element-ref', () => {
           const el = {} as ElementRef<HTMLDivElement>;
           const serializer = {} as Serializer<number>;
 
-          const _result: number | null = el.attr('test', serializer);
+          const _result1: number = el.attr('test', serializer);
+          const _result2: number = el.attr('test', serializer, {});
+          const _result3: number =
+              el.attr('test', serializer, { optional: false });
+
+          let optional = el.attr('test', serializer, { optional: true });
+          optional = 123 as number | undefined;
+
+          let unknown =
+              el.attr('test', serializer, { optional: true as boolean });
+          unknown = 123 as number | undefined;
         };
       });
 
@@ -287,7 +303,17 @@ describe('element-ref', () => {
           const el = {} as ElementRef<HTMLDivElement>;
           const serializable = {} as Serializable<number>;
 
-          const _result: number | null = el.attr('test', serializable);
+          const _result1: number = el.attr('test', serializable);
+          const _result2: number = el.attr('test', serializable, {});
+          const _result3: number =
+              el.attr('test', serializable, { optional: false });
+
+          let optional = el.attr('test', serializable, { optional: true });
+          optional = 123 as number | undefined;
+
+          let unknown =
+              el.attr('test', serializable, { optional: true as boolean });
+          unknown = 123 as number | undefined;
         };
       });
     });
