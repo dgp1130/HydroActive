@@ -11,7 +11,7 @@ export type HydrateLifecycle = (host: ComponentRef) => void;
  * Defines a component of the given tag name with the provided hydration
  * callback.
  */
-export function component(tagName: string, hydrate: HydrateLifecycle):
+export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
     Class<HTMLElement> {
   const Component = class extends HydroActiveComponent {
     override hydrate(): void {

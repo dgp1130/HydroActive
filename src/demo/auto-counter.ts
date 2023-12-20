@@ -1,7 +1,7 @@
-import { component } from 'hydroactive';
+import { defineComponent } from 'hydroactive';
 
 /** Automatically increments the count over time. */
-export const AutoCounter = component('auto-counter', (comp) => {
+export const AutoCounter = defineComponent('auto-counter', (comp) => {
   const count = comp.live('span', Number);
 
   comp.connected(() => {

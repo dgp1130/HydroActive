@@ -1,4 +1,4 @@
-import { component, HydrateLifecycle } from './component.js';
+import { type HydrateLifecycle, defineComponent } from './component.js';
 import { ComponentRef } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
@@ -13,10 +13,10 @@ describe('component', () => {
     }
   });
 
-  describe('component', () => {
+  describe('defineComponent', () => {
     it('upgrades already rendered components', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
-      component('already-rendered', hydrate);
+      defineComponent('already-rendered', hydrate);
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     }));
@@ -24,7 +24,7 @@ describe('component', () => {
     it('upgrades components rendered after definition', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
 
-      component('new-component', hydrate);
+      defineComponent('new-component', hydrate);
       expect(hydrate).not.toHaveBeenCalled();
 
       const comp = document.createElement('new-component');
@@ -42,7 +42,7 @@ describe('component', () => {
         self = this;
       }
 
-      component('this-component', hydrate);
+      defineComponent('this-component', hydrate);
 
       const comp = document.createElement('this-component');
       document.body.appendChild(comp);
@@ -52,7 +52,7 @@ describe('component', () => {
 
     it('invokes hydrate callback with an `ElementRef` of the component host', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
-      component('host-component', hydrate);
+      defineComponent('host-component', hydrate);
 
       const comp =
           document.createElement('host-component') as HydroActiveComponent;
@@ -64,17 +64,17 @@ describe('component', () => {
 
     it('sets the class name', () => {
       {
-        const Comp = component('foo-bar-baz', () => {});
+        const Comp = defineComponent('foo-bar-baz', () => {});
         expect(Comp.name).toBe('FooBarBaz');
       }
 
       {
-        const Comp = component('foo-bar-', () => {});
+        const Comp = defineComponent('foo-bar-', () => {});
         expect(Comp.name).toBe('FooBar');
       }
 
       {
-        const Comp = component('foo-----bar', () => {});
+        const Comp = defineComponent('foo-----bar', () => {});
         expect(Comp.name).toBe('FooBar');
       }
     });
