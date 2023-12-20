@@ -3,7 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
-import { type AttrSerializer, type Serialized, type Serializable, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
  * A wrapper class of {@link Element} which provides more ergonomic API access
@@ -35,7 +35,7 @@ export class ElementRef<El extends Element> {
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
    *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   A {@link AttrSerializable} object.
    * @returns The value of the text content for this element deserialized based
    *     on the input token.
    */
@@ -68,7 +68,7 @@ export class ElementRef<El extends Element> {
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
    *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   A {@link AttrSerializable} object.
    * @returns The value of the attribute deserialized based on the input token,
    *     or `null` if not set.
    */
@@ -197,7 +197,7 @@ type PrimitiveSerializerToken<Value> =
 export type SerializerToken<Value> =
     | PrimitiveSerializerToken<Value>
     | AttrSerializer<Value>
-    | Serializable<Value>
+    | AttrSerializable<Value>
 ;
 
 /**
@@ -217,7 +217,7 @@ export function resolveSerializer<Token extends SerializerToken<any>>(
       return bigintSerializer as ResolveSerializer<Token>;
     } default: {
       if (toSerializer in token) {
-        return (token as Serializable<unknown>)[toSerializer]() as
+        return (token as AttrSerializable<unknown>)[toSerializer]() as
             ResolveSerializer<Token>;
       } else {
         // Already a serializer.
@@ -229,7 +229,7 @@ export function resolveSerializer<Token extends SerializerToken<any>>(
 
 // Computes the return type of a resolved `Serializer` object for a given token.
 export type ResolveSerializer<Token extends SerializerToken<any>> =
-    Token extends Serializable<unknown>
+    Token extends AttrSerializable<unknown>
         ? ReturnType<Token[typeof toSerializer]>
         : Token extends AttrSerializer<unknown>
             ? Token

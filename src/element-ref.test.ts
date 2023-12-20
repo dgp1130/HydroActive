@@ -1,5 +1,5 @@
 import { ElementRef } from './element-ref.js';
-import { type AttrSerializer, type Serializable, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, toSerializer } from './serializers.js';
 import { parseHtml } from './testing/html-parser.js';
 
 describe('element-ref', () => {
@@ -150,7 +150,7 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializable = {} as Serializable<number>;
+          const serializable = {} as AttrSerializable<number>;
 
           const _result: number = el.read(serializable);
         };
@@ -301,7 +301,7 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializable = {} as Serializable<number>;
+          const serializable = {} as AttrSerializable<number>;
 
           const _result1: number = el.attr('test', serializable);
           const _result2: number = el.attr('test', serializable, {});

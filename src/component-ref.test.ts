@@ -1,7 +1,7 @@
 import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { type AttrSerializer, type Serializable, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
 
@@ -490,7 +490,7 @@ describe('component-ref', () => {
               ref.live(ref.host, serializer);
 
           // Custom `Serializable` type.
-          const serializable = {} as Serializable<string>;
+          const serializable = {} as AttrSerializable<string>;
           const _signal6: WriteableSignal<string> =
               ref.live(ref.host, serializable);
         };
@@ -708,7 +708,7 @@ describe('component-ref', () => {
               ref.liveAttr(ref.host, 'value', serializer);
 
           // Custom `Serializable` type.
-          const serializable = {} as Serializable<string>;
+          const serializable = {} as AttrSerializable<string>;
           const _signal6: WriteableSignal<string> =
               ref.liveAttr(ref.host, 'value', serializable);
         };
@@ -1045,7 +1045,7 @@ describe('component-ref', () => {
           ref.bind(ref.host, () => 1234, serializer);
 
           // Correct explicit serializable types.
-          const serializable = {} as Serializable<string>;
+          const serializable = {} as AttrSerializable<string>;
           ref.bind(ref.host, () => 'test', serializable);
 
           // Incorrect explicit serializable types.
@@ -1410,7 +1410,7 @@ describe('component-ref', () => {
           ref.bindAttr(ref.host, 'data', () => 1234, serializer);
 
           // Correct explicit serializable types.
-          const serializable = {} as Serializable<string>;
+          const serializable = {} as AttrSerializable<string>;
           ref.bindAttr(ref.host, 'data', () => 'test', serializable);
 
           // Incorrect explicit serializable types.

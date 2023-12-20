@@ -29,11 +29,11 @@ export interface AttrSerializer<Value> {
 
 /**
  * Returns the serialized type wrapped by the given {@link AttrSerializer} or
- * {@link Serializable} type.
+ * {@link AttrSerializable} type.
  */
 export type Serialized<
-    Serial extends AttrSerializer<unknown> | Serializable<unknown>,
-> = Serial extends Serializable<infer Value>
+    Serial extends AttrSerializer<unknown> | AttrSerializable<unknown>,
+> = Serial extends AttrSerializable<infer Value>
     ? Value
     : Serial extends AttrSerializer<infer Value>
         ? Value
@@ -51,4 +51,6 @@ export const toSerializer = Symbol('toSerializer');
  * object to an {@link AttrSerializer} which can serialize and deserialize that
  * type.
  */
-export type Serializable<Value> = { [toSerializer](): AttrSerializer<Value> };
+export type AttrSerializable<Value> = {
+  [toSerializer](): AttrSerializer<Value>,
+};
