@@ -3,6 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
+import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
@@ -198,115 +199,4 @@ type QueryAllResult<Query extends string, Host extends Element> =
   QueriedElement<Query, Host> extends null
     ? Element
     : QueriedElement<Query, Host>
-;
-
-// Tokens which reference `Serializer` objects for primitive types, filtered
-// down only to those which extend the given input type.
-type PrimitiveSerializerToken<Value> =
-  | Value extends string ? typeof String : never
-  | Value extends number ? typeof Number : never
-  | Value extends boolean ? typeof Boolean : never
-  | Value extends bigint ? typeof BigInt : never
-;
-
-/**
- * Tokens which can be exchanged for an {@link ElementSerializer} object.
- * {@link ElementSerializer} objects are treated as tokens which can be
- * exchanged for themselves.
- */
-export type ElementSerializerToken<Value, El extends Element> =
-  | PrimitiveSerializerToken<Value>
-  | ElementSerializer<Value, El>
-  | ElementSerializable<Value, El>
-;
-
-/**
- * Tokens which can be exchanged for an {@link AttrSerializer} object.
- * {@link AttrSerializer} objects are treated as tokens which can be exchanged
- * for themselves.
- */
-export type AttrSerializerToken<Value> =
-  | PrimitiveSerializerToken<Value>
-  | AttrSerializer<Value>
-  | AttrSerializable<Value>
-;
-
-/**
- * A token for either an {@link ElementSerializer} or an {@link AttrSerializer}.
- */
-export type SerializerToken<Value> =
-  ElementSerializerToken<Value, any> | AttrSerializerToken<Value>;
-
-/**
- * Resolves and returns the {@link AttrSerializer} referenced by the provided
- * token.
- */
-export function resolveSerializer<
-  Token extends SerializerToken<any>,
-  SerializerKind extends
-    | ElementSerializer<unknown, any>
-    | AttrSerializer<unknown>,
-  SerializableKind extends
-    | ElementSerializable<unknown, any>
-    | AttrSerializable<unknown>,
->(token: Token): ResolveSerializer<
-  Token,
-  SerializerKind,
-  SerializableKind
-> {
-  switch (token) {
-    case String: {
-      return stringSerializer as
-          ResolveSerializer<Token, SerializerKind, SerializableKind>;
-    } case Number: {
-      return numberSerializer as
-          ResolveSerializer<Token, SerializerKind, SerializableKind>;
-    } case Boolean: {
-      return booleanSerializer as
-          ResolveSerializer<Token, SerializerKind, SerializableKind>;
-    } case BigInt: {
-      return bigintSerializer as
-          ResolveSerializer<Token, SerializerKind, SerializableKind>;
-    } default: {
-      if (toSerializer in token) {
-        type Serializable =
-          | ElementSerializable<unknown, any>
-          | AttrSerializable<unknown>
-        ;
-        return (token as Serializable)[toSerializer]() as
-            ResolveSerializer<Token, SerializerKind, SerializableKind>;
-      } else {
-        // Already a serializer.
-        return token as
-            ResolveSerializer<Token, SerializerKind, SerializableKind>;
-      }
-    }
-  }
-}
-
-// Computes the return type of a resolved `Serializer` object for a given token.
-export type ResolveSerializer<
-  // The token to resolve.
-  Token extends SerializerToken<any>,
-  // Whether to resolve to element or attribute serializers.
-  SerializerKind extends
-    | ElementSerializer<unknown, any>
-    | AttrSerializer<unknown>,
-  // Whether to resolve to element or attribute serializables.
-  SerializableKind extends
-    | ElementSerializable<unknown, any>
-    | AttrSerializable<unknown>,
-> = Token extends SerializableKind
-  ? ReturnType<Token[typeof toSerializer]>
-  : Token extends SerializerKind
-    ? Token
-    : Token extends typeof String
-      ? typeof stringSerializer
-      : Token extends typeof Number
-        ? typeof numberSerializer
-        : Token extends typeof Boolean
-          ? typeof booleanSerializer
-          : Token extends typeof BigInt
-            ? typeof bigintSerializer
-            : never
 ;

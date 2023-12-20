@@ -1,6 +1,7 @@
-import { type AttrSerializerToken, ElementRef, type ElementSerializerToken, type ResolveSerializer, type SerializerToken, resolveSerializer } from './element-ref.js';
+import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { QueriedElement } from './query.js';
+import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, type SerializerToken, resolveSerializer } from './serializer-tokens.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
 import { type Signal, type WriteableSignal, effect, signal } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
