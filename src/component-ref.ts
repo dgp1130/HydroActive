@@ -1,6 +1,7 @@
-import { ElementRef, type ResolveSerializer, type SerializerToken, resolveSerializer } from './element-ref.js';
+import { type AttrSerializerToken, ElementRef, type ElementSerializerToken, type ResolveSerializer, type SerializerToken, resolveSerializer } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { type AttrSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
+import { QueriedElement } from './query.js';
+import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer } from './serializers.js';
 import { type Signal, type WriteableSignal, effect, signal } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
@@ -148,36 +149,43 @@ export class ComponentRef {
    * @param elementOrSelector An {@link ElementRef} or a selector to look up in
    *     the component to get an element. Used to read and bind the return
    *     signal to.
-   * @param token A "token" which identifiers an {@link AttrSerializer} to
-   *     serialize the `signal` result to a string. A token is one of:
+   * @param token A "token" which identifiers an {@link ElementSerializer} to
+   *     serialize the `signal` result to an element. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   An {@link ElementSerializer} object.
+   *     *   A {@link ElementSerializable} object.
    * @returns A {@link WriteableSignal} initialized to the current text content
    *     of the specified element. When the signal is mutated, the value is
    *     automatically propagated back to the DOM.
    */
-  public live<Token extends SerializerToken<any>>(
-    elementOrSelector: ElementRef<Element> | string,
+  public live<
+    ElementOrSelector extends ElementRef<Element> | string,
+    Token extends ElementSerializerToken<any, ElementOf<ElementOrSelector>>,
+  >(
+    elementOrSelector: ElementOrSelector,
     token: Token,
-  ): WriteableSignal<Serialized<ResolveSerializer<Token>>> {
+  ): WriteableSignal<Serialized<ResolveSerializer<
+    Token,
+    ElementSerializer<unknown, ElementOf<ElementOrSelector>>,
+    ElementSerializable<unknown, ElementOf<ElementOrSelector>>
+  >>> {
     // Query for a selector if provided.
     const element = elementOrSelector instanceof ElementRef
-        ? elementOrSelector
+        ? elementOrSelector as ElementRef<ElementOf<ElementOrSelector>>
         : this.host.query(elementOrSelector);
 
     // Read the initial value from the DOM.
-    const initial = element.read(token);
+    const initial = element.read(token as any);
 
     // Wrap the value in a reactive signal.
     const value = signal(initial);
 
     // Bind the signal back to the DOM to reflect future changes.
-    this.bind(element, value, token);
+    this.bind(element as any, value, token);
 
     // Return a writeable version of the signal.
-    return value;
+    return value as any;
   }
 
 
@@ -210,16 +218,20 @@ export class ComponentRef {
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
    *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   A {@link AttrSerializable} object.
    * @returns A {@link WriteableSignal} initialized to the current value of the
    *     named attribute for the specified element. When the signal is mutated,
    *     the value is automatically propagated back to the DOM.
    */
-  public liveAttr<Token extends SerializerToken<any>>(
+  public liveAttr<Token extends AttrSerializerToken<any>>(
     elementOrSelector: ElementRef<Element> | string,
     name: string,
     token: Token,
-  ): WriteableSignal<Serialized<ResolveSerializer<Token>>> {
+  ): WriteableSignal<Serialized<ResolveSerializer<
+    Token,
+    AttrSerializer<unknown>,
+    AttrSerializable<unknown>
+  >>> {
     // Query for a selector if provided.
     const element = elementOrSelector instanceof ElementRef
         ? elementOrSelector
@@ -243,33 +255,36 @@ export class ComponentRef {
    * renders it to the provided element's text content. Automatically re-renders
    * whenever a dependency of `signal` is modified.
    *
-   * A default {@link AttrSerializer} is inferred from the return value of `signal`
-   * if no token is provided.
+   * A default {@link ElementSerializer} is inferred from the return value of
+   * `signal` if no token is provided.
    *
    * @param elementOrSelector The element to render to or a selector of the
    *     element to render to.
    * @param signal The signal to invoke in a reactive context.
-   * @param token A "token" which identifiers an {@link AttrSerializer} to
-   *     serialize the `signal` result to a string. A token is one of:
+   * @param token A "token" which identifiers an {@link ElementSerializer} to
+   *     serialize the `signal` result to an element. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   An {@link ElementSerializer} object.
+   *     *   A {@link ElementSerializable} object.
    */
-  public bind<Primitive extends string | number | boolean | bigint>(
-    elementOrSelector: ElementRef<Element> | string,
+  public bind<
+    Primitive extends string | number | boolean | bigint,
+    ElementOrSelector extends ElementRef<Element> | string,
+  >(
+    elementOrSelector: ElementOrSelector,
     signal: Signal<Primitive>,
-    token?: SerializerToken<Primitive>,
+    token?: ElementSerializerToken<Primitive, ElementOf<ElementOrSelector>>,
   ): void;
-  public bind<Value>(
-    elementOrSelector: ElementRef<Element> | string,
+  public bind<Value, ElementOrSelector extends ElementRef<Element> | string>(
+    elementOrSelector: ElementOrSelector,
     signal: Signal<Value>,
-    token: SerializerToken<Value>,
+    token: ElementSerializerToken<Value, ElementOf<ElementOrSelector>>,
   ): void;
-  public bind<Value>(
-    elementOrSelector: ElementRef<Element> | string,
+  public bind<Value, ElementOrSelector extends ElementRef<Element> | string>(
+    elementOrSelector: ElementOrSelector,
     signal: Signal<Value>,
-    token?: SerializerToken<Value>,
+    token?: ElementSerializerToken<Value, ElementOf<ElementOrSelector>>,
   ): void {
     this.#bindToDom(
       elementOrSelector,
@@ -281,8 +296,8 @@ export class ComponentRef {
         }
         boundElements.add(element);
       },
-      /* updateDom */ (element, serialized) => {
-        element.textContent = serialized;
+      /* updateDom */ (element, serializer, value) => {
+        (serializer as ElementSerializer<Value, Element>).serializeTo(value, element);
       },
     );
   }
@@ -292,37 +307,37 @@ export class ComponentRef {
    * renders it to the named attribute of the provided element. Automatically
    * re-renders whenever a dependency of `signal` is modified.
    *
-   * A default {@link AttrSerializer} is inferred from the return value of `signal`
-   * if no token is provided.
+   * A default {@link AttrSerializer} is inferred from the return value of
+   * `signal` if no token is provided.
    *
    * @param elementOrSelector The element to render to or a selector of the
    *     element to render to.
    * @param name The name of the attribute to bind to.
    * @param signal The signal to invoke in a reactive context.
-   * @param token A "token" which identifiers a {@link AttrSerializer} to
+   * @param token A "token" which identifiers an {@link AttrSerializer} to
    *     serialize the `signal` result to a string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
    *     *   An {@link AttrSerializer} object.
-   *     *   A {@link Serializable} object.
+   *     *   A {@link AttrSerializable} object.
    */
   public bindAttr<Primitive extends string | number | boolean | bigint>(
     elementOrSelector: ElementRef<Element> | string,
     name: string,
     signal: Signal<Primitive>,
-    token?: SerializerToken<Primitive>,
+    token?: AttrSerializerToken<Primitive>,
   ): void;
   public bindAttr<Value>(
     elementOrSelector: ElementRef<Element> | string,
     name: string,
     signal: Signal<Value>,
-    token: SerializerToken<Value>,
+    token: AttrSerializerToken<Value>,
   ): void;
   public bindAttr<Value>(
     elementOrSelector: ElementRef<Element> | string,
     name: string,
     signal: Signal<Value>,
-    token?: SerializerToken<Value>,
+    token?: AttrSerializerToken<Value>,
   ): void {
     this.#bindToDom(
       elementOrSelector,
@@ -336,8 +351,9 @@ export class ComponentRef {
         boundAttrs.add(name);
         boundElementAttrs.set(element, boundAttrs);
       },
-      /* updateDom */ (element, serialized) => {
-        element.setAttribute(name, serialized);
+      /* updateDom */ (element, serializer, value) => {
+        const serial = (serializer as AttrSerializer<Value>).serialize(value);
+        element.setAttribute(name, serial);
       },
     );
   }
@@ -354,7 +370,11 @@ export class ComponentRef {
     signal: Signal<Value>,
     token: SerializerToken<Value> | undefined,
     boundCheck: (el: Element) => void,
-    updateDom: (el: Element, serialized: string) => void,
+    updateDom: (
+      el: Element,
+      serializer: ElementSerializer<Value, Element> | AttrSerializer<Value>,
+      value: Value,
+    ) => void,
   ): void {
     // Query for a selector if provided.
     const element = elementOrSelector instanceof ElementRef
@@ -367,7 +387,8 @@ export class ComponentRef {
     // Resolve an explicit serializer immediately, since that isn't dependent on
     // the value and we don't want to do this for every invocation of effect.
     const explicitSerializer = token
-        ? resolveSerializer(token) as AttrSerializer<Value>
+        ? resolveSerializer(token) as
+          ElementSerializer<Value, Element> | AttrSerializer<Value>
         : undefined;
 
     this.effect(() => {
@@ -382,7 +403,7 @@ export class ComponentRef {
       }
 
       // Update the DOM with the new value.
-      updateDom(element.native, serializer.serialize(value));
+      updateDom(element.native, serializer, value);
     });
   }
 
@@ -396,16 +417,32 @@ export class ComponentRef {
   }
 }
 
+type PrimitiveSerializer<Value> =
+    ElementSerializer<Value, Element> & AttrSerializer<Value>;
+
 /**
  * Given the type of the provided value, returns a serializer which can
  * serialize it or `undefined` if no serializer can.
  */
-function inferSerializer(value: unknown): AttrSerializer<unknown> | undefined {
+function inferSerializer<Value>(value: Value):
+    PrimitiveSerializer<Value> | undefined {
   switch (typeof value) {
-    case 'string': return stringSerializer;
-    case 'number': return numberSerializer;
-    case 'boolean': return booleanSerializer;
-    case 'bigint': return bigintSerializer;
+    case 'string': return stringSerializer as any;
+    case 'number': return numberSerializer as any;
+    case 'boolean': return booleanSerializer as any;
+    case 'bigint': return bigintSerializer as any;
     default: return undefined;
   }
 }
+
+/**
+ * Resolves an `ElementRef` or a selector string literal to the type of the
+ * referenced element.
+ */
+type ElementOf<ElementOrSelector extends ElementRef<Element> | string> =
+  ElementOrSelector extends ElementRef<infer El>
+    ? El
+    : ElementOrSelector extends string
+      ? QueriedElement<ElementOrSelector>
+      : Element
+;

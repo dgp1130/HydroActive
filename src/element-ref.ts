@@ -3,7 +3,7 @@
  */
 
 import { type QueriedElement } from './query.js';
-import { type AttrSerializable, type AttrSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
 
 /**
  * A wrapper class of {@link Element} which provides more ergonomic API access
@@ -30,28 +30,28 @@ export class ElementRef<El extends Element> {
   /**
    * Provides the value of the text content on the underlying element.
    *
-   * @param token A "token" which identifiers an {@link AttrSerializer} to
+   * @param token A "token" which identifiers an {@link ElementSerializer} to
    *     deserialize the read attribute string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
-   *     *   An {@link AttrSerializer} object.
-   *     *   A {@link AttrSerializable} object.
+   *     *   An {@link ElementSerializer} object.
+   *     *   A {@link ElementSerializable} object.
    * @returns The value of the text content for this element deserialized based
    *     on the input token.
    */
-  public read<Token extends SerializerToken<any>>(token: Token):
-      Serialized<ResolveSerializer<Token>> {
-    const text = this.native.textContent;
+  public read<Token extends ElementSerializerToken<any, El>>(token: Token):
+      Serialized<ResolveSerializer<
+        Token,
+        ElementSerializer<unknown, El>,
+        ElementSerializable<unknown, El>
+      >> {
+    const serializer = resolveSerializer<
+      Token,
+      ElementSerializer<unknown, El>,
+      ElementSerializable<unknown, El>
+    >(token);
 
-    // This should only happen when the native element is a `Document` or a
-    // DocType. Neither should be allowed to be constructed, but even if so, we
-    // assert here to be sure.
-    if (text === null) {
-      throw new Error('`textContent` was `null`.');
-    }
-
-    const serializer = resolveSerializer(token);
-    return serializer.deserialize(text) as any;
+    return serializer.deserializeFrom(this.native) as any;
   }
 
   /**
@@ -72,26 +72,42 @@ export class ElementRef<El extends Element> {
    * @returns The value of the attribute deserialized based on the input token,
    *     or `null` if not set.
    */
-  public attr<Token extends SerializerToken<any>>(
+  public attr<Token extends AttrSerializerToken<any>>(
     name: string,
     token: Token,
     options: { optional: true },
-  ): Serialized<ResolveSerializer<Token>> | undefined;
-  public attr<Token extends SerializerToken<any>>(
+  ): Serialized<ResolveSerializer<
+    Token,
+    AttrSerializer<unknown>,
+    AttrSerializable<unknown>
+  >> | undefined;
+  public attr<Token extends AttrSerializerToken<any>>(
     name: string,
     token: Token,
     options?: { optional?: false },
-  ): Serialized<ResolveSerializer<Token>>;
-  public attr<Token extends SerializerToken<any>>(
+  ): Serialized<ResolveSerializer<
+    Token,
+    AttrSerializer<unknown>,
+    AttrSerializable<unknown>
+  >>;
+  public attr<Token extends AttrSerializerToken<any>>(
     name: string,
     token: Token,
     options?: { optional?: boolean },
-  ): Serialized<ResolveSerializer<Token>> | undefined;
-  public attr<Token extends SerializerToken<any>>(
+  ): Serialized<ResolveSerializer<
+    Token,
+    AttrSerializer<unknown>,
+    AttrSerializable<unknown>
+  >> | undefined;
+  public attr<Token extends AttrSerializerToken<any>>(
     name: string,
     token: Token,
     { optional }: { optional?: boolean } = {},
-  ): Serialized<ResolveSerializer<Token>> | undefined {
+  ): Serialized<ResolveSerializer<
+    Token,
+    AttrSerializer<unknown>,
+    AttrSerializable<unknown>
+  >> | undefined {
     const serialized = this.native.getAttribute(name);
     if (serialized === null) {
       if (optional) {
@@ -101,7 +117,11 @@ export class ElementRef<El extends Element> {
       }
     }
 
-    const serializer = resolveSerializer(token);
+    const serializer = resolveSerializer<
+      Token,
+      AttrSerializer<unknown>,
+      AttrSerializable<unknown>
+    >(token);
     return serializer.deserialize(serialized) as any;
   }
 
@@ -166,27 +186,38 @@ export class ElementRef<El extends Element> {
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `ElementRef<null>`.
 type QueryResult<Query extends string, Host extends Element> =
-    QueriedElement<Query, Host> extends null
-        ? null
-        : ElementRef<QueriedElement<Query, Host>>
+  QueriedElement<Query, Host> extends null
+    ? null
+    : ElementRef<QueriedElement<Query, Host>>
 ;
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `null[]`, when any such values would be
 // filtered out of the result.
 type QueryAllResult<Query extends string, Host extends Element> =
-    QueriedElement<Query, Host> extends null
-        ? Element
-        : QueriedElement<Query, Host>
+  QueriedElement<Query, Host> extends null
+    ? Element
+    : QueriedElement<Query, Host>
 ;
 
 // Tokens which reference `Serializer` objects for primitive types, filtered
 // down only to those which extend the given input type.
 type PrimitiveSerializerToken<Value> =
-    | Value extends string ? typeof String : never
-    | Value extends number ? typeof Number : never
-    | Value extends boolean ? typeof Boolean : never
-    | Value extends bigint ? typeof BigInt : never
+  | Value extends string ? typeof String : never
+  | Value extends number ? typeof Number : never
+  | Value extends boolean ? typeof Boolean : never
+  | Value extends bigint ? typeof BigInt : never
+;
+
+/**
+ * Tokens which can be exchanged for an {@link ElementSerializer} object.
+ * {@link ElementSerializer} objects are treated as tokens which can be
+ * exchanged for themselves.
+ */
+export type ElementSerializerToken<Value, El extends Element> =
+  | PrimitiveSerializerToken<Value>
+  | ElementSerializer<Value, El>
+  | ElementSerializable<Value, El>
 ;
 
 /**
@@ -194,52 +225,88 @@ type PrimitiveSerializerToken<Value> =
  * {@link AttrSerializer} objects are treated as tokens which can be exchanged
  * for themselves.
  */
-export type SerializerToken<Value> =
-    | PrimitiveSerializerToken<Value>
-    | AttrSerializer<Value>
-    | AttrSerializable<Value>
+export type AttrSerializerToken<Value> =
+  | PrimitiveSerializerToken<Value>
+  | AttrSerializer<Value>
+  | AttrSerializable<Value>
 ;
+
+/**
+ * A token for either an {@link ElementSerializer} or an {@link AttrSerializer}.
+ */
+export type SerializerToken<Value> =
+  ElementSerializerToken<Value, any> | AttrSerializerToken<Value>;
 
 /**
  * Resolves and returns the {@link AttrSerializer} referenced by the provided
  * token.
  */
-export function resolveSerializer<Token extends SerializerToken<any>>(
-    token: Token): ResolveSerializer<typeof token> {
+export function resolveSerializer<
+  Token extends SerializerToken<any>,
+  SerializerKind extends
+    | ElementSerializer<unknown, any>
+    | AttrSerializer<unknown>,
+  SerializableKind extends
+    | ElementSerializable<unknown, any>
+    | AttrSerializable<unknown>,
+>(token: Token): ResolveSerializer<
+  Token,
+  SerializerKind,
+  SerializableKind
+> {
   switch (token) {
     case String: {
-      return stringSerializer as ResolveSerializer<Token>;
+      return stringSerializer as
+          ResolveSerializer<Token, SerializerKind, SerializableKind>;
     } case Number: {
-      return numberSerializer as ResolveSerializer<Token>;
+      return numberSerializer as
+          ResolveSerializer<Token, SerializerKind, SerializableKind>;
     } case Boolean: {
-      return booleanSerializer as ResolveSerializer<Token>;
+      return booleanSerializer as
+          ResolveSerializer<Token, SerializerKind, SerializableKind>;
     } case BigInt: {
-      return bigintSerializer as ResolveSerializer<Token>;
+      return bigintSerializer as
+          ResolveSerializer<Token, SerializerKind, SerializableKind>;
     } default: {
       if (toSerializer in token) {
-        return (token as AttrSerializable<unknown>)[toSerializer]() as
-            ResolveSerializer<Token>;
+        type Serializable =
+          | ElementSerializable<unknown, any>
+          | AttrSerializable<unknown>
+        ;
+        return (token as Serializable)[toSerializer]() as
+            ResolveSerializer<Token, SerializerKind, SerializableKind>;
       } else {
         // Already a serializer.
-        return token as ResolveSerializer<Token>;
+        return token as
+            ResolveSerializer<Token, SerializerKind, SerializableKind>;
       }
     }
   }
 }
 
 // Computes the return type of a resolved `Serializer` object for a given token.
-export type ResolveSerializer<Token extends SerializerToken<any>> =
-    Token extends AttrSerializable<unknown>
-        ? ReturnType<Token[typeof toSerializer]>
-        : Token extends AttrSerializer<unknown>
-            ? Token
-            : Token extends typeof String
-                ? typeof stringSerializer
-                : Token extends typeof Number
-                    ? typeof numberSerializer
-                    : Token extends typeof Boolean
-                        ? typeof booleanSerializer
-                        : Token extends typeof BigInt
-                            ? typeof bigintSerializer
-                            : never
+export type ResolveSerializer<
+  // The token to resolve.
+  Token extends SerializerToken<any>,
+  // Whether to resolve to element or attribute serializers.
+  SerializerKind extends
+    | ElementSerializer<unknown, any>
+    | AttrSerializer<unknown>,
+  // Whether to resolve to element or attribute serializables.
+  SerializableKind extends
+    | ElementSerializable<unknown, any>
+    | AttrSerializable<unknown>,
+> = Token extends SerializableKind
+  ? ReturnType<Token[typeof toSerializer]>
+  : Token extends SerializerKind
+    ? Token
+    : Token extends typeof String
+      ? typeof stringSerializer
+      : Token extends typeof Number
+        ? typeof numberSerializer
+        : Token extends typeof Boolean
+          ? typeof booleanSerializer
+          : Token extends typeof BigInt
+            ? typeof bigintSerializer
+            : never
 ;

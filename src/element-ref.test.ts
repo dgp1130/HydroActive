@@ -1,5 +1,5 @@
 import { ElementRef } from './element-ref.js';
-import { type AttrSerializable, type AttrSerializer, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
 import { parseHtml } from './testing/html-parser.js';
 
 describe('element-ref', () => {
@@ -71,14 +71,12 @@ describe('element-ref', () => {
       });
 
       it('reads the text content of the element with the given custom serializer', () => {
-        const serializer: AttrSerializer<{ foo: string }> = {
-          serialize(value: { foo: string }): string {
-            return value.foo;
-          },
+        const serializer: ElementSerializer<{ foo: string }, Element> = {
+          serializeTo(): void { /* no-op */ },
 
-          deserialize(): { foo: string } {
+          deserializeFrom(): { foo: string } {
             return { foo: 'bar' };
-          }
+          },
         };
 
         const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
@@ -88,14 +86,14 @@ describe('element-ref', () => {
       it('reads the text content of the element with the given serializable', () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): AttrSerializer<User> {
+          public static [toSerializer](): ElementSerializer<User, Element> {
             return {
-              serialize(user: User): string {
-                return user.name;
+              serializeTo(user: User, element: Element): void {
+                element.textContent = user.name;
               },
 
-              deserialize(name: string): User {
-                return new User(name);
+              deserializeFrom(element: Element): User {
+                return new User(element.textContent!);
               },
             };
           }
@@ -107,12 +105,10 @@ describe('element-ref', () => {
 
       it('throws an error if the deserialization process throws', () => {
         const err = new Error('Failed to deserialize.');
-        const serializer: AttrSerializer<string> = {
-          serialize(value: string): string {
-            return value;
-          },
+        const serializer: ElementSerializer<string, Element> = {
+          serializeTo(): void { /* no-op */ },
 
-          deserialize(): string {
+          deserializeFrom(): string {
             throw err;
           }
         };
@@ -139,7 +135,7 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializer = {} as AttrSerializer<number>;
+          const serializer = {} as ElementSerializer<number, Element>;
 
           const _result: number = el.read(serializer);
         };
@@ -150,9 +146,50 @@ describe('element-ref', () => {
         expect().nothing();
         () => {
           const el = {} as ElementRef<HTMLDivElement>;
-          const serializable = {} as AttrSerializable<number>;
+          const serializable = {} as ElementSerializable<number, Element>;
 
           const _result: number = el.read(serializable);
+        };
+      });
+
+      it('resolves serializer type based on element type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const divSerializer = {} as ElementSerializer<number, HTMLDivElement>;
+          el.read(divSerializer);
+
+          const inputSerializer =
+              {} as ElementSerializer<number, HTMLInputElement>;
+          // @ts-expect-error
+          el.read(inputSerializer);
+
+          const divSerializable =
+              {} as ElementSerializable<number, HTMLDivElement>;
+          el.read(divSerializable);
+
+          const inputSerializable =
+              {} as ElementSerializable<number, HTMLInputElement>;
+          // @ts-expect-error
+          el.read(inputSerializable);
+        };
+      });
+
+      it('throws a compile-time error for attribute serializers', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const serializer = {} as AttrSerializer<number>;
+          // @ts-expect-error
+          el.read(serializer);
+
+          const serializable = {} as AttrSerializable<number>;
+          // @ts-expect-error
+          el.read(serializable);
         };
       });
     });
@@ -314,6 +351,22 @@ describe('element-ref', () => {
           let unknown =
               el.attr('test', serializable, { optional: true as boolean });
           unknown = 123 as number | undefined;
+        };
+      });
+
+      it('throws a compile-time error when used with an element serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const el = {} as ElementRef<HTMLDivElement>;
+
+          const serializer = {} as ElementSerializer<number, Element>;
+          // @ts-expect-error
+          el.attr('test', serializer);
+
+          const serializable = {} as ElementSerializable<number, Element>;
+          // @ts-expect-error
+          el.attr('test', serializable);
         };
       });
     });

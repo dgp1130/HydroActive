@@ -1,7 +1,7 @@
 import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { type AttrSerializable, type AttrSerializer, toSerializer } from './serializers.js';
+import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
 
@@ -396,12 +396,12 @@ describe('component-ref', () => {
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
-        const serializer: AttrSerializer<string> = {
-          serialize(value: string): string {
-            return `serialized: ${value}`;
+        const serializer: ElementSerializer<string, Element> = {
+          serializeTo(value: string, element: Element): void {
+            element.textContent = `serialized: ${value}`;
           },
 
-          deserialize(): string {
+          deserializeFrom(): string {
             return 'deserialized';
           },
         };
@@ -417,14 +417,14 @@ describe('component-ref', () => {
       it('processes the DOM element based on the provided serializable', async () => {
         class User {
           public constructor(private name: string) {}
-          public static [toSerializer](): AttrSerializer<User> {
+          public static [toSerializer](): ElementSerializer<User, Element> {
             return {
-              serialize(user: User): string {
-                return user.name;
+              serializeTo(user: User, element: Element): void {
+                element.textContent = user.name;
               },
 
-              deserialize(name: string): User {
-                return new User(name);
+              deserializeFrom(element: Element): User {
+                return new User(element.textContent!);
               }
             };
           }
@@ -484,15 +484,56 @@ describe('component-ref', () => {
               ref.live(ref.host, Boolean);
           const _signal4: WriteableSignal<bigint> = ref.live(ref.host, BigInt);
 
-          // Custom `AttrSerializer` type.
-          const serializer = {} as AttrSerializer<string>;
+          // Custom `ElementSerializer` type.
+          const serializer = {} as ElementSerializer<string, Element>;
           const _signal5: WriteableSignal<string> =
               ref.live(ref.host, serializer);
 
-          // Custom `Serializable` type.
-          const serializable = {} as AttrSerializable<string>;
+          // Custom `ElementSerializable` type.
+          const serializable = {} as ElementSerializable<string, Element>;
           const _signal6: WriteableSignal<string> =
               ref.live(ref.host, serializable);
+        };
+      });
+
+      it('resolves serializer type based on element type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+          const div = {} as ElementRef<HTMLDivElement>;
+
+          const divSerializer = {} as ElementSerializer<number, HTMLDivElement>;
+          ref.live(div, divSerializer);
+          ref.live('div', divSerializer);
+
+          const inputSerializer =
+              {} as ElementSerializable<number, HTMLInputElement>;
+          // @ts-expect-error
+          ref.live(div, inputSerializer);
+          // @ts-expect-error
+          ref.live('div', inputSerializer);
+
+          const elSerializer = {} as ElementSerializer<number, Element>;
+          ref.live('.foo', elSerializer);
+          // @ts-expect-error
+          ref.live('.foo', divSerializer);
+        };
+      });
+
+      it('throws a compile time error when given an attribute serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          const serializer = {} as AttrSerializer<string>;
+          // @ts-expect-error
+          ref.live(ref.host, serializer);
+
+          const serializable = {} as AttrSerializable<string>;
+          // @ts-expect-error
+          ref.live(ref.host, serializable);
         };
       });
     });
@@ -707,10 +748,26 @@ describe('component-ref', () => {
           const _signal5: WriteableSignal<string> =
               ref.liveAttr(ref.host, 'value', serializer);
 
-          // Custom `Serializable` type.
+          // Custom `AttrSerializable` type.
           const serializable = {} as AttrSerializable<string>;
           const _signal6: WriteableSignal<string> =
               ref.liveAttr(ref.host, 'value', serializable);
+        };
+      });
+
+      it('throws a compile time error when given an element serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          const serializer = {} as ElementSerializer<string, Element>;
+          // @ts-expect-error
+          ref.liveAttr(ref.host, 'test', serializer);
+
+          const serializable = {} as ElementSerializable<string, Element>;
+          // @ts-expect-error
+          ref.liveAttr(ref.host, 'test', serializable);
         };
       });
     });
@@ -906,12 +963,12 @@ describe('component-ref', () => {
             NoopComponent;
         document.body.appendChild(el);
 
-        const serializer: AttrSerializer<undefined> = {
-          serialize(): string {
-            return 'undefined';
+        const serializer: ElementSerializer<undefined, Element> = {
+          serializeTo(_value: undefined, element: Element): void {
+            element.textContent = 'undefined';
           },
 
-          deserialize(): undefined {
+          deserializeFrom(): undefined {
             return undefined;
           },
         };
@@ -926,14 +983,14 @@ describe('component-ref', () => {
         class User {
           public constructor(private name: string) {}
 
-          public static [toSerializer](): AttrSerializer<User> {
+          public static [toSerializer](): ElementSerializer<User, Element> {
             return {
-              serialize(user: User): string {
-                return user.name;
+              serializeTo(user: User, element: Element): void {
+                element.textContent = user.name;
               },
 
-              deserialize(name: string): User {
-                return new User(name);
+              deserializeFrom(element: Element): User {
+                return new User(element.textContent!);
               }
             };
           }
@@ -1037,7 +1094,7 @@ describe('component-ref', () => {
           ref.bind(ref.host, () => 1234n, String);
 
           // Correct explicit serializer types.
-          const serializer = {} as AttrSerializer<string>;
+          const serializer = {} as ElementSerializer<string, Element>;
           ref.bind(ref.host, () => 'test', serializer);
 
           // Incorrect explicit serializer types.
@@ -1045,12 +1102,53 @@ describe('component-ref', () => {
           ref.bind(ref.host, () => 1234, serializer);
 
           // Correct explicit serializable types.
-          const serializable = {} as AttrSerializable<string>;
+          const serializable = {} as ElementSerializable<string, Element>;
           ref.bind(ref.host, () => 'test', serializable);
 
           // Incorrect explicit serializable types.
           // @ts-expect-error
           ref.bind(ref.host, () => 1234, serializable);
+        };
+      });
+
+      it('resolves serializer type based on element type', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+          const div = {} as ElementRef<HTMLDivElement>;
+
+          const divSerializer = {} as ElementSerializer<number, HTMLDivElement>;
+          ref.bind(div, () => 1234, divSerializer);
+          ref.bind('div', () => 1234, divSerializer);
+
+          const inputSerializer =
+              {} as ElementSerializable<number, HTMLInputElement>;
+          // @ts-expect-error
+          ref.bind(div, () => 1234, inputSerializer);
+          // @ts-expect-error
+          ref.bind('div', () => 1234, inputSerializer);
+
+          const elSerializer = {} as ElementSerializer<number, Element>;
+          ref.bind('.foo', () => 1234, elSerializer);
+          // @ts-expect-error
+          ref.bind('.foo', () => 1234, divSerializer);
+        };
+      });
+
+      it('throws a compile time error when given an attribute serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          const serializer = {} as AttrSerializer<string>;
+          // @ts-expect-error
+          ref.bind(ref.host, () => 'test', serializer);
+
+          const serializable = {} as AttrSerializable<string>;
+          // @ts-expect-error
+          ref.bind(ref.host, () => 'test', serializable);
         };
       });
     });
@@ -1410,12 +1508,28 @@ describe('component-ref', () => {
           ref.bindAttr(ref.host, 'data', () => 1234, serializer);
 
           // Correct explicit serializable types.
-          const serializable = {} as AttrSerializable<string>;
+          const serializable = {} as AttrSerializer<string>;
           ref.bindAttr(ref.host, 'data', () => 'test', serializable);
 
           // Incorrect explicit serializable types.
           // @ts-expect-error
           ref.bindAttr(ref.host, 'data', () => 1234, serializable);
+        };
+      });
+
+      it('throws a compile time error when given an element serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const ref = {} as ComponentRef;
+
+          const serializer = {} as ElementSerializer<string, Element>;
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 'test', serializer);
+
+          const serializable = {} as ElementSerializable<string, Element>;
+          // @ts-expect-error
+          ref.bindAttr(ref.host, 'data', () => 'test', serializable);
         };
       });
     });
