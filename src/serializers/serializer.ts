@@ -94,9 +94,9 @@ export type Serialized<
     | AttrSerializable<unknown>,
 > = Serial extends AttrSerializable<infer Value>
   ? Value
-  : Serial extends ElementSerializable<infer Value, Element>
+  : Serial extends ElementSerializable<infer Value, any>
     ? Value
-    : Serial extends ElementSerializer<infer Value, Element>
+    : Serial extends ElementSerializer<infer Value, any>
       ? Value
       : Serial extends AttrSerializer<infer Value>
         ? Value

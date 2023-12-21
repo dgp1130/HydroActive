@@ -85,3 +85,14 @@ export const stringSerializer =
     return serial;
   }
 }();
+
+/** TODO */
+export const elementSerializer: ElementSerializer<Element, Element> = {
+  serializeTo(newElement: Element, oldElement: Element): void {
+    oldElement.replaceWith(newElement);
+  },
+
+  deserializeFrom(element: Element): Element {
+    return element;
+  },
+};

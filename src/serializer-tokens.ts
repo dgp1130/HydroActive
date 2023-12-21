@@ -1,4 +1,5 @@
-import { ElementSerializer, ElementSerializable, AttrSerializer, AttrSerializable, stringSerializer, numberSerializer, booleanSerializer, bigintSerializer, toSerializer } from './serializers.js';
+import { ElementSerializer, ElementSerializable, AttrSerializer, AttrSerializable, stringSerializer, numberSerializer, booleanSerializer, bigintSerializer, toSerializer, Serialized } from './serializers.js';
+import { elementSerializer } from './serializers/primitive-serializers.js';
 
 // Tokens which reference `Serializer` objects for primitive types, filtered
 // down only to those which extend the given input type.
@@ -18,6 +19,7 @@ export type ElementSerializerToken<Value, El extends Element> =
   | PrimitiveSerializerToken<Value>
   | ElementSerializer<Value, El>
   | ElementSerializable<Value, El>
+  | Value extends Element ? Value : never
 ;
 
 /**
@@ -56,6 +58,7 @@ export function resolveSerializer<
   SerializerKind,
   SerializableKind
 > {
+  // Resolve primitive tokens.
   switch (token) {
     case String: {
       return stringSerializer as
@@ -69,21 +72,28 @@ export function resolveSerializer<
     } case BigInt: {
       return bigintSerializer as
           ResolveSerializer<Token, SerializerKind, SerializableKind>;
-    } default: {
-      if (toSerializer in token) {
-        type Serializable =
-          | ElementSerializable<unknown, any>
-          | AttrSerializable<unknown>
-        ;
-        return (token as Serializable)[toSerializer]() as
-            ResolveSerializer<Token, SerializerKind, SerializableKind>;
-      } else {
-        // Already a serializer.
-        return token as
-            ResolveSerializer<Token, SerializerKind, SerializableKind>;
-      }
     }
   }
+
+  // Resolve serializable tokens.
+  if (toSerializer in (token as Record<string, unknown>)) {
+    type Serializable =
+      | ElementSerializable<unknown, any>
+      | AttrSerializable<unknown>
+    ;
+    return (token as Serializable)[toSerializer]() as
+        ResolveSerializer<Token, SerializerKind, SerializableKind>;
+  }
+
+  // Resolve `Element` tokens.
+  if (staticExtends(token, Element)) {
+    return elementSerializer as
+        ResolveSerializer<Token, SerializerKind, SerializableKind>;
+  }
+
+  // Resolve `Serializer` tokens, they already are a `Serializer`!
+  return token as
+      ResolveSerializer<Token, SerializerKind, SerializableKind>;
 }
 
 /**
@@ -118,13 +128,46 @@ export type ResolveSerializer<
   ? ReturnType<Token[typeof toSerializer]>
   : Token extends SerializerKind
     ? Token
-    : Token extends typeof String
-      ? typeof stringSerializer
-      : Token extends typeof Number
-        ? typeof numberSerializer
-        : Token extends typeof Boolean
-          ? typeof booleanSerializer
-          : Token extends typeof BigInt
-            ? typeof bigintSerializer
-            : never
+    : Token extends typeof Element
+      ? InstanceType<Token> extends ElementOf<SerializerKind>
+        ? ElementSerializer<InstanceType<Token>, InstanceType<Token>>
+        : never
+      : Token extends typeof String
+        ? typeof stringSerializer
+        : Token extends typeof Number
+          ? typeof numberSerializer
+          : Token extends typeof Boolean
+            ? typeof booleanSerializer
+            : Token extends typeof BigInt
+              ? typeof bigintSerializer
+              : never
 ;
+
+type ElementOr<Token, Alternative> = Token extends typeof Element
+  ? InstanceType<Token>
+  : Alternative
+;
+
+type ElementOf<SerializerKind extends
+  | ElementSerializer<unknown, any>
+  | AttrSerializer<unknown>
+> = SerializerKind extends ElementSerializer<unknown, infer El> ? El : never;
+
+/** TODO: `instanceof` but for classes instead of instances. */
+function staticExtends(maybeChild: unknown, parent: unknown): boolean {
+  if (maybeChild === null || maybeChild === undefined) return false;
+
+  for (const proto of prototypeChain(maybeChild)) {
+    if (proto === parent) return true;
+  }
+
+  return false;
+}
+
+function* prototypeChain(obj: unknown): Generator<unknown, void, void> {
+  const proto = Object.getPrototypeOf(obj);
+  if (proto === null) return;
+
+  yield proto;
+  yield* prototypeChain(proto);
+}

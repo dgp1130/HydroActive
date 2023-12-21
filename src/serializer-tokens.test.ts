@@ -1,5 +1,6 @@
 import { type ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { type AttrSerializer, type ElementSerializer, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer, ElementSerializable, AttrSerializable } from './serializers.js';
+import { elementSerializer } from './serializers/primitive-serializers.js';
 
 describe('serializer-tokens', () => {
   describe('resolveSerializer', () => {
@@ -271,6 +272,36 @@ describe('serializer-tokens', () => {
               AttrSerializer<unknown>,
               AttrSerializable<unknown>
             >;
+      };
+    });
+
+    it('resolves `Element` types', () => {
+      expect().nothing();
+      () => {
+        const _elSerializerResult: ResolveSerializer<
+          typeof Element,
+          ElementSerializer<unknown, any>,
+          ElementSerializable<unknown, any>
+        > = elementSerializer;
+        const _elSerializerResult2: typeof elementSerializer =
+            {} as ResolveSerializer<
+              typeof Element,
+              ElementSerializer<unknown, any>,
+              ElementSerializable<unknown, any>
+            >;
+
+        const _spanSerializerResult: ResolveSerializer<
+          typeof HTMLSpanElement,
+          ElementSerializer<unknown, any>,
+          ElementSerializable<unknown, any>
+        > = {} as ElementSerializer<HTMLSpanElement, HTMLSpanElement>;
+        const _spanSerializerResult2:
+            ElementSerializer<HTMLSpanElement, HTMLSpanElement> =
+              {} as ResolveSerializer<
+                typeof HTMLSpanElement,
+                ElementSerializer<unknown, any>,
+                ElementSerializable<unknown, any>
+              >;
       };
     });
 

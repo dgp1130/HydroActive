@@ -177,13 +177,13 @@ export class ComponentRef {
         : this.host.query(elementOrSelector);
 
     // Read the initial value from the DOM.
-    const initial = element.read(token as any);
+    const initial = element.read(token);
 
     // Wrap the value in a reactive signal.
     const value = signal(initial);
 
     // Bind the signal back to the DOM to reflect future changes.
-    this.bind(element as any, value, token);
+    this.bind(element, value, token as any);
 
     // Return a writeable version of the signal.
     return value as any;

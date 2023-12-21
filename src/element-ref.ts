@@ -52,7 +52,21 @@ export class ElementRef<El extends Element> {
       ElementSerializable<unknown, El>
     >(token);
 
-    return serializer.deserializeFrom(this.native) as any;
+    // Should work.
+    type Test = ResolveSerializer<
+      typeof Element,
+      ElementSerializer<unknown, HTMLInputElement>,
+      ElementSerializable<unknown, HTMLInputElement>
+    >;
+
+    // Should not work.
+    type TestAnother = ResolveSerializer<
+      typeof HTMLInputElement,
+      ElementSerializer<unknown, Element>,
+      ElementSerializable<unknown, Element>
+    >;
+
+    return serializer.deserializeFrom(this.native as any) as any;
   }
 
   /**

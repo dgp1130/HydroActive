@@ -2,16 +2,20 @@ import { defineComponent } from 'hydroactive';
 
 /** Automatically increments the count over time. */
 export const AutoCounter = defineComponent('auto-counter', (comp) => {
-  const count = comp.live('span', Number);
+  const span1 = comp.host.query('span').read(HTMLSpanElement);
+  // @ts-expect-error
+  const span2 = comp.host.query('.foo').read(HTMLInputElement);
+  // @ts-expect-error
+  const span3 = comp.host.query('input').read(HTMLSelectElement);
+  const span4 = comp.host.query('span').read(Element);
+  const span5 = comp.host.query('span').read({
+    serializeTo(input: HTMLInputElement, span: HTMLSpanElement): void {
+      span.querySelector('input')!.replaceWith(input);
+    },
 
-  comp.connected(() => {
-    const id = setInterval(() => {
-      count.set(count() + 1);
-    }, 1_000);
-
-    return () => {
-      clearInterval(id);
-    };
+    deserializeFrom(span: HTMLSpanElement): HTMLInputElement {
+      return span.querySelector('input') as HTMLInputElement;
+    }
   });
 });
 
