@@ -3,10 +3,6 @@
 {
   "extends": "./tsconfig.base.json",
   "include": ["src/**/*.ts"],
-  "compilerOptions": {
-    "composite": false,
-    "outDir": "dist/src/",
-  },
   "exclude": [
     "src/**/*.test.ts",
     "src/testing/**/*.ts",
