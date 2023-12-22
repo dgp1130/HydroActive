@@ -4,6 +4,7 @@ import { HydroActiveComponent } from './hydroactive-component.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
+import { nextFrame } from './testing/timing.js';
 
 class NoopComponent extends HydroActiveComponent {
   protected override hydrate(): void { /* noop */ }
@@ -188,7 +189,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
         expect(effect).not.toHaveBeenCalled();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -202,17 +203,17 @@ describe('component-ref', () => {
             .and.callFake(() => { value(); });
 
         ref.effect(effect);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalled();
         effect.calls.reset();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).not.toHaveBeenCalled(); // Nothing changed.
 
         value.set(2);
         expect(effect).not.toHaveBeenCalled(); // Scheduled but not invoked yet.
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -223,11 +224,11 @@ describe('component-ref', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         ref.effect(effect);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -241,14 +242,14 @@ describe('component-ref', () => {
             .and.callFake(() => { value(); });
 
         ref.effect(effect);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
         // Don't really need to assert this, just making sure `value` is used
         // correctly in this test.
         value.set(2);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
@@ -256,7 +257,7 @@ describe('component-ref', () => {
         expect(effect).not.toHaveBeenCalled();
 
         value.set(3);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).not.toHaveBeenCalled();
       });
 
@@ -273,7 +274,7 @@ describe('component-ref', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         ref.effect(effect);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
@@ -283,7 +284,7 @@ describe('component-ref', () => {
         // Even though no dependencies changed, effect should be re-invoked just
         // to check if they have.
         document.body.appendChild(el);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(effect).toHaveBeenCalledOnceWith();
       });
     });
@@ -311,7 +312,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.textContent!).toBe('test2');
       });
 
@@ -328,7 +329,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.textContent!).toBe('test2');
       });
 
@@ -343,7 +344,7 @@ describe('component-ref', () => {
           expect(value()).toBe('test1');
 
           value.set('test2');
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.textContent!).toBe('test2');
         }
 
@@ -357,7 +358,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234);
 
           value.set(4321);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.textContent!).toBe('4321');
         }
 
@@ -371,7 +372,7 @@ describe('component-ref', () => {
           expect(value()).toBe(true);
 
           value.set(false);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.textContent!).toBe('false');
         }
 
@@ -385,7 +386,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234n);
 
           value.set(4321n);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.textContent!).toBe('4321');
         }
       });
@@ -410,7 +411,7 @@ describe('component-ref', () => {
         expect(value()).toBe('deserialized');
 
         value.set('test');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.textContent!).toBe('serialized: test');
       });
 
@@ -439,7 +440,7 @@ describe('component-ref', () => {
         expect(value()).toEqual(new User('Devel'));
 
         value.set(new User('Devel without a Cause'));
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.textContent!).toBe('Devel without a Cause');
       });
 
@@ -562,7 +563,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
       });
 
@@ -579,7 +580,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
       });
 
@@ -595,7 +596,7 @@ describe('component-ref', () => {
           expect(value()).toBe('test1');
 
           value.set('test2');
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.getAttribute('value')).toBe('test2');
         }
 
@@ -610,7 +611,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234);
 
           value.set(4321);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.getAttribute('value')).toBe('4321');
         }
 
@@ -625,7 +626,7 @@ describe('component-ref', () => {
           expect(value()).toBe(true);
 
           value.set(false);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.getAttribute('value')).toBe('false');
         }
 
@@ -640,7 +641,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234n);
 
           value.set(4321n);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(el.getAttribute('value')).toBe('4321');
         }
       });
@@ -665,7 +666,7 @@ describe('component-ref', () => {
         expect(value()).toBe('deserialized');
 
         value.set('test');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.getAttribute('value')).toBe('serialized: test');
       });
 
@@ -695,7 +696,7 @@ describe('component-ref', () => {
         expect(value()).toEqual(new User('Devel'));
 
         value.set(new User('Devel without a Cause'));
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.getAttribute('user')).toBe('Devel without a Cause');
       });
 
@@ -782,11 +783,11 @@ describe('component-ref', () => {
 
         const value = signal('1');
         ref.bind(ref.host, () => value(), String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.textContent).toBe('1');
 
         value.set('2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.textContent).toBe('2');
       });
 
@@ -797,12 +798,12 @@ describe('component-ref', () => {
             .and.returnValue('test');
 
         ref.bind(ref.host, sig, String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).toHaveBeenCalledOnceWith();
       });
 
@@ -816,7 +817,7 @@ describe('component-ref', () => {
             .and.callFake(() => value());
 
         ref.bind(ref.host, sig, String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).toHaveBeenCalledOnceWith();
         expect(el.textContent).toBe('1');
         sig.calls.reset();
@@ -824,7 +825,7 @@ describe('component-ref', () => {
         el.remove();
 
         value.set('2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).not.toHaveBeenCalled();
         expect(el.textContent).toBe('1'); // Does not update.
       });
@@ -839,7 +840,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
 
         ref.bind(ref.host.query('span'), () => 'test');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.textContent!).toBe('test');
       });
 
@@ -853,7 +854,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
 
         ref.bind('span', () => 'test', String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.textContent!).toBe('test');
       });
 
@@ -874,7 +875,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 'test');
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('test');
         }
 
@@ -885,7 +886,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 1234);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('1234');
         }
 
@@ -896,7 +897,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => true);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('true');
         }
 
@@ -907,7 +908,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 1234n);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('1234');
         }
       });
@@ -920,7 +921,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 'test', String);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('test');
         }
 
@@ -931,7 +932,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 1234, Number);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('1234');
         }
 
@@ -942,7 +943,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => true, Boolean);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('true');
         }
 
@@ -953,7 +954,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bind(ref.host, () => 1234n, BigInt);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.textContent!).toBe('1234');
         }
       });
@@ -975,7 +976,7 @@ describe('component-ref', () => {
 
         const ref = ComponentRef._from(ElementRef.from(el));
         ref.bind(ref.host, () => undefined, serializer);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(ref.host.native.textContent!).toBe('undefined');
       });
 
@@ -1002,7 +1003,7 @@ describe('component-ref', () => {
 
         const ref = ComponentRef._from(ElementRef.from(el));
         ref.bind(ref.host, () => new User('Devel'), User);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(ref.host.native.textContent!).toBe('Devel');
       });
 
@@ -1163,11 +1164,11 @@ describe('component-ref', () => {
 
         const value = signal('1');
         ref.bindAttr(ref.host, 'count', () => value(), String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.getAttribute('count')).toBe('1');
 
         value.set('2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.getAttribute('count')).toBe('2');
       });
 
@@ -1178,12 +1179,12 @@ describe('component-ref', () => {
             .and.returnValue('test');
 
         ref.bindAttr(ref.host, 'hello', sig, String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).toHaveBeenCalledOnceWith();
       });
 
@@ -1197,7 +1198,7 @@ describe('component-ref', () => {
             .and.callFake(() => value());
 
         ref.bindAttr(ref.host, 'count', sig, String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).toHaveBeenCalledOnceWith();
         expect(el.getAttribute('count')).toBe('1');
         sig.calls.reset();
@@ -1205,7 +1206,7 @@ describe('component-ref', () => {
         el.remove();
 
         value.set('2');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(sig).not.toHaveBeenCalled();
         expect(el.getAttribute('count')).toBe('1'); // Does not update.
       });
@@ -1220,7 +1221,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
 
         ref.bindAttr(ref.host.query('span'), 'name', () => 'test');
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
       });
 
@@ -1234,7 +1235,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
 
         ref.bindAttr('span', 'name', () => 'test', String);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
       });
 
@@ -1256,7 +1257,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 'test');
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('test');
         }
 
@@ -1267,7 +1268,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 1234);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
 
@@ -1278,7 +1279,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => true);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('true');
         }
 
@@ -1289,7 +1290,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 1234n);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
       });
@@ -1302,7 +1303,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 'test', String);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('test');
         }
 
@@ -1313,7 +1314,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 1234, Number);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
 
@@ -1324,7 +1325,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => true, Boolean);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('true');
         }
 
@@ -1335,7 +1336,7 @@ describe('component-ref', () => {
           document.body.appendChild(el);
 
           ref.bindAttr(ref.host, 'name', () => 1234n, BigInt);
-          await waitForNextAnimationFrame();
+          await nextFrame();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
       });
@@ -1357,7 +1358,7 @@ describe('component-ref', () => {
 
         const ref = ComponentRef._from(ElementRef.from(el));
         ref.bindAttr(ref.host, 'name', () => undefined, serializer);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(ref.host.native.getAttribute('name')).toBe('undefined');
       });
 
@@ -1384,7 +1385,7 @@ describe('component-ref', () => {
 
         const ref = ComponentRef._from(ElementRef.from(el));
         ref.bindAttr(ref.host, 'user', () => new User('Devel'), User);
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(ref.host.native.getAttribute('user')).toBe('Devel');
       });
 
@@ -1719,9 +1720,3 @@ describe('component-ref', () => {
     });
   });
 });
-
-async function waitForNextAnimationFrame(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => { resolve(); });
-  });
-}

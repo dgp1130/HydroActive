@@ -1,3 +1,4 @@
+import { nextFrame } from '../../testing/timing.js';
 import { UiScheduler } from './ui-scheduler.js';
 
 describe('ui-scheduler', () => {
@@ -10,7 +11,7 @@ describe('ui-scheduler', () => {
         scheduler.schedule(action);
         expect(action).not.toHaveBeenCalled();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(action).toHaveBeenCalledOnceWith();
       });
 
@@ -24,7 +25,7 @@ describe('ui-scheduler', () => {
         cancel();
         expect(action).not.toHaveBeenCalled();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(action).not.toHaveBeenCalled();
       });
 
@@ -39,7 +40,7 @@ describe('ui-scheduler', () => {
         expect(action1).not.toHaveBeenCalled();
         expect(action2).not.toHaveBeenCalled();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
 
         expect(action1).toHaveBeenCalled();
         expect(action2).toHaveBeenCalled();
@@ -62,7 +63,7 @@ describe('ui-scheduler', () => {
 
         expect(calls).toEqual([]);
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
 
         expect(calls).toEqual([ action1, action2, action3 ]);
       });
@@ -80,7 +81,7 @@ describe('ui-scheduler', () => {
         expect(action1).not.toHaveBeenCalled();
         expect(action2).not.toHaveBeenCalled();
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
 
         expect(action1).not.toHaveBeenCalled();
         expect(action2).toHaveBeenCalledOnceWith();
@@ -93,7 +94,7 @@ describe('ui-scheduler', () => {
 
         const cancel = scheduler.schedule(action1);
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(action1).toHaveBeenCalledOnceWith();
         action1.calls.reset();
 
@@ -102,16 +103,10 @@ describe('ui-scheduler', () => {
 
         scheduler.schedule(action2);
 
-        await waitForNextAnimationFrame();
+        await nextFrame();
         expect(action1).not.toHaveBeenCalledOnceWith();
         expect(action2).toHaveBeenCalledOnceWith();
       });
     });
   });
 });
-
-async function waitForNextAnimationFrame(): Promise<void> {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => { resolve(); });
-  });
-}
