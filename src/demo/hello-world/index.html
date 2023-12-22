@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hello World Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Hello World Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <hello-world>
+            <h2>Hello World</h2>
+
+            <div>Hello, <span id="name">World</span>!</div>
+
+            <script src="./hello-world.js" type="module"></script>
+        </hello-world>
+    </body>
+</html>
