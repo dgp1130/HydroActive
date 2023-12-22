@@ -14,3 +14,9 @@ export const AutoCounter = defineComponent('auto-counter', (comp) => {
     };
   });
 });
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'auto-counter': InstanceType<typeof AutoCounter>;
+  }
+}
