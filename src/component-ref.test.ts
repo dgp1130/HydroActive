@@ -1533,6 +1533,190 @@ describe('component-ref', () => {
         };
       });
     });
+
+    describe('listen', () => {
+      it('listens invokes the given callback when the specified event is triggered', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const handler = jasmine.createSpy<(evt: Event) => void>('handler');
+
+        ref.listen(ref.host, 'click', handler);
+        expect(handler).not.toHaveBeenCalled();
+
+        ref.host.native.click();
+
+        expect(handler).toHaveBeenCalledOnceWith(jasmine.any(Event));
+      });
+
+      it('removes event listener on disconnect', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+
+        const addSpy = spyOn(el, 'addEventListener').and.callThrough();
+        const removeSpy = spyOn(el, 'removeEventListener').and.callThrough();
+
+        const handler = jasmine.createSpy<() => void>('handler');
+
+        // Start listening while disconnected, nothing should happen yet.
+        ref.listen(ref.host, 'click', handler);
+        expect(addSpy).not.toHaveBeenCalled();
+        expect(removeSpy).not.toHaveBeenCalled();
+
+        ref.host.native.click();
+        expect(handler).not.toHaveBeenCalled();
+
+        // On connection, start listening.
+        document.body.appendChild(el);
+        expect(addSpy).toHaveBeenCalledTimes(1);
+        expect(removeSpy).not.toHaveBeenCalled();
+        expect(handler).not.toHaveBeenCalled();
+        addSpy.calls.reset();
+
+        // React to events.
+        ref.host.native.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // On disconnect, stop listening.
+        el.remove();
+        expect(addSpy).not.toHaveBeenCalled();
+        expect(removeSpy).toHaveBeenCalledTimes(1);
+        expect(handler).not.toHaveBeenCalled();
+        removeSpy.calls.reset();
+
+        // Stop reacting to events.
+        ref.host.native.click();
+        expect(handler).not.toHaveBeenCalled();
+      });
+
+      it('listens for events for the provided `ElementRef`', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <div id="first">
+              <div id="child"></div>
+            </div>
+            <div id="second"></div>
+          </noop-component>
+        `) as HydroActiveComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const handler = jasmine.createSpy<() => void>('handler');
+
+        ref.listen(ref.host.query('div#first'), 'click', handler);
+
+        // Listen for direct events.
+        ref.host.query('div#first').native.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Listen for descendant events.
+        ref.host.query('div#child').native.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Do not listen for sibling events.
+        ref.host.query('div#second').native.click();
+        expect(handler).not.toHaveBeenCalled();
+
+        // Do not listen for ancestor events.
+        ref.host.native.click();
+        expect(handler).not.toHaveBeenCalled();
+      });
+
+      it('listens for events for the provided selector', () => {
+        const el = parseHtml(`
+          <noop-component>
+            <div id="first">
+              <div id="child"></div>
+            </div>
+            <div id="second"></div>
+          </noop-component>
+        `) as HydroActiveComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const handler = jasmine.createSpy<() => void>('handler');
+
+        ref.listen('div#first', 'click', handler);
+
+        // Listen for direct events.
+        ref.host.query('div#first').native.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Listen for descendant events.
+        ref.host.query('div#child').native.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Do not listen for sibling events.
+        ref.host.query('div#second').native.click();
+        expect(handler).not.toHaveBeenCalled();
+
+        // Do not listen for ancestor events.
+        ref.host.native.click();
+        expect(handler).not.toHaveBeenCalled();
+      });
+
+      it('throws an error if given a selector which does not match anything', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        expect(() => ref.listen('#does-not-exist', 'click', () => {}))
+            .toThrowError();
+      });
+
+      it('supports custom events', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        const handler = jasmine.createSpy<(evt: Event) => void>('handler');
+
+        ref.listen(ref.host, 'custom-event', handler);
+
+        const evt = new CustomEvent('custom-event');
+        ref.host.native.dispatchEvent(evt);
+
+        expect(handler).toHaveBeenCalledOnceWith(evt);
+      });
+
+      it('propagates the `capture` option', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        spyOn(el, 'addEventListener').and.callThrough();
+
+        ref.listen(ref.host, 'click', () => {}, { capture: true });
+
+        expect(el.addEventListener).toHaveBeenCalledOnceWith(
+          'click',
+          jasmine.any(Function),
+          jasmine.objectContaining({ capture: true }),
+        );
+      });
+
+      it('propagates the `passive` option', () => {
+        const el = document.createElement('noop-component');
+        const ref = ComponentRef._from(ElementRef.from(el));
+        document.body.appendChild(el);
+
+        spyOn(el, 'addEventListener').and.callThrough();
+
+        ref.listen(ref.host, 'click', () => {}, { passive: true });
+
+        expect(el.addEventListener).toHaveBeenCalledOnceWith(
+          'click',
+          jasmine.any(Function),
+          jasmine.objectContaining({ passive: true }),
+        );
+      });
+    });
   });
 });
 

@@ -409,6 +409,58 @@ export class ComponentRef {
   }
 
   /**
+   * Creates an event listener for the given event which invokes the provided
+   * handler callback function. This listener is automatically created and
+   * removed as the component is connected and disconnected from the DOM,
+   * meaning the listener does not leak memory and does not need to be manually
+   * cleaned up.
+   *
+   * @param elementOrSelector An {@link ElementRef} or selector string to query
+   *     inside the component. This element holds the created event listener,
+   *     meaning only events on this element or its descendants will trigger the
+   *     listener.
+   * @param event The name of the event to listen for.
+   * @param handler The event handler to invoke whenever an associated event is
+   *     dispatched.
+   * @param capture [See `capture` documentation for `addEventListener`.](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#capture)
+   * @param passive [See `passive` documentation for `addEventListener`.](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#passive)
+   */
+  // Type `HTMLElement` events for improved autocompletion.
+  public listen<EventName extends keyof AllElementsEventMap>(
+    elementOrSelector: ElementRef<Element> | string,
+    event: EventName,
+    handler: (event: AllElementsEventMap[EventName]) => void,
+    options?: { capture?: boolean, passive?: boolean },
+  ): void;
+
+  // Overload with generic `string` types so we don't disallow custom events.
+  public listen(
+    elementOrSelector: ElementRef<Element> | string,
+    event: string,
+    handler: (event: Event) => void,
+    options?: { capture?: boolean, passive?: boolean },
+  ): void;
+
+  public listen(
+    elementOrSelector: ElementRef<Element> | string,
+    event: string,
+    handler: (event: Event) => void,
+    { capture, passive }: { capture?: boolean, passive?: boolean } = {},
+  ): void {
+    const element = elementOrSelector instanceof ElementRef
+        ? elementOrSelector
+        : this.host.query(elementOrSelector);
+
+    this.connected(() => {
+      element.native.addEventListener(event, handler, { capture, passive });
+
+      return () => {
+        element.native.removeEventListener(event, handler, { capture })
+      };
+    });
+  }
+
+  /**
    * Invokes the given {@link OnConnect} handler and registers its disconnect
    * callback if provided.
    */
@@ -446,4 +498,17 @@ type ElementOf<ElementOrSelector extends ElementRef<Element> | string> =
     : ElementOrSelector extends string
       ? QueriedElement<ElementOrSelector>
       : Element
+;
+
+// An attempt to capture all the event maps a user might reasonably encounter
+// in an element discovered by an element query inside a component. Almost
+// certainly not exhaustive.
+type AllElementsEventMap =
+  & HTMLElementEventMap
+  & SVGElementEventMap
+  & SVGSVGElementEventMap
+  & MathMLElementEventMap
+  & HTMLVideoElementEventMap
+  & HTMLMediaElementEventMap
+  & HTMLFrameSetElementEventMap
 ;
