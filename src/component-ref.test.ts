@@ -1,22 +1,10 @@
 import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
-import { HydroActiveComponent } from './hydroactive-component.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
+import { NoopComponent } from './testing/noop-component.js';
 import { nextFrame } from './testing/timing.js';
-
-class NoopComponent extends HydroActiveComponent {
-  protected override hydrate(): void { /* noop */ }
-}
-
-customElements.define('noop-component', NoopComponent);
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'noop-component': NoopComponent;
-  }
-}
 
 describe('component-ref', () => {
   afterEach(() => {
@@ -291,8 +279,9 @@ describe('component-ref', () => {
 
     describe('live', () => {
       it('returns an initialized signal', () => {
-        const el = parseHtml(`<noop-component>Hello!</noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component>Hello!</noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         const text = ref.live(ref.host, String);
@@ -300,11 +289,11 @@ describe('component-ref', () => {
       });
 
       it('binds to the provided DOM element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span>test</span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -317,11 +306,11 @@ describe('component-ref', () => {
       });
 
       it('binds to the element returned by the provided selector query', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span>test</span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -335,8 +324,9 @@ describe('component-ref', () => {
 
       it('processes the DOM element based on the provided primitive serializer token', async () => {
         {
-          const el = parseHtml(`<noop-component>test1</noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component>test1</noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -349,8 +339,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component>1234</noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component>1234</noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -363,8 +354,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component>true</noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component>true</noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -377,8 +369,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component>1234</noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component>1234</noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -392,8 +385,9 @@ describe('component-ref', () => {
       });
 
       it('processes the DOM element based on the provided custom serializer', async () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -431,8 +425,9 @@ describe('component-ref', () => {
           }
         }
 
-        const el = parseHtml(`<noop-component>Devel</noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component>Devel</noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -445,11 +440,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span id="my-span"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.live('span', String);
@@ -458,11 +453,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times from different components', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const outerRef = ComponentRef._from(ElementRef.from(el));
         const innerRef =
             ComponentRef._from(outerRef.host.query('noop-component'));
@@ -541,9 +536,9 @@ describe('component-ref', () => {
 
     describe('liveAttr', () => {
       it('returns an initialized signal', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component value="Hello!"></noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         const text = ref.liveAttr(ref.host, 'value', String);
@@ -551,11 +546,11 @@ describe('component-ref', () => {
       });
 
       it('binds to the provided DOM element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span value="test"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -568,11 +563,11 @@ describe('component-ref', () => {
       });
 
       it('binds to the element returned by the provided selector query', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span value="test"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -586,9 +581,9 @@ describe('component-ref', () => {
 
       it('processes the DOM element based on the provided primitive serializer token', async () => {
         {
-          const el = parseHtml(`
+          const el = parseHtml(NoopComponent, `
             <noop-component value="test1"></noop-component>
-          `) as NoopComponent;
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -601,9 +596,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`
+          const el = parseHtml(NoopComponent, `
             <noop-component value="1234"></noop-component>
-          `) as NoopComponent;
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -616,9 +611,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`
+          const el = parseHtml(NoopComponent, `
             <noop-component value="true"></noop-component>
-          `) as NoopComponent;
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -631,9 +626,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`
+          const el = parseHtml(NoopComponent, `
             <noop-component value="1234"></noop-component>
-          `) as NoopComponent;
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -647,8 +642,9 @@ describe('component-ref', () => {
       });
 
       it('processes the DOM element based on the provided custom serializer', async () => {
-        const el = parseHtml(`<noop-component value></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component value></noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -686,9 +682,9 @@ describe('component-ref', () => {
           }
         }
 
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component user="Devel"></noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -701,11 +697,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span id="my-span" value></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.liveAttr('span', 'value', String);
@@ -714,11 +710,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times from different components', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component value></noop-component>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const outerRef = ComponentRef._from(ElementRef.from(el));
         const innerRef =
             ComponentRef._from(outerRef.host.query('noop-component'));
@@ -831,11 +827,11 @@ describe('component-ref', () => {
       });
 
       it('updates the explicitly provided element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -845,11 +841,11 @@ describe('component-ref', () => {
       });
 
       it('queries for the given selector and updates that element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span></span>
           </noop-component>`
-        ) as NoopComponent;
+        );
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -859,8 +855,9 @@ describe('component-ref', () => {
       });
 
       it('throws when the given selector is not found', () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -869,8 +866,9 @@ describe('component-ref', () => {
 
       it('serializes with an implicit primitive serializer', async () => {
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -880,8 +878,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -891,8 +890,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -902,8 +902,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -915,8 +916,9 @@ describe('component-ref', () => {
 
       it('serializes with an explicit primitive serializer', async () => {
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -926,8 +928,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -937,8 +940,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -948,8 +952,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -960,8 +965,9 @@ describe('component-ref', () => {
       });
 
       it('serializes with a custom `Serializer`', async () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         document.body.appendChild(el);
 
         const serializer: ElementSerializer<undefined, Element> = {
@@ -997,8 +1003,9 @@ describe('component-ref', () => {
           }
         }
 
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         document.body.appendChild(el);
 
         const ref = ComponentRef._from(ElementRef.from(el));
@@ -1008,11 +1015,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span id="my-span"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.bind('span', () => 'test1');
@@ -1021,11 +1028,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times from different components', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const outerRef = ComponentRef._from(ElementRef.from(el));
         const innerRef =
             ComponentRef._from(outerRef.host.query('noop-component'));
@@ -1212,11 +1219,11 @@ describe('component-ref', () => {
       });
 
       it('updates the explicitly provided element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -1226,11 +1233,11 @@ describe('component-ref', () => {
       });
 
       it('queries for the given selector and updates that element', async () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span></span>
           </noop-component>`
-        ) as NoopComponent;
+        );
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -1240,8 +1247,9 @@ describe('component-ref', () => {
       });
 
       it('throws when the given selector is not found', () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -1251,8 +1259,9 @@ describe('component-ref', () => {
 
       it('serializes with an implicit primitive serializer', async () => {
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1262,8 +1271,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1273,8 +1283,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1284,8 +1295,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1297,8 +1309,9 @@ describe('component-ref', () => {
 
       it('serializes with an explicit primitive serializer', async () => {
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1308,8 +1321,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1319,8 +1333,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1330,8 +1345,9 @@ describe('component-ref', () => {
         }
 
         {
-          const el = parseHtml(`<noop-component></noop-component>`) as
-              NoopComponent;
+          const el = parseHtml(NoopComponent, `
+            <noop-component></noop-component>
+          `);
           const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
 
@@ -1342,8 +1358,9 @@ describe('component-ref', () => {
       });
 
       it('serializes with a custom `Serializer`', async () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         document.body.appendChild(el);
 
         const serializer: AttrSerializer<undefined> = {
@@ -1379,8 +1396,9 @@ describe('component-ref', () => {
           }
         }
 
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         document.body.appendChild(el);
 
         const ref = ComponentRef._from(ElementRef.from(el));
@@ -1390,11 +1408,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span id="my-span"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.bindAttr('span', 'name', () => 'test1');
@@ -1403,11 +1421,11 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times from different components', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const outerRef = ComponentRef._from(ElementRef.from(el));
         const innerRef =
             ComponentRef._from(outerRef.host.query('noop-component'));
@@ -1418,8 +1436,9 @@ describe('component-ref', () => {
       });
 
       it('allows binding to different attributes of the same element', () => {
-        const el = parseHtml(`<noop-component></noop-component>`) as
-            NoopComponent;
+        const el = parseHtml(NoopComponent, `
+          <noop-component></noop-component>
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.bindAttr(ref.host, 'name1', () => 'test1');
@@ -1428,12 +1447,12 @@ describe('component-ref', () => {
       });
 
       it('allows binding to the same attribute of different elements', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <span id="first"></span>
             <span id="second"></span>
           </noop-component>
-        `) as NoopComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
 
         ref.bindAttr('#first', 'name', () => 'test1');
@@ -1593,14 +1612,14 @@ describe('component-ref', () => {
       });
 
       it('listens for events for the provided `ElementRef`', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <div id="first">
               <div id="child"></div>
             </div>
             <div id="second"></div>
           </noop-component>
-        `) as HydroActiveComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 
@@ -1628,14 +1647,14 @@ describe('component-ref', () => {
       });
 
       it('listens for events for the provided selector', () => {
-        const el = parseHtml(`
+        const el = parseHtml(NoopComponent, `
           <noop-component>
             <div id="first">
               <div id="child"></div>
             </div>
             <div id="second"></div>
           </noop-component>
-        `) as HydroActiveComponent;
+        `);
         const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
 

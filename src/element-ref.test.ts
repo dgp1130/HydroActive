@@ -57,16 +57,20 @@ describe('element-ref', () => {
 
     describe('read', () => {
       it('reads the text content of the element and deserializes with the given primitive serializer', () => {
-        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>Hello, World!</div>`));
         expect(el.read(String)).toBe('Hello, World!');
 
-        const el2 = ElementRef.from(parseHtml(`<div>12345</div>`));
+        const el2 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>12345</div>`));
         expect(el2.read(Number)).toBe(12345);
 
-        const el3 = ElementRef.from(parseHtml(`<div>true</div>`));
+        const el3 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>true</div>`));
         expect(el3.read(Boolean)).toBeTrue();
 
-        const el4 = ElementRef.from(parseHtml(`<div>12345</div>`));
+        const el4 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>12345</div>`));
         expect(el4.read(BigInt)).toBe(12345n);
       });
 
@@ -79,7 +83,8 @@ describe('element-ref', () => {
           },
         };
 
-        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>Hello, World!</div>`));
         expect(el.read(serializer)).toEqual({ foo: 'bar' });
       });
 
@@ -99,7 +104,8 @@ describe('element-ref', () => {
           }
         }
 
-        const el = ElementRef.from(parseHtml(`<div>Devel</div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>Devel</div>`));
         expect(el.read(User)).toEqual(new User('Devel'));
       });
 
@@ -113,7 +119,8 @@ describe('element-ref', () => {
           }
         };
 
-        const el = ElementRef.from(parseHtml(`<div>Hello, World!</div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div>Hello, World!</div>`));
         expect(() => el.read(serializer)).toThrow(err);
       });
 
@@ -196,43 +203,54 @@ describe('element-ref', () => {
 
     describe('attr', () => {
       it('returns the attribute value for the given name', () => {
-        const el = ElementRef.from(parseHtml(`<div foo="bar"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div foo="bar"></div>`));
 
         expect(el.attr('foo', String)).toBe('bar');
       });
 
       it('deserializes empty string when the attribute is set with no value', () => {
-        const el = ElementRef.from(parseHtml(`<div foo bar=""></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div foo bar=""></div>`));
 
         expect(el.attr('foo', String)).toBe('');
         expect(el.attr('bar', String)).toBe('');
       });
 
       it('deserializes the attribute with the given primitive serializer', () => {
-        const el = ElementRef.from(parseHtml(`<div name="Devel"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div name="Devel"></div>`));
         expect(el.attr('name', String)).toBe('Devel');
 
-        const el2 = ElementRef.from(parseHtml(`<div id="12345"></div>`));
+        const el2 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div id="12345"></div>`));
         expect(el2.attr('id', Number)).toBe(12345);
 
-        const el3 = ElementRef.from(parseHtml(`<div id="12345"></div>`));
+        const el3 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div id="12345"></div>`));
         expect(el3.attr('id', BigInt)).toBe(12345n);
       });
 
       it('deserializes booleans based on text value, not attribute presence', () => {
-        const el = ElementRef.from(parseHtml(`<div enabled="true"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div enabled="true"></div>`));
         expect(el.attr('enabled', Boolean)).toBeTrue();
 
-        const el2 = ElementRef.from(parseHtml(`<div enabled="false"></div>`));
+        const el2 = ElementRef.from(parseHtml(HTMLDivElement, `
+          <div enabled="false"></div>
+        `));
         expect(el2.attr('enabled', Boolean)).toBeFalse();
 
-        const el3 = ElementRef.from(parseHtml(`<div enabled></div>`));
+        const el3 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div enabled></div>`));
         expect(() => el3.attr('enabled', Boolean)).toThrow();
 
-        const el4 = ElementRef.from(parseHtml(`<div enabled=""></div>`));
+        const el4 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div enabled=""></div>`));
         expect(() => el4.attr('enabled', Boolean)).toThrow();
 
-        const el5 = ElementRef.from(parseHtml(`<div></div>`));
+        const el5 = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div></div>`));
         expect(() => el5.attr('enabled', Boolean)).toThrow();
       });
 
@@ -247,7 +265,8 @@ describe('element-ref', () => {
           }
         };
 
-        const el = ElementRef.from(parseHtml(`<div hello="world"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div hello="world"></div>`));
         expect(el.attr('hello', serializer)).toEqual({ foo: 'bar' });
       });
 
@@ -267,7 +286,8 @@ describe('element-ref', () => {
           }
         }
 
-        const el = ElementRef.from(parseHtml(`<div name="Devel"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div name="Devel"></div>`));
         expect(el.attr('name', User)).toEqual(new User('Devel'));
       });
 
@@ -283,12 +303,13 @@ describe('element-ref', () => {
           }
         };
 
-        const el = ElementRef.from(parseHtml(`<div hello="world"></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement,
+            `<div hello="world"></div>`));
         expect(() => el.attr('hello', serializer)).toThrow(err);
       });
 
       it('returns `undefined` if the attribute does not exist and is marked optional', () => {
-        const el = ElementRef.from(parseHtml(`<div></div>`));
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
         expect(el.attr('hello', String, { optional: true })).toBeUndefined();
       });
 
@@ -374,7 +395,7 @@ describe('element-ref', () => {
     describe('query', () => {
       it('returns the queried element', () => {
         const el = ElementRef.from(
-            parseHtml(`<div><span>Hello, World!</span></div>`));
+            parseHtml(HTMLDivElement, `<div><span>Hello, World!</span></div>`));
 
         expect(el.query('span').read(String)).toBe('Hello, World!');
       });
@@ -506,15 +527,15 @@ describe('element-ref', () => {
       });
 
       it('scopes to the native element', () => {
-        const el = ElementRef.from(parseHtml(`
-<div>
-  <div>
-    <!-- Should be skipped by \`:scope >\` -->
-    <span>Descendant</span>
-  </div>
-  <span>Child</span>
-</div>
-        `.trim()));
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `
+          <div>
+            <div>
+              <!-- Should be skipped by \`:scope >\` -->
+              <span>Descendant</span>
+            </div>
+            <span>Child</span>
+          </div>
+        `));
 
         expect(el.query(':scope > span').read(String)).toBe('Child');
       });
@@ -522,13 +543,13 @@ describe('element-ref', () => {
 
     describe('queryAll', () => {
       it('returns the queried elements', () => {
-        const el = ElementRef.from(parseHtml(`
-<div>
-  <span>Hello, World!</span>
-  <span>Hello again!</span>
-  <span>Hello once more!</span>
-</div>
-        `.trim()));
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `
+          <div>
+            <span>Hello, World!</span>
+            <span>Hello again!</span>
+            <span>Hello once more!</span>
+          </div>
+        `));
 
         expect(el.queryAll('span').map((el) => el.read(String))).toEqual([
           'Hello, World!',
@@ -564,16 +585,16 @@ describe('element-ref', () => {
       });
 
       it('scopes to the native element', () => {
-        const el = ElementRef.from(parseHtml(`
-<div>
-  <div>
-    <!-- Should be skipped by \`:scope >\` -->
-    <span>Descendant</span>
-  </div>
-  <span>Child 1</span>
-  <span>Child 2</span>
-</div>
-        `.trim()));
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `
+          <div>
+            <div>
+              <!-- Should be skipped by \`:scope >\` -->
+              <span>Descendant</span>
+            </div>
+            <span>Child 1</span>
+            <span>Child 2</span>
+          </div>
+        `));
 
         expect(el.queryAll(':scope > span').map((el) => el.read(String)))
             .toEqual([
