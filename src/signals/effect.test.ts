@@ -71,12 +71,14 @@ describe('effect', () => {
 
       // Unrelated signals don't trigger the effect.
       value2.set(3);
-      expect(scheduler.pending()).toEqual([]);
+      expect(scheduler.isStable()).toBeTrue();
       expect(action).not.toHaveBeenCalled();
 
       // Dependency signal *does* trigger the effect.
       value1.set(4);
       expect(action).not.toHaveBeenCalled();
+      expect(scheduler.isStable()).toBeFalse();
+
       scheduler.flush();
       expect(action).toHaveBeenCalledOnceWith();
       action.calls.reset();
@@ -84,7 +86,7 @@ describe('effect', () => {
       // Old dependencies don't trigger the effect.
       value1.set(5);
       expect(action).not.toHaveBeenCalled();
-      expect(scheduler.pending()).toEqual([]);
+      expect(scheduler.isStable()).toBeTrue();
 
       // New dependencies do trigger the effect.
       value2.set(6);
@@ -152,7 +154,7 @@ describe('effect', () => {
 
         // Should not react to signal change.
         value.set(2);
-        expect(scheduler.pending()).toEqual([]);
+        expect(scheduler.isStable()).toBeTrue();
       });
 
       it('cancels a pending initial call', () => {
@@ -160,10 +162,10 @@ describe('effect', () => {
         const action = jasmine.createSpy<() => void>('action');
 
         const dispose = effect(action, scheduler);
-        expect(scheduler.pending()).toEqual([ jasmine.any(Function) ]);
+        expect(scheduler.isStable()).toBeFalse();
 
         dispose();
-        expect(scheduler.pending()).toEqual([]);
+        expect(scheduler.isStable()).toBeTrue();
       });
 
       it('cancels a pending re-record call', () => {
@@ -179,10 +181,10 @@ describe('effect', () => {
 
         // Schedule another invocation.
         value.set(2);
-        expect(scheduler.pending()).toEqual([ jasmine.any(Function) ]);
+        expect(scheduler.isStable()).toBeFalse();
 
         dispose();
-        expect(scheduler.pending()).toEqual([]);
+        expect(scheduler.isStable()).toBeTrue();
       });
     });
   });

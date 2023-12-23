@@ -1,25 +1,24 @@
 import { Action, CancelAction, Scheduler } from './scheduler.js';
 
-let singletonScheduler: UiScheduler | undefined;
-
 /**
  * A {@link Scheduler} implementation which schedules actions to be run on the
  * next animation frame. Does *not* batch multiple actions together into a
  * single {@link requestAnimationFrame} call. This scheduler is ideal for
  * scheduling UI operations which affect the DOM.
  */
-export class UiScheduler implements Scheduler {
-  private constructor() {}
+export class UiScheduler extends Scheduler {
+  private constructor() {
+    super();
+  }
 
   /** Provides a {@link UiScheduler}. */
   public static from(): UiScheduler {
-    if (!singletonScheduler) singletonScheduler = new UiScheduler();
-    return singletonScheduler;
+    return new UiScheduler();
   }
 
-  public schedule(action: Action): CancelAction {
-    const id = requestAnimationFrame(() => { action(); });
+  protected scheduleAction(action: Action): CancelAction {
+    const handle = requestAnimationFrame(() => { action(); });
 
-    return () => { cancelAnimationFrame(id); };
+    return () => { cancelAnimationFrame(handle); };
   }
 }

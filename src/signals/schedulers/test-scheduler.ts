@@ -5,18 +5,20 @@ import { Action, CancelAction, Scheduler } from './scheduler.js';
  * automatically invoke a scheduled task, but instead waits to be manually
  * flushed during a test.
  */
-export class TestScheduler implements Scheduler {
+export class TestScheduler extends Scheduler {
   /** Queue of actions to be invoked. */
   readonly #queue: Array<Action> = [];
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   /** Constructs a new {@link TestScheduler}. */
   public static from(): TestScheduler {
     return new TestScheduler();
   }
 
-  public schedule(action: Action): CancelAction {
+  protected scheduleAction(action: Action): CancelAction {
     this.#queue.push(action);
 
     return () => {
@@ -43,14 +45,5 @@ export class TestScheduler implements Scheduler {
     if (errors.length !== 0) {
       throw new AggregateError(errors, 'One or more scheduled actions threw.');
     }
-  }
-
-  /**
-   * Returns all pending actions. Useful for asserting the current scheduler
-   * state.
-   */
-  public pending(): Array<Action> {
-    // Clone the array to avoid accidental mutations of internal state.
-    return Array.from(this.#queue);
   }
 }

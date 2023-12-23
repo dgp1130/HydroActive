@@ -7,8 +7,10 @@ let singletonScheduler: MacrotaskScheduler | undefined;
  * next macrotask. Does *not* batch multiple actions together into a single
  * macrotask.
  */
-export class MacrotaskScheduler implements Scheduler {
-  private constructor() {}
+export class MacrotaskScheduler extends Scheduler {
+  private constructor() {
+    super();
+  }
 
   /** Provides a {@link MacrotaskScheduler}. */
   public static from(): MacrotaskScheduler {
@@ -16,9 +18,9 @@ export class MacrotaskScheduler implements Scheduler {
     return singletonScheduler;
   }
 
-  public schedule(callback: Action): CancelAction {
-    const id = setTimeout(() => { callback(); });
+  protected scheduleAction(callback: Action): CancelAction {
+    const handle = setTimeout(() => { callback(); });
 
-    return () => { clearInterval(id); };
+    return () => { clearInterval(handle); };
   }
 }
