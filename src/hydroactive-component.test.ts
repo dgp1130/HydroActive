@@ -1,4 +1,5 @@
-import { OnConnect, OnDisconnect } from './component-ref.js';
+import { ComponentRef, OnConnect, OnDisconnect } from './component-ref.js';
+import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 
@@ -15,7 +16,11 @@ describe('hydroactive-component', () => {
 
   describe('HydroActiveComponent', () => {
     it('hydrates on upgrade when already connected to the DOM', testCase('already-rendered', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
+          .and.callFake(function (this: HydroActiveComponent): void {
+            const ref = ComponentRef._from(ElementRef.from(this));
+            this._registerComponentRef(ref);
+          });
 
       customElements.define(
         'already-rendered',
@@ -28,7 +33,12 @@ describe('hydroactive-component', () => {
     }));
 
     it('hydrates on connect', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
+          .and.callFake(function (this: HydroActiveComponent): void {
+            const ref = ComponentRef._from(ElementRef.from(this));
+            this._registerComponentRef(ref);
+          });
+
       customElements.define(
         'new-component',
         class extends HydroActiveComponent {
@@ -45,7 +55,12 @@ describe('hydroactive-component', () => {
     });
 
     it('does not hydrate a second time when moved around the DOM', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
+          .and.callFake(function (this: HydroActiveComponent): void {
+            const ref = ComponentRef._from(ElementRef.from(this));
+            this._registerComponentRef(ref);
+          });
+
       customElements.define(
         'another-component',
         class extends HydroActiveComponent {
@@ -53,19 +68,24 @@ describe('hydroactive-component', () => {
         },
       );
 
-      const comp = document.createElement('another-component');
-      document.body.appendChild(comp);
+      const el = document.createElement('another-component');
+      document.body.appendChild(el);
       expect(hydrate).toHaveBeenCalledTimes(1);
       hydrate.calls.reset();
 
-      comp.remove();
-      document.body.appendChild(comp);
+      el.remove();
+      document.body.appendChild(el);
       expect(hydrate).not.toHaveBeenCalled();
     });
 
     describe('`defer-hydration`', () => {
       it('defers hydration', testCase('deferred', (el) => {
-        const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+        const hydrate = jasmine.createSpy<Hydrate>('hydrate')
+            .and.callFake(function (this: HydroActiveComponent): void {
+              const ref = ComponentRef._from(ElementRef.from(this));
+              this._registerComponentRef(ref);
+            });
+
         customElements.define(
           'deferred-component',
           class extends HydroActiveComponent {
@@ -111,7 +131,12 @@ describe('hydroactive-component', () => {
       });
 
       it('hydrates when `defer-hydration` is removed while disconnected from the DOM', testCase('disconnected-hydration', (el) => {
-        const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+        const hydrate = jasmine.createSpy<Hydrate>('hydrate')
+            .and.callFake(function (this: HydroActiveComponent): void {
+              const ref = ComponentRef._from(ElementRef.from(this));
+              this._registerComponentRef(ref);
+            });
+
         customElements.define(
           'disconnected-hydration',
           class extends HydroActiveComponent {
@@ -154,10 +179,11 @@ describe('hydroactive-component', () => {
       });
     });
 
-    describe('_registerLifecycleHooks', () => {
-      it('registers the connect and disconnect hooks', () => {
-        const onConnect = jasmine.createSpy<OnConnect>('onConnect');
+    describe('_registerComponentRef', () => {
+      it('registers the `ComponentRef` and invokes its lifecycle hooks', () => {
         const onDisconnect = jasmine.createSpy<OnDisconnect>('onDisconnect');
+        const onConnect = jasmine.createSpy<OnConnect>('onConnect')
+            .and.returnValue(onDisconnect);
 
         customElements.define(
           'lifecycle-comp',
@@ -166,90 +192,55 @@ describe('hydroactive-component', () => {
           },
         );
 
-        const comp =
+        const el =
             document.createElement('lifecycle-comp') as HydroActiveComponent;
-        comp._registerLifecycleHooks({ onConnect, onDisconnect });
-        expect(onConnect).not.toHaveBeenCalled();
-        expect(onDisconnect).not.toHaveBeenCalled();
+        const ref = ComponentRef._from(ElementRef.from(el));
+        el._registerComponentRef(ref);
+
+        ref.connected(onConnect);
 
         // Invokes the `onConnect` listener when connected.
-        document.body.appendChild(comp);
+        document.body.appendChild(el);
         expect(onConnect).toHaveBeenCalledTimes(1);
         expect(onDisconnect).not.toHaveBeenCalled();
 
         onConnect.calls.reset();
 
         // Invokes the `onDisconnect` listener when disconnected.
-        comp.remove();
+        el.remove();
         expect(onConnect).not.toHaveBeenCalled();
         expect(onDisconnect).toHaveBeenCalledTimes(1);
       });
 
-      it('maintains multiple registered callbacks', () => {
-        const onConnect1 = jasmine.createSpy<OnConnect>('onConnect1');
-        const onDisconnect1 = jasmine.createSpy<OnDisconnect>('onDisconnect1');
-        const onConnect2 = jasmine.createSpy<OnConnect>('onConnect2');
-        const onDisconnect2 = jasmine.createSpy<OnDisconnect>('onDisconnect2');
-
-        customElements.define(
-          'multi-lifecycle-comp',
-          class extends HydroActiveComponent {
-            hydrate(): void {}
-          },
-        );
-
-        const comp = document.createElement('multi-lifecycle-comp') as
-            HydroActiveComponent;
-
-        comp._registerLifecycleHooks({
-          onConnect: onConnect1,
-          onDisconnect: onDisconnect1,
-        });
-        expect(onConnect1).not.toHaveBeenCalled();
-        expect(onDisconnect1).not.toHaveBeenCalled();
-
-        comp._registerLifecycleHooks({
-          onConnect: onConnect2,
-          onDisconnect: onDisconnect2,
-        });
-        expect(onConnect2).not.toHaveBeenCalled();
-        expect(onDisconnect2).not.toHaveBeenCalled();
-
-        // Invokes the `onConnect` listeners when connected.
-        document.body.appendChild(comp);
-        expect(onConnect1).toHaveBeenCalledTimes(1);
-        expect(onDisconnect1).not.toHaveBeenCalled();
-        expect(onConnect2).toHaveBeenCalledTimes(1);
-        expect(onDisconnect2).not.toHaveBeenCalled();
-
-        onConnect1.calls.reset();
-        onConnect2.calls.reset();
-
-        // Invokes the `onDisconnect` listener when disconnected.
-        comp.remove();
-        expect(onConnect1).not.toHaveBeenCalled();
-        expect(onDisconnect1).toHaveBeenCalledTimes(1);
-        expect(onConnect2).not.toHaveBeenCalled();
-        expect(onDisconnect2).toHaveBeenCalledTimes(1);
-      });
-
-      it('does not invoke connect listeners added during hydration', () => {
-        const onConnect = jasmine.createSpy<OnConnect>('onConnect');
+      it('does *not* invoke connect listener prior to hydration', () => {
+        let hydrated = false;
+        const onConnect = jasmine.createSpy<OnConnect>('onConnect')
+            .and.callFake(() => {
+              // Connection happens before hydration.
+              expect(hydrated).toBeFalse();
+            });
 
         customElements.define(
           'hydration-connect',
           class extends HydroActiveComponent {
             override hydrate(): void {
-              this._registerLifecycleHooks({ onConnect });
+              hydrated = true;
             }
           },
         );
 
-        document.body.appendChild(document.createElement('hydration-connect'));
-
-        // Components are connected *before* they hydrate, therefore this event
-        // should not be called.
+        const el = document.createElement('hydration-connect') as
+            HydroActiveComponent;
+        const ref = ComponentRef._from(ElementRef.from(el));
+        el._registerComponentRef(ref);
+        ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();
+
+        document.body.appendChild(el);
+
+        // Verify that `onConnect` was invoked, which itself should have
+        // verified that `hydrate` was *not* called before it.
+        expect(onConnect).toHaveBeenCalled();
       });
     });
   });

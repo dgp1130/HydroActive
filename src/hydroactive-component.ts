@@ -1,36 +1,34 @@
+import { ComponentRef } from './component-ref.js';
+
 /** Abstract base class for all HydroActive components. */
 export abstract class HydroActiveComponent extends HTMLElement {
   /** Whether or not the component has been hydrated. */
   #hydrated = false;
 
-  /** Listeners to invoke when connected to the DOM. */
-  readonly #connectListeners: Array<() => void> = [];
-
-  /** Listeners to invoke when disconnected from the DOM. */
-  readonly #disconnectListeners: Array<() => void> = [];
+  /** The associated {@link ComponentRef} for this component. */
+  #ref?: ComponentRef;
 
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
 
-  public /* internal */ _registerLifecycleHooks({ onConnect, onDisconnect }: {
-    onConnect?: () => void,
-    onDisconnect?: () => void,
-  }): void {
-    if (onConnect) this.#connectListeners.push(onConnect);
-    if (onDisconnect) this.#disconnectListeners.push(onDisconnect);
+  public /* internal */ _registerComponentRef(ref: ComponentRef): void {
+    if (ref.host.native !== this) throw new Error('Registered `ComponentRef` must be associated with this component.');
+    if (this.#ref) throw new Error('Already registered a `ComponentRef`.');
+
+    this.#ref = ref;
   }
 
   connectedCallback(): void {
     // The "connect" event triggers _before_ the "hydrate" event when they
-    // happen simultaneously. Listeners should know to invoke connect callbacks
-    // discovered post-connection time, such as during hydration.
-    for (const listener of this.#connectListeners) listener();
+    // happen simultaneously. `ComponentRef` should know to invoke connect
+    // callbacks discovered post-connection time, such as during hydration.
+    this.#ref?._onConnect();
 
     this.#requestHydration();
   }
 
   disconnectedCallback(): void {
-    for (const listener of this.#disconnectListeners) listener();
+    this.#ref?._onDisconnect();
   }
 
   // Trigger hydration when the `defer-hydration` attribute is removed.
@@ -52,5 +50,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
     this.#hydrated = true;
     this.hydrate();
+
+    if (!this.#ref) throw new Error('No registered `ComponentRef` after hydration.');
   }
 }

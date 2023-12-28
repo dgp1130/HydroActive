@@ -1,3 +1,4 @@
+import { ComponentRef, ElementRef } from 'hydroactive';
 import { HydroActiveComponent } from '../hydroactive-component.js';
 
 /**
@@ -6,7 +7,20 @@ import { HydroActiveComponent } from '../hydroactive-component.js';
  * defining its own components and potentially conflicting tag names.
  */
 export class NoopComponent extends HydroActiveComponent {
-  protected override hydrate(): void { /* noop */ }
+  #ref!: ComponentRef;
+
+  public constructor() {
+    super();
+
+    this.#ref = ComponentRef._from(ElementRef.from(this));
+    this._registerComponentRef(this.#ref);
+  }
+
+  protected override hydrate(): void { /* no-op */ }
+
+  public getComponentRef(): ComponentRef {
+    return this.#ref;
+  }
 }
 
 customElements.define('noop-component', NoopComponent);

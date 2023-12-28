@@ -1,5 +1,6 @@
 import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
+import { HydroActiveComponent } from './hydroactive-component.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
@@ -28,7 +29,7 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();
@@ -41,7 +42,7 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();
@@ -64,7 +65,7 @@ describe('component-ref', () => {
         const onDisconnect = jasmine.createSpy<OnDisconnect>('onDisconnect');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.connected(() => onDisconnect);
         expect(onDisconnect).not.toHaveBeenCalled();
@@ -81,7 +82,7 @@ describe('component-ref', () => {
         const onDisconnect2 = jasmine.createSpy<OnDisconnect>('onDisconnect2');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.connected(jasmine.createSpy().and.returnValues(
           onDisconnect1,
@@ -118,7 +119,7 @@ describe('component-ref', () => {
         const onConnect2 = jasmine.createSpy<OnConnect>('onConnect2');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.connected(onConnect1);
         ref.connected(onConnect2);
@@ -135,7 +136,7 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         document.body.appendChild(el);
         expect(onConnect).not.toHaveBeenCalled();
@@ -148,7 +149,7 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         // Connect and disconnect the element.
         document.body.appendChild(el);
@@ -167,7 +168,7 @@ describe('component-ref', () => {
     describe('effect', () => {
       it('schedules the effect for the next animation frame', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -184,7 +185,7 @@ describe('component-ref', () => {
       it('reruns the effect when a signal changes', async () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const value = signal(1);
         const effect = jasmine.createSpy<() => void>('effect')
@@ -207,7 +208,7 @@ describe('component-ref', () => {
 
       it('does not initialize the effect until connected', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -223,7 +224,7 @@ describe('component-ref', () => {
       it('pauses the effect while disconnected', async () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const value = signal(1);
         const effect = jasmine.createSpy<() => void>('effect')
@@ -257,7 +258,7 @@ describe('component-ref', () => {
       it('resumes the effect when reconnected', async () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -282,7 +283,7 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component>Hello!</noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const text = ref.live(ref.host, String);
         expect(text()).toBe('Hello!');
@@ -294,8 +295,8 @@ describe('component-ref', () => {
             <span>test</span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const text = ref.live(ref.host.query('span'), String);
         expect(text()).toBe('test');
@@ -311,8 +312,8 @@ describe('component-ref', () => {
             <span>test</span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const text = ref.live('span', String);
         expect(text()).toBe('test');
@@ -327,8 +328,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component>test1</noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.live(ref.host, String);
           expect(value()).toBe('test1');
@@ -342,8 +343,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component>1234</noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.live(ref.host, Number);
           expect(value()).toBe(1234);
@@ -357,8 +358,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component>true</noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.live(ref.host, Boolean);
           expect(value()).toBe(true);
@@ -372,8 +373,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component>1234</noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.live(ref.host, BigInt);
           expect(value()).toBe(1234n);
@@ -388,8 +389,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const serializer: ElementSerializer<string, Element> = {
           serializeTo(value: string, element: Element): void {
@@ -428,8 +429,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component>Devel</noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const value = ref.live(ref.host, User);
         expect(value()).toEqual(new User('Devel'));
@@ -445,7 +446,7 @@ describe('component-ref', () => {
             <span id="my-span"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.live('span', String);
         expect(() => ref.live('#my-span', String))
@@ -453,14 +454,15 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times from different components', () => {
-        const el = parseHtml(NoopComponent, `
+        const outerEl = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
         `);
-        const outerRef = ComponentRef._from(ElementRef.from(el));
-        const innerRef =
-            ComponentRef._from(outerRef.host.query('noop-component'));
+        const outerRef = outerEl.getComponentRef();
+
+        const innerEl = outerRef.host.query('noop-component').native;
+        const innerRef = innerEl.getComponentRef();
 
         outerRef.live('noop-component', String);
         expect(() => innerRef.live(innerRef.host, String))
@@ -539,7 +541,7 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component value="Hello!"></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const text = ref.liveAttr(ref.host, 'value', String);
         expect(text()).toBe('Hello!');
@@ -551,8 +553,8 @@ describe('component-ref', () => {
             <span value="test"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const text = ref.liveAttr(ref.host.query('span'), 'value', String);
         expect(text()).toBe('test');
@@ -568,8 +570,8 @@ describe('component-ref', () => {
             <span value="test"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const text = ref.liveAttr('span', 'value', String);
         expect(text()).toBe('test');
@@ -584,8 +586,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component value="test1"></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.liveAttr(ref.host, 'value', String);
           expect(value()).toBe('test1');
@@ -599,8 +601,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component value="1234"></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.liveAttr(ref.host, 'value', Number);
           expect(value()).toBe(1234);
@@ -614,8 +616,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component value="true"></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.liveAttr(ref.host, 'value', Boolean);
           expect(value()).toBe(true);
@@ -629,8 +631,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component value="1234"></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           const value = ref.liveAttr(ref.host, 'value', BigInt);
           expect(value()).toBe(1234n);
@@ -645,8 +647,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component value></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const serializer: AttrSerializer<string> = {
           serialize(value: string): string {
@@ -685,8 +687,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component user="Devel"></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const value = ref.liveAttr(ref.host, 'user', User);
         expect(value()).toEqual(new User('Devel'));
@@ -702,7 +704,7 @@ describe('component-ref', () => {
             <span id="my-span" value></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.liveAttr('span', 'value', String);
         expect(() => ref.liveAttr('#my-span', 'value', String))
@@ -710,14 +712,15 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times from different components', () => {
-        const el = parseHtml(NoopComponent, `
+        const outerEl = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component value></noop-component>
           </noop-component>
         `);
-        const outerRef = ComponentRef._from(ElementRef.from(el));
-        const innerRef =
-            ComponentRef._from(outerRef.host.query('noop-component'));
+        const outerRef = outerEl.getComponentRef();
+
+        const innerEl = outerRef.host.query('noop-component').native;
+        const innerRef = innerEl.getComponentRef();
 
         outerRef.liveAttr('noop-component', 'value', String);
         expect(() => innerRef.liveAttr(innerRef.host, 'value', String))
@@ -772,8 +775,8 @@ describe('component-ref', () => {
     describe('bind', () => {
       it('updates the provided element\'s text content reactively', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         expect(el.textContent).toBe('');
 
@@ -789,7 +792,7 @@ describe('component-ref', () => {
 
       it('does not invoke the signal until connected', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
         const sig = jasmine.createSpy<() => string>('sig')
             .and.returnValue('test');
 
@@ -805,8 +808,8 @@ describe('component-ref', () => {
 
       it('pauses updates while disconnected', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const value = signal('1');
         const sig = jasmine.createSpy<() => string>('sig')
@@ -832,8 +835,8 @@ describe('component-ref', () => {
             <span></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         ref.bind(ref.host.query('span'), () => 'test');
         await nextFrame();
@@ -846,8 +849,8 @@ describe('component-ref', () => {
             <span></span>
           </noop-component>`
         );
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         ref.bind('span', () => 'test', String);
         await nextFrame();
@@ -858,8 +861,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         expect(() => ref.bind('span', () => 'test', String)).toThrow();
       });
@@ -869,8 +872,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 'test');
           await nextFrame();
@@ -881,8 +884,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234);
           await nextFrame();
@@ -893,8 +896,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => true);
           await nextFrame();
@@ -905,8 +908,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234n);
           await nextFrame();
@@ -919,8 +922,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 'test', String);
           await nextFrame();
@@ -931,8 +934,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234, Number);
           await nextFrame();
@@ -943,8 +946,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => true, Boolean);
           await nextFrame();
@@ -955,8 +958,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234n, BigInt);
           await nextFrame();
@@ -969,6 +972,7 @@ describe('component-ref', () => {
           <noop-component></noop-component>
         `);
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const serializer: ElementSerializer<undefined, Element> = {
           serializeTo(_value: undefined, element: Element): void {
@@ -980,7 +984,6 @@ describe('component-ref', () => {
           },
         };
 
-        const ref = ComponentRef._from(ElementRef.from(el));
         ref.bind(ref.host, () => undefined, serializer);
         await nextFrame();
         expect(ref.host.native.textContent!).toBe('undefined');
@@ -1007,8 +1010,8 @@ describe('component-ref', () => {
           <noop-component></noop-component>
         `);
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
-        const ref = ComponentRef._from(ElementRef.from(el));
         ref.bind(ref.host, () => new User('Devel'), User);
         await nextFrame();
         expect(ref.host.native.textContent!).toBe('Devel');
@@ -1020,7 +1023,7 @@ describe('component-ref', () => {
             <span id="my-span"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.bind('span', () => 'test1');
         expect(() => ref.bind('#my-span', () => 'test2'))
@@ -1028,14 +1031,15 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element multiple times from different components', () => {
-        const el = parseHtml(NoopComponent, `
+        const outerEl = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
         `);
-        const outerRef = ComponentRef._from(ElementRef.from(el));
-        const innerRef =
-            ComponentRef._from(outerRef.host.query('noop-component'));
+        const outerRef = outerEl.getComponentRef();
+
+        const innerEl = outerRef.host.query('noop-component').native;
+        const innerRef = innerEl.getComponentRef();
 
         outerRef.bind('noop-component', () => 'test1');
         expect(() => innerRef.bind(innerRef.host, () => 'test2'))
@@ -1164,8 +1168,8 @@ describe('component-ref', () => {
     describe('bindAttr', () => {
       it('updates the provided element\'s named attribute reactively', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         expect(el.textContent).toBe('');
 
@@ -1181,7 +1185,7 @@ describe('component-ref', () => {
 
       it('does not invoke the signal until connected', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
         const sig = jasmine.createSpy<() => string>('sig')
             .and.returnValue('test');
 
@@ -1197,8 +1201,8 @@ describe('component-ref', () => {
 
       it('pauses updates while disconnected', async () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const value = signal('1');
         const sig = jasmine.createSpy<() => string>('sig')
@@ -1224,8 +1228,8 @@ describe('component-ref', () => {
             <span></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         ref.bindAttr(ref.host.query('span'), 'name', () => 'test');
         await nextFrame();
@@ -1238,8 +1242,8 @@ describe('component-ref', () => {
             <span></span>
           </noop-component>`
         );
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         ref.bindAttr('span', 'name', () => 'test', String);
         await nextFrame();
@@ -1250,8 +1254,8 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         expect(() => ref.bindAttr('span', 'name', () => 'test', String))
             .toThrow();
@@ -1262,8 +1266,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 'test');
           await nextFrame();
@@ -1274,8 +1278,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234);
           await nextFrame();
@@ -1286,8 +1290,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => true);
           await nextFrame();
@@ -1298,8 +1302,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234n);
           await nextFrame();
@@ -1312,8 +1316,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 'test', String);
           await nextFrame();
@@ -1324,8 +1328,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234, Number);
           await nextFrame();
@@ -1336,8 +1340,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => true, Boolean);
           await nextFrame();
@@ -1348,8 +1352,8 @@ describe('component-ref', () => {
           const el = parseHtml(NoopComponent, `
             <noop-component></noop-component>
           `);
-          const ref = ComponentRef._from(ElementRef.from(el));
           document.body.appendChild(el);
+          const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234n, BigInt);
           await nextFrame();
@@ -1362,6 +1366,7 @@ describe('component-ref', () => {
           <noop-component></noop-component>
         `);
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const serializer: AttrSerializer<undefined> = {
           serialize(): string {
@@ -1373,7 +1378,6 @@ describe('component-ref', () => {
           },
         };
 
-        const ref = ComponentRef._from(ElementRef.from(el));
         ref.bindAttr(ref.host, 'name', () => undefined, serializer);
         await nextFrame();
         expect(ref.host.native.getAttribute('name')).toBe('undefined');
@@ -1400,8 +1404,8 @@ describe('component-ref', () => {
           <noop-component></noop-component>
         `);
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
-        const ref = ComponentRef._from(ElementRef.from(el));
         ref.bindAttr(ref.host, 'user', () => new User('Devel'), User);
         await nextFrame();
         expect(ref.host.native.getAttribute('user')).toBe('Devel');
@@ -1413,7 +1417,7 @@ describe('component-ref', () => {
             <span id="my-span"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.bindAttr('span', 'name', () => 'test1');
         expect(() => ref.bindAttr('#my-span', 'name', () => 'test2'))
@@ -1421,14 +1425,15 @@ describe('component-ref', () => {
       });
 
       it('throws an error when binding to the same element attribute multiple times from different components', () => {
-        const el = parseHtml(NoopComponent, `
+        const outerEl = parseHtml(NoopComponent, `
           <noop-component>
             <noop-component></noop-component>
           </noop-component>
         `);
-        const outerRef = ComponentRef._from(ElementRef.from(el));
-        const innerRef =
-            ComponentRef._from(outerRef.host.query('noop-component'));
+        const outerRef = outerEl.getComponentRef();
+
+        const innerEl = outerRef.host.query('noop-component').native;
+        const innerRef = innerEl.getComponentRef();
 
         outerRef.bindAttr('noop-component', 'name', () => 'test1');
         expect(() => innerRef.bindAttr(innerRef.host, 'name', () => 'test2'))
@@ -1439,7 +1444,7 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.bindAttr(ref.host, 'name1', () => 'test1');
         expect(() => ref.bindAttr(ref.host, 'name2', () => 'test2'))
@@ -1453,7 +1458,7 @@ describe('component-ref', () => {
             <span id="second"></span>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         ref.bindAttr('#first', 'name', () => 'test1');
         expect(() => ref.bindAttr('#second', 'name', () => 'test2'))
@@ -1557,8 +1562,8 @@ describe('component-ref', () => {
     describe('listen', () => {
       it('listens invokes the given callback when the specified event is triggered', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const handler = jasmine.createSpy<(evt: Event) => void>('handler');
 
@@ -1572,7 +1577,7 @@ describe('component-ref', () => {
 
       it('removes event listener on disconnect', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = el.getComponentRef();
 
         const addSpy = spyOn(el, 'addEventListener').and.callThrough();
         const removeSpy = spyOn(el, 'removeEventListener').and.callThrough();
@@ -1620,8 +1625,8 @@ describe('component-ref', () => {
             <div id="second"></div>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const handler = jasmine.createSpy<() => void>('handler');
 
@@ -1655,8 +1660,8 @@ describe('component-ref', () => {
             <div id="second"></div>
           </noop-component>
         `);
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const handler = jasmine.createSpy<() => void>('handler');
 
@@ -1683,8 +1688,8 @@ describe('component-ref', () => {
 
       it('throws an error if given a selector which does not match anything', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         expect(() => ref.listen('#does-not-exist', 'click', () => {}))
             .toThrowError();
@@ -1692,8 +1697,8 @@ describe('component-ref', () => {
 
       it('supports custom events', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         const handler = jasmine.createSpy<(evt: Event) => void>('handler');
 
@@ -1707,8 +1712,8 @@ describe('component-ref', () => {
 
       it('propagates the `capture` option', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         spyOn(el, 'addEventListener').and.callThrough();
 
@@ -1723,8 +1728,8 @@ describe('component-ref', () => {
 
       it('propagates the `passive` option', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
         document.body.appendChild(el);
+        const ref = el.getComponentRef();
 
         spyOn(el, 'addEventListener').and.callThrough();
 

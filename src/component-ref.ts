@@ -32,7 +32,7 @@ export class ComponentRef {
   readonly #host: ElementRef<HydroActiveComponent>;
 
   /** The custom element hosting the HydroActive component. */
-  public get host(): ElementRef<HTMLElement> { return this.#host; }
+  public get host(): ElementRef<HydroActiveComponent> { return this.#host; }
 
   /** All callbacks to invoke when the component is connected to the DOM. */
   readonly #connectedCallbacks: Array<OnConnect> = [];
@@ -58,27 +58,23 @@ export class ComponentRef {
    */
   public /* internal */ static _from(host: ElementRef<HydroActiveComponent>):
       ComponentRef {
-    const ref = new ComponentRef(host);
+    return new ComponentRef(host);
+  }
 
-    ref.#host.native._registerLifecycleHooks({
-      onConnect: () => {
-        for (const onConnect of ref.#connectedCallbacks) {
-          ref.#invokeOnConnect(onConnect);
-        }
-      },
+  public /* internal */ _onConnect(): void {
+    for (const connectedCallback of this.#connectedCallbacks) {
+      this.#invokeOnConnect(connectedCallback);
+    }
+  }
 
-      onDisconnect: () => {
-        for (const onDisconnect of ref.#disconnectedCallbacks) {
-          onDisconnect();
-        }
+  public /* internal */ _onDisconnect(): void {
+    for (const onDisconnect of this.#disconnectedCallbacks) {
+      onDisconnect();
+    }
 
-        // Clear all the disconnect listeners. They will be re-added when their
-        // associated connect listeners are invoked.
-        ref.#disconnectedCallbacks.splice(0, ref.#disconnectedCallbacks.length);
-      },
-    });
-
-    return ref;
+    // Clear all the disconnect listeners. They will be re-added when their
+    // associated connect listeners are invoked.
+    this.#disconnectedCallbacks.splice(0, this.#disconnectedCallbacks.length);
   }
 
   /**
