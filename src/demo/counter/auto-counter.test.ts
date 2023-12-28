@@ -1,4 +1,4 @@
-import { nextFrame, parseHtml } from 'hydroactive/testing.js';
+import { parseHtml } from 'hydroactive/testing.js';
 import { AutoCounter } from './auto-counter.js';
 
 describe('auto-counter', () => {
@@ -22,7 +22,7 @@ describe('auto-counter', () => {
       const el = render({ count: 5 });
       document.body.appendChild(el);
 
-      await nextFrame();
+      await el.stable();
 
       expect(el.querySelector('span')!.textContent).toBe('5');
     });
@@ -32,7 +32,7 @@ describe('auto-counter', () => {
       document.body.appendChild(el);
 
       jasmine.clock().tick(1_000);
-      await nextFrame();
+      await el.stable();
 
       expect(el.querySelector('span')!.textContent).toBe('6');
     });
@@ -44,7 +44,7 @@ describe('auto-counter', () => {
       el.remove(); // Should pause timer.
 
       jasmine.clock().tick(1_000);
-      await nextFrame();
+      await el.stable();
 
       // Should not have incremented.
       expect(el.querySelector('span')!.textContent).toBe('5');
@@ -61,7 +61,7 @@ describe('auto-counter', () => {
       document.body.appendChild(el); // Should resume timer.
 
       jasmine.clock().tick(1_000);
-      await nextFrame();
+      await el.stable();
 
       // Should have incremented only once.
       expect(el.querySelector('span')!.textContent).toBe('6');

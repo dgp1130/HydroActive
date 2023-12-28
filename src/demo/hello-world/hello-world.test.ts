@@ -1,4 +1,4 @@
-import { nextFrame, parseHtml } from 'hydroactive/testing.js';
+import { parseHtml } from 'hydroactive/testing.js';
 import { HelloWorld } from './hello-world.js';
 
 describe('hello-world', () => {
@@ -11,7 +11,7 @@ describe('hello-world', () => {
       `);
       document.body.appendChild(el);
 
-      await nextFrame();
+      await el.stable();
 
       expect(el.querySelector('#name')!.textContent).toBe('HydroActive');
     });

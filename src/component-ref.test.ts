@@ -5,7 +5,6 @@ import { type AttrSerializable, type AttrSerializer, type ElementSerializable, t
 import { type WriteableSignal, signal } from './signals.js';
 import { parseHtml } from './testing/html-parser.js';
 import { NoopComponent } from './testing/noop-component.js';
-import { nextFrame } from './testing/timing.js';
 
 describe('component-ref', () => {
   afterEach(() => {
@@ -178,7 +177,7 @@ describe('component-ref', () => {
         document.body.appendChild(el);
         expect(effect).not.toHaveBeenCalled();
 
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -192,17 +191,17 @@ describe('component-ref', () => {
             .and.callFake(() => { value(); });
 
         ref.effect(effect);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalled();
         effect.calls.reset();
 
-        await nextFrame();
+        await el.stable();
         expect(effect).not.toHaveBeenCalled(); // Nothing changed.
 
         value.set(2);
         expect(effect).not.toHaveBeenCalled(); // Scheduled but not invoked yet.
 
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -213,11 +212,11 @@ describe('component-ref', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         ref.effect(effect);
-        await nextFrame();
+        await el.stable();
         expect(effect).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -231,14 +230,14 @@ describe('component-ref', () => {
             .and.callFake(() => { value(); });
 
         ref.effect(effect);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
         // Don't really need to assert this, just making sure `value` is used
         // correctly in this test.
         value.set(2);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
@@ -246,7 +245,7 @@ describe('component-ref', () => {
         expect(effect).not.toHaveBeenCalled();
 
         value.set(3);
-        await nextFrame();
+        await el.stable();
         expect(effect).not.toHaveBeenCalled();
       });
 
@@ -263,7 +262,7 @@ describe('component-ref', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         ref.effect(effect);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
         effect.calls.reset();
 
@@ -273,7 +272,7 @@ describe('component-ref', () => {
         // Even though no dependencies changed, effect should be re-invoked just
         // to check if they have.
         document.body.appendChild(el);
-        await nextFrame();
+        await el.stable();
         expect(effect).toHaveBeenCalledOnceWith();
       });
     });
@@ -302,7 +301,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.textContent!).toBe('test2');
       });
 
@@ -319,7 +318,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.textContent!).toBe('test2');
       });
 
@@ -335,7 +334,7 @@ describe('component-ref', () => {
           expect(value()).toBe('test1');
 
           value.set('test2');
-          await nextFrame();
+          await el.stable();
           expect(el.textContent!).toBe('test2');
         }
 
@@ -350,7 +349,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234);
 
           value.set(4321);
-          await nextFrame();
+          await el.stable();
           expect(el.textContent!).toBe('4321');
         }
 
@@ -365,7 +364,7 @@ describe('component-ref', () => {
           expect(value()).toBe(true);
 
           value.set(false);
-          await nextFrame();
+          await el.stable();
           expect(el.textContent!).toBe('false');
         }
 
@@ -380,7 +379,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234n);
 
           value.set(4321n);
-          await nextFrame();
+          await el.stable();
           expect(el.textContent!).toBe('4321');
         }
       });
@@ -406,7 +405,7 @@ describe('component-ref', () => {
         expect(value()).toBe('deserialized');
 
         value.set('test');
-        await nextFrame();
+        await el.stable();
         expect(el.textContent!).toBe('serialized: test');
       });
 
@@ -436,7 +435,7 @@ describe('component-ref', () => {
         expect(value()).toEqual(new User('Devel'));
 
         value.set(new User('Devel without a Cause'));
-        await nextFrame();
+        await el.stable();
         expect(el.textContent!).toBe('Devel without a Cause');
       });
 
@@ -560,7 +559,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
       });
 
@@ -577,7 +576,7 @@ describe('component-ref', () => {
         expect(text()).toBe('test');
 
         text.set('test2');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.getAttribute('value')).toBe('test2');
       });
 
@@ -593,7 +592,7 @@ describe('component-ref', () => {
           expect(value()).toBe('test1');
 
           value.set('test2');
-          await nextFrame();
+          await el.stable();
           expect(el.getAttribute('value')).toBe('test2');
         }
 
@@ -608,7 +607,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234);
 
           value.set(4321);
-          await nextFrame();
+          await el.stable();
           expect(el.getAttribute('value')).toBe('4321');
         }
 
@@ -623,7 +622,7 @@ describe('component-ref', () => {
           expect(value()).toBe(true);
 
           value.set(false);
-          await nextFrame();
+          await el.stable();
           expect(el.getAttribute('value')).toBe('false');
         }
 
@@ -638,7 +637,7 @@ describe('component-ref', () => {
           expect(value()).toBe(1234n);
 
           value.set(4321n);
-          await nextFrame();
+          await el.stable();
           expect(el.getAttribute('value')).toBe('4321');
         }
       });
@@ -664,7 +663,7 @@ describe('component-ref', () => {
         expect(value()).toBe('deserialized');
 
         value.set('test');
-        await nextFrame();
+        await el.stable();
         expect(el.getAttribute('value')).toBe('serialized: test');
       });
 
@@ -694,7 +693,7 @@ describe('component-ref', () => {
         expect(value()).toEqual(new User('Devel'));
 
         value.set(new User('Devel without a Cause'));
-        await nextFrame();
+        await el.stable();
         expect(el.getAttribute('user')).toBe('Devel without a Cause');
       });
 
@@ -782,11 +781,11 @@ describe('component-ref', () => {
 
         const value = signal('1');
         ref.bind(ref.host, () => value(), String);
-        await nextFrame();
+        await el.stable();
         expect(el.textContent).toBe('1');
 
         value.set('2');
-        await nextFrame();
+        await el.stable();
         expect(el.textContent).toBe('2');
       });
 
@@ -797,12 +796,12 @@ describe('component-ref', () => {
             .and.returnValue('test');
 
         ref.bind(ref.host, sig, String);
-        await nextFrame();
+        await el.stable();
         expect(sig).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
 
-        await nextFrame();
+        await el.stable();
         expect(sig).toHaveBeenCalledOnceWith();
       });
 
@@ -816,7 +815,7 @@ describe('component-ref', () => {
             .and.callFake(() => value());
 
         ref.bind(ref.host, sig, String);
-        await nextFrame();
+        await el.stable();
         expect(sig).toHaveBeenCalledOnceWith();
         expect(el.textContent).toBe('1');
         sig.calls.reset();
@@ -824,7 +823,7 @@ describe('component-ref', () => {
         el.remove();
 
         value.set('2');
-        await nextFrame();
+        await el.stable();
         expect(sig).not.toHaveBeenCalled();
         expect(el.textContent).toBe('1'); // Does not update.
       });
@@ -839,7 +838,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bind(ref.host.query('span'), () => 'test');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.textContent!).toBe('test');
       });
 
@@ -853,7 +852,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bind('span', () => 'test', String);
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.textContent!).toBe('test');
       });
 
@@ -876,7 +875,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 'test');
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('test');
         }
 
@@ -888,7 +887,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('1234');
         }
 
@@ -900,7 +899,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => true);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('true');
         }
 
@@ -912,7 +911,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234n);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('1234');
         }
       });
@@ -926,7 +925,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 'test', String);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('test');
         }
 
@@ -938,7 +937,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234, Number);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('1234');
         }
 
@@ -950,7 +949,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => true, Boolean);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('true');
         }
 
@@ -962,7 +961,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bind(ref.host, () => 1234n, BigInt);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.textContent!).toBe('1234');
         }
       });
@@ -985,7 +984,7 @@ describe('component-ref', () => {
         };
 
         ref.bind(ref.host, () => undefined, serializer);
-        await nextFrame();
+        await el.stable();
         expect(ref.host.native.textContent!).toBe('undefined');
       });
 
@@ -1013,7 +1012,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bind(ref.host, () => new User('Devel'), User);
-        await nextFrame();
+        await el.stable();
         expect(ref.host.native.textContent!).toBe('Devel');
       });
 
@@ -1175,11 +1174,11 @@ describe('component-ref', () => {
 
         const value = signal('1');
         ref.bindAttr(ref.host, 'count', () => value(), String);
-        await nextFrame();
+        await el.stable();
         expect(el.getAttribute('count')).toBe('1');
 
         value.set('2');
-        await nextFrame();
+        await el.stable();
         expect(el.getAttribute('count')).toBe('2');
       });
 
@@ -1190,12 +1189,12 @@ describe('component-ref', () => {
             .and.returnValue('test');
 
         ref.bindAttr(ref.host, 'hello', sig, String);
-        await nextFrame();
+        await el.stable();
         expect(sig).not.toHaveBeenCalled();
 
         document.body.appendChild(el);
 
-        await nextFrame();
+        await el.stable();
         expect(sig).toHaveBeenCalledOnceWith();
       });
 
@@ -1209,7 +1208,7 @@ describe('component-ref', () => {
             .and.callFake(() => value());
 
         ref.bindAttr(ref.host, 'count', sig, String);
-        await nextFrame();
+        await el.stable();
         expect(sig).toHaveBeenCalledOnceWith();
         expect(el.getAttribute('count')).toBe('1');
         sig.calls.reset();
@@ -1217,7 +1216,7 @@ describe('component-ref', () => {
         el.remove();
 
         value.set('2');
-        await nextFrame();
+        await el.stable();
         expect(sig).not.toHaveBeenCalled();
         expect(el.getAttribute('count')).toBe('1'); // Does not update.
       });
@@ -1232,7 +1231,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bindAttr(ref.host.query('span'), 'name', () => 'test');
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
       });
 
@@ -1246,7 +1245,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bindAttr('span', 'name', () => 'test', String);
-        await nextFrame();
+        await el.stable();
         expect(el.querySelector('span')!.getAttribute('name')).toBe('test');
       });
 
@@ -1270,7 +1269,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 'test');
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('test');
         }
 
@@ -1282,7 +1281,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
 
@@ -1294,7 +1293,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => true);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('true');
         }
 
@@ -1306,7 +1305,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234n);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
       });
@@ -1320,7 +1319,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 'test', String);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('test');
         }
 
@@ -1332,7 +1331,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234, Number);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
 
@@ -1344,7 +1343,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => true, Boolean);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('true');
         }
 
@@ -1356,7 +1355,7 @@ describe('component-ref', () => {
           const ref = el.getComponentRef();
 
           ref.bindAttr(ref.host, 'name', () => 1234n, BigInt);
-          await nextFrame();
+          await el.stable();
           expect(ref.host.native.getAttribute('name')).toBe('1234');
         }
       });
@@ -1379,7 +1378,7 @@ describe('component-ref', () => {
         };
 
         ref.bindAttr(ref.host, 'name', () => undefined, serializer);
-        await nextFrame();
+        await el.stable();
         expect(ref.host.native.getAttribute('name')).toBe('undefined');
       });
 
@@ -1407,7 +1406,7 @@ describe('component-ref', () => {
         const ref = el.getComponentRef();
 
         ref.bindAttr(ref.host, 'user', () => new User('Devel'), User);
-        await nextFrame();
+        await el.stable();
         expect(ref.host.native.getAttribute('user')).toBe('Devel');
       });
 
