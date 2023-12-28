@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Attributes Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Attributes Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <read-attr user-id="1234">
+            <h2>Read Attribute</h2>
+
+            <div>Hello, <span>-</span>!</div>
+
+            <script src="./read-attr.js" type="module"></script>
+        </read-attr>
+    </body>
+</html>
