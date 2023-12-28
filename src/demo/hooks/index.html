@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hooks Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Hooks Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <custom-hook>
+            <h2>Custom Hook</h2>
+
+            <div>The current count is: <span id="count">5</span>.</div>
+
+            <script src="./custom-hook.js" type="module"></script>
+        </custom-hook>
+    </body>
+</html>
