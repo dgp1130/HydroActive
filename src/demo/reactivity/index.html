@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Reactivity Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Reactivity Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <computed-value>
+            <h2>Computed Value</h2>
+
+            <div>The current count is: <span id="count">5</span>.</div>
+            <div>The negative count is: <span id="negative">-5</span>.</div>
+            <button>+</button>
+
+            <script src="./computed-value.js" type="module"></script>
+        </computed-value>
+    </body>
+</html>
