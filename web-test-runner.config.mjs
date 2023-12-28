@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import { createRequire } from 'module';
+import * as fs from 'node:fs';
+import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const jasminePath = require.resolve('jasmine-core/lib/jasmine-core/jasmine.js');
@@ -36,9 +36,11 @@ const jasminePlugin = {
   },
 };
 
+/** @type {import('@web/test-runner').TestRunnerConfig} */
 export default {
   testFramework,
   rootDir: 'dist/',
   nodeResolve: true,
   plugins: [ jasminePlugin ],
+  concurrency: 1,
 };
