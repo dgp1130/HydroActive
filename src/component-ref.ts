@@ -15,8 +15,6 @@ export type OnConnect = () => OnDisconnect | void;
 /** The type of the function invoked on disconnect. */
 export type OnDisconnect = () => void;
 
-const scheduler = UiScheduler.from();
-
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
 
@@ -30,6 +28,7 @@ const boundElementAttrs = new WeakMap<Element, Set<string>>();
  */
 export class ComponentRef {
   readonly #host: ElementRef<HydroActiveComponent>;
+  readonly #scheduler = UiScheduler.from();
 
   /** The custom element hosting the HydroActive component. */
   public get host(): ElementRef<HydroActiveComponent> { return this.#host; }
@@ -77,6 +76,10 @@ export class ComponentRef {
     this.#disconnectedCallbacks.splice(0, this.#disconnectedCallbacks.length);
   }
 
+  public /* internal */ async _stable(): Promise<void> {
+    return await this.#scheduler.stable();
+  }
+
   /**
    * Sets up the given handler to be invoked whenever the component is connected
    * to the DOM. If the handler returns a function, that function will be
@@ -122,7 +125,7 @@ export class ComponentRef {
    */
   public effect(callback: () => void): void {
     this.connected(() => {
-      return effect(callback, scheduler);
+      return effect(callback, this.#scheduler);
     });
   }
 

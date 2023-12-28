@@ -53,4 +53,17 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
     if (!this.#ref) throw new Error('No registered `ComponentRef` after hydration.');
   }
+
+  /**
+   * Returns a {@link Promise} which resolves when this component is stable. A
+   * component is "stable" when there are no pending DOM operations scheduled.
+   *
+   * @returns A {@link Promise} which resolves when this component is stable.
+   */
+  public async stable(): Promise<void> {
+    if (!this.#ref) throw new Error('No registered `ComponentRef`.');
+
+    return await this.#ref._stable();
+
+  }
 }

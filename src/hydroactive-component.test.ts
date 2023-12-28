@@ -1,3 +1,5 @@
+import './testing/noop-component.js';
+
 import { ComponentRef, OnConnect, OnDisconnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
@@ -241,6 +243,24 @@ describe('hydroactive-component', () => {
         // Verify that `onConnect` was invoked, which itself should have
         // verified that `hydrate` was *not* called before it.
         expect(onConnect).toHaveBeenCalled();
+      });
+    });
+
+    describe('stable', () => {
+      it('resolves when the component is stable of all effects', async () => {
+        const el = document.createElement('noop-component');
+        document.body.appendChild(el);
+        const ref = el.getComponentRef();
+
+        const effect = jasmine.createSpy<() => void>('effect');
+
+        ref.effect(effect);
+        await expectAsync(el.stable()).toBePending();
+        expect(effect).not.toHaveBeenCalled();
+
+        // Eventually resolves.
+        await expectAsync(el.stable()).toBeResolved();
+        expect(effect).toHaveBeenCalledOnceWith();
       });
     });
   });
