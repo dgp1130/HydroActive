@@ -12,7 +12,7 @@ export type HydrateLifecycle = (host: ComponentRef) => void;
  * callback.
  */
 export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
-    Class<HTMLElement> {
+    Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
     override hydrate(): void {
       hydrate(ComponentRef._from(ElementRef.from(this)));
