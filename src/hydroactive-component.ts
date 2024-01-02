@@ -1,4 +1,5 @@
 import { ComponentRef } from './component-ref.js';
+import { ElementRef } from './element-ref.js';
 
 /** Abstract base class for all HydroActive components. */
 export abstract class HydroActiveComponent extends HTMLElement {
@@ -6,17 +7,29 @@ export abstract class HydroActiveComponent extends HTMLElement {
   #hydrated = false;
 
   /** The associated {@link ComponentRef} for this component. */
-  protected comp?: ComponentRef;
+  #comp?: ComponentRef;
+  protected get comp(): ComponentRef {
+    this.#initializeComponent();
+    return this.#comp!;
+  }
+
+  #ref?: ElementRef<HydroActiveComponent>;
+  protected get ref(): ElementRef<HydroActiveComponent> {
+    this.#initializeComponent();
+    return this.#ref!;
+  }
+
+  #initialized = false;
+  #initializeComponent(): void {
+    if (this.#initialized) return;
+    this.#initialized = true;
+
+    this.#ref = ElementRef.from(this);
+    this.#comp = ComponentRef._from(this.ref);
+  }
 
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
-
-  public /* internal */ _registerComponentRef(ref: ComponentRef): void {
-    if (ref.host.native !== this) throw new Error('Registered `ComponentRef` must be associated with this component.');
-    if (this.comp) throw new Error('Already registered a `ComponentRef`.');
-
-    this.comp = ref;
-  }
 
   connectedCallback(): void {
     // The "connect" event triggers _before_ the "hydrate" event when they
