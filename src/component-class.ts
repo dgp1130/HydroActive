@@ -1,10 +1,15 @@
 import { OnConnect } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
-import { Signal } from './signals.js';
+import { QueriedElement } from './query.js';
+import { SerializerToken, inferSerializer, resolveSerializer } from './serializer-tokens.js';
+import { Scheduler, Signal } from './signals.js';
 
 /** TODO */
-const propertyMap = new WeakMap<Component, ReadonlyMap<string | symbol, Descriptor<unknown>>>();
+const propertyMap = new WeakMap<Component, ReadonlyMap<
+  string | symbol,
+  Descriptor<unknown>
+>>();
 
 /** TODO */
 export abstract class Component<State extends {} = {}>
@@ -62,6 +67,7 @@ export abstract class Component<State extends {} = {}>
         ref: this.ref as ElementRef<Component>,
         connected: this.comp.connected.bind(this.comp),
         requestUpdate: this.requestUpdate.bind(this),
+        schedule: this.comp.schedule.bind(this.comp),
       });
     }
 
@@ -73,9 +79,9 @@ export abstract class Component<State extends {} = {}>
     const componentHost = this.#componentHost;
 
     const descriptors = new Map(Array.from(this.#propertyFactories.entries())
-      .map(([ propName, factory ]) => [
+      .map(([ propName, { ctx, factory } ]) => [
         propName,
-        factory(componentHost),
+        factory(componentHost, ctx),
       ]));
     propertyMap.set(this, descriptors);
 
@@ -95,12 +101,15 @@ export abstract class Component<State extends {} = {}>
   }
 
   // TODO: `static` per component?
-  #propertyFactories = new Map<string | symbol, PropertyFactory<unknown>>();
+  #propertyFactories = new Map<string | symbol, {
+    ctx: ClassAccessorDecoratorContext,
+    factory: PropertyFactory<unknown>,
+  }>();
   public _registerPropertyFactory(
-    propName: string | symbol,
+    ctx: ClassAccessorDecoratorContext,
     factory: PropertyFactory<unknown>,
   ): void {
-    this.#propertyFactories.set(propName, factory);
+    this.#propertyFactories.set(ctx.name, { ctx, factory });
   }
 }
 
@@ -109,6 +118,7 @@ export interface ComponentHost {
   readonly ref: ElementRef<Component>;
   connected(onConnect: OnConnect): void;
   requestUpdate(): void;
+  schedule(callback: () => void): void;
 }
 
 type PropertyDecorator<Comp extends Component, Value> = (
@@ -182,7 +192,10 @@ export interface ValueDescriptor<Value> {
   value: Value;
 }
 
-export type PropertyFactory<Value> = (host: ComponentHost) => Descriptor<Value>;
+export type PropertyFactory<Value> = (
+  host: ComponentHost,
+  ctx?: ClassAccessorDecoratorContext,
+) => Descriptor<Value>;
 
 export function use<Comp extends Component, Result>(
   propertyFactory: PropertyFactory<Result>,
@@ -190,7 +203,7 @@ export function use<Comp extends Component, Result>(
   return (_target, ctx) => {
     ctx.addInitializer(function (): void {
       this._registerPropertyFactory(
-        ctx.name,
+        ctx,
         propertyFactory as PropertyFactory<unknown>,
       );
     });
@@ -230,3 +243,42 @@ export function use<Comp extends Component, Result>(
     };
   };
 }
+
+export function bind<SelectorOrElement extends string | ElementRef<Element>>(
+  selectorOrElement: SelectorOrElement,
+  token?: SerializerToken<ElementOf<SelectorOrElement>>,
+): PropertyDecorator<Component, any> {
+  return (_target, ctx) => {
+    // const el = selectorOrElement instanceof ElementRef
+    //   ? selectorOrElement
+    //   : host.ref.query(selectorOrElement);
+
+    // const explicitSerializer = token ? resolveSerializer(token) : undefined;
+
+    return {
+      get: function (): unknown {
+        return ctx!.access.get(this);
+      },
+
+      set: function (value: unknown): void {
+        ctx!.access.set(this, value);
+        // host.schedule(() => {
+        //   const serializer = explicitSerializer ?? inferSerializer(value);
+        //   (el as any).write(value, serializer);
+        // });
+      },
+    };
+  };
+}
+
+/**
+ * Resolves an `ElementRef` or a selector string literal to the type of the
+ * referenced element.
+ */
+type ElementOf<ElementOrSelector extends ElementRef<Element> | string> =
+  ElementOrSelector extends ElementRef<infer El>
+    ? El
+    : ElementOrSelector extends string
+      ? QueriedElement<ElementOrSelector>
+      : Element
+;

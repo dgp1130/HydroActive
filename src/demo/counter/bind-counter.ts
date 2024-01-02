@@ -1,4 +1,4 @@
-import { Component, ComponentHost, Descriptor, ElementRef, Initializer, ProxyDescriptor, ValueDescriptor, query, use } from 'hydroactive';
+import { Component, ComponentHost, Descriptor, ElementRef, Initializer, ProxyDescriptor, ValueDescriptor, bind, query, use } from 'hydroactive';
 import { ElementSerializer } from 'hydroactive/serializers.js';
 
 const valueSerializer: ElementSerializer<string, HTMLInputElement> = {
@@ -119,8 +119,8 @@ export class BindCounter extends Component<State> {
   private accessor label!: ElementRef<HTMLInputElement>;
 
   // Decorator use of a property descriptor.
-  @use(textInput('input'))
-  private accessor name!: string;
+  // @use(textInput('input'))
+  // private accessor name!: string;
 
   // Decorator use of a wrapper object.
   // @use(textInputCtrl('input'))
@@ -165,8 +165,16 @@ export class BindCounter extends Component<State> {
   //   });
   // }
 
+  // Bind
+  @bind('span')
+  private accessor name: string | undefined;
+
+  protected override onHydrate(): void {
+    this.name = 'Devel';
+  }
+
   protected override update(): void {
-    this.label.write(this.name);
+    // this.label.write(this.name!);
   }
 }
 
