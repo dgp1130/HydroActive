@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.js",
+    "./forms.js": "./src/forms.js",
     "./serializers.js": "./src/serializers.js",
     "./signals.js": "./src/signals.js",
     "./testing.js": "./src/testing.js"
