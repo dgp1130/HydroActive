@@ -50,8 +50,8 @@ an unrelated implementation detail.** HydroActive focuses on taking that pre-ren
 HTML and making it interactive on the client.
 
 This means we can think of hydration as a purely deserialization problem. Servers can
-render web components with declarative shadow DOM without any fancy tooling or
-integrations, all they need to do is render something like:
+render web components without any fancy tooling or integrations, all they need to do
+is render something like:
 
 ```html
 <my-counter>
