@@ -62,7 +62,7 @@ is render something like:
 
 Any server can do that, exactly how it does so is unimportant to HydroActive. From
 here, HydroActive makes it easy to load from this component and make it interactable.
-It does this by providing an API to define custom elements useful lifecycle and
+It does this by providing an API to define custom elements with useful lifecycle and
 convenient DOM APIs. One example would be:
 
 ```typescript
