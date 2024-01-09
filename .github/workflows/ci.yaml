@@ -4,7 +4,6 @@ on:
   push:
     branches:
     - main
-    - rewrite
 
     # Run CI for the `ci` branch. This branch isn't special in any way, it just
     # does not enforce linear history, so edits to the CI workflow can be tested
