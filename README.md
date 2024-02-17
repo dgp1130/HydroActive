@@ -79,7 +79,7 @@ const MyCounter = defineComponent('my-counter', (comp) => {
   // Whenever `count.set` is called, the `<span>` tag is automatically updated.
   const count = comp.live('span', Number);
 
-  // Ergonomic wrapper to read an element from the shadow DOM and assert it exists.
+  // Ergonomic wrapper to read an element from the element DOM and assert it exists.
   // Also types the result based on the query, this implicitly has type
   // `HTMLButtonElement`.
   const incrementBtn = comp.host.query('button');
