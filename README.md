@@ -139,7 +139,8 @@ Run tests with `npm test`. Debug tests with `npm run test-debug` and then openin
     ```shell
     git add . && git commit -m "Release v0.0.1."
     git tag releases/0.0.1
-    git push --follow-tags
+    git push
+    git push --tags
     ```
 1.  Go to [GitHub releases](https://github.com/dgp1130/HydroActive/releases/) and create a
     new release with a changelog.
