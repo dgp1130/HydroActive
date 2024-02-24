@@ -1,3 +1,4 @@
+import { ComponentOptions } from './component-options.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { QueriedElement } from './query.js';
@@ -28,6 +29,7 @@ const boundElementAttrs = new WeakMap<Element, Set<string>>();
  */
 export class ComponentRef {
   readonly #host: ElementRef<HydroActiveComponent>;
+  readonly #options: ComponentOptions;
   readonly #scheduler = UiScheduler.from();
 
   /** The custom element hosting the HydroActive component. */
@@ -44,8 +46,12 @@ export class ComponentRef {
    */
   readonly #disconnectedCallbacks: Array<OnDisconnect> = [];
 
-  private constructor(host: ElementRef<HydroActiveComponent>) {
+  private constructor(
+    host: ElementRef<HydroActiveComponent>,
+    options: ComponentOptions,
+  ) {
     this.#host = host;
+    this.#options = options;
   }
 
   /**
@@ -55,9 +61,11 @@ export class ComponentRef {
    * {@link ComponentRef} to you, it should never be necessary to create one
    * manually.
    */
-  public /* internal */ static _from(host: ElementRef<HydroActiveComponent>):
-      ComponentRef {
-    return new ComponentRef(host);
+  public /* internal */ static _from(
+    host: ElementRef<HydroActiveComponent>,
+    options: ComponentOptions,
+  ): ComponentRef {
+    return new ComponentRef(host, options);
   }
 
   public /* internal */ _onConnect(): void {

@@ -1,4 +1,11 @@
+import { ComponentOptions } from './component-options.js';
 import { ComponentRef } from './component-ref.js';
+
+// A query which finds all `defer-hydration` elements which are direct children
+// of the scope element. "Direct" in the sense that there is no
+// `defer-hydration` element between it and the scope.
+const directDeferredChildrenQuery =
+    '[defer-hydration]:not(:scope [defer-hydration] [defer-hydration])';
 
 /** Abstract base class for all HydroActive components. */
 export abstract class HydroActiveComponent extends HTMLElement {
@@ -7,6 +14,12 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
   /** The associated {@link ComponentRef} for this component. */
   #ref?: ComponentRef;
+  #options!: ComponentOptions;
+
+  public constructor(options: ComponentOptions) {
+    super();
+    this.#options = options;
+  }
 
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
@@ -52,6 +65,16 @@ export abstract class HydroActiveComponent extends HTMLElement {
     this.hydrate();
 
     if (!this.#ref) throw new Error('No registered `ComponentRef` after hydration.');
+
+    if (this.#options.autoHydrationChildren) {
+      // Automatically hydrate all "direct" children which have been deferred.
+      const children = [
+        ...(this.shadowRoot?.querySelectorAll(directDeferredChildrenQuery) ?? []),
+        ...this.querySelectorAll(directDeferredChildrenQuery),
+      ];
+
+      for (const child of children) child.removeAttribute('defer-hydration');
+    }
   }
 
   /**

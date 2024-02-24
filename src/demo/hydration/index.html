@@ -28,5 +28,20 @@
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
             Hydrate
         </button>
+
+        <outer-deferred defer-hydration>
+            <h2>Deferred Composition</h2>
+
+            <div>Hello, <span>World</span>!</div>
+
+            <inner-deferred defer-hydration>
+                <div>The current count is: <span>5</span>.</div>
+            </inner-deferred>
+
+            <script src="./deferred-composition.js" type="module"></script>
+        </outer-deferred>
+        <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
+            Hydrate
+        </button>
     </body>
 </html>
