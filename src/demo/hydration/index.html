@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Hydration Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Hydration Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <deferred-comp defer-hydration>
+            <h2>Deferred Component</h2>
+
+            <div>Hello, <span>World</span>!</div>
+
+            <script src="./deferred-comp.js" type="module"></script>
+        </deferred-comp>
+        <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
+            Hydrate
+        </button>
+    </body>
+</html>
