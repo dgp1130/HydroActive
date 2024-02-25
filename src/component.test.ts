@@ -59,7 +59,11 @@ describe('component', () => {
       document.body.appendChild(comp);
 
       expect(hydrate).toHaveBeenCalledOnceWith(
-          ComponentRef._from(ElementRef.from(comp)));
+        ComponentRef._from(ElementRef.from(
+          comp,
+          HydroActiveComponent as unknown as { new(): HydroActiveComponent },
+        )),
+      );
     });
 
     it('sets the class name', () => {

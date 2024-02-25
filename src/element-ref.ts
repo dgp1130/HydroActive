@@ -18,12 +18,32 @@ export class ElementRef<El extends Element> {
    * Creates a new {@link ElementRef} from the given {@link Element} object.
    *
    * @param native The native element to wrap in an {@link ElementRef}.
+   * @param ElClass TODO
    * @returns A new {@link ElementRef} object wrapping the input.
    */
-  public static from<El extends Element>(native: El): ElementRef<El> {
+  public static from<El extends Element>(
+    native: El,
+    ElClass?: { new(): El },
+  ): ElementRef<El> {
     if (native.nodeType !== Node.ELEMENT_NODE) {
       throw new Error(`Tried to create an \`ElementRef\` of \`nodeType\` ${
         native.nodeType} (see https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType).\n\n\`ElementRef\` must be created with an \`Element\`, not any other type of \`Node\`.`);
+    }
+
+    if (native.tagName.includes('-')) {
+      // Custom elements require a reference to the element's class to ensure it
+      // is hydrated consistently.
+      if (!ElClass) {
+        throw new Error(`Creating an \`ElementRef\` of a custom element \`${
+            native.tagName.toLowerCase()}\` requires the custom element's class to ensure it is consistently hydrated.`);
+      }
+
+      // Require that the element is already hydrated, otherwise typing anything
+      // as `InstanceType<ElementClass>` would be misleading.
+      if (native.hasAttribute('defer-hydration')) {
+        throw new Error(`Cannot create an \`ElementRef\` of a custom element \`${
+            ElClass.name}\` which has not been hydrated yet. Hydrate the element first.`);
+      }
     }
 
     return new ElementRef(native);
@@ -139,14 +159,24 @@ export class ElementRef<El extends Element> {
    */
   public query<Query extends string>(
     selector: Query,
-    options?: { readonly optional?: false },
+    options?: {
+      readonly optional?: false,
+      readonly elementClass?: typeof Element,
+    },
   ): QueryResult<Query, El>;
   public query<Query extends string>(
     selector: Query,
-    options: { readonly optional: boolean },
+    options: {
+      readonly optional: boolean,
+      readonly elementClass?: typeof Element,
+    },
   ): QueryResult<Query, El> | null;
-  public query<Query extends string>(selector: Query, { optional = false }: {
+  public query<Query extends string>(selector: Query, {
+    optional = false,
+    elementClass,
+  }: {
     readonly optional?: boolean,
+    readonly elementClass?: typeof Element,
   } = {}): QueryResult<Query, El> | null {
     const child = this.native.querySelector(selector) as
         QueriedElement<Query, El> | null;
@@ -158,7 +188,7 @@ export class ElementRef<El extends Element> {
       }
     }
 
-    return ElementRef.from(child) as QueryResult<Query, El>;
+    return ElementRef.from(child, elementClass) as QueryResult<Query, El>;
   }
 
   /**
@@ -176,7 +206,13 @@ export class ElementRef<El extends Element> {
    */
   public queryAll<Selector extends string>(
     selector: Selector,
-    { optional = false }: { optional?: boolean } = {},
+    {
+      optional = false,
+      elementClass,
+    }: {
+      optional?: boolean,
+      elementClass?: typeof Element,
+    } = {},
   ): Array<ElementRef<QueryAllResult<Selector, El>>> {
     const elements = this.native.querySelectorAll(selector) as
         NodeListOf<QueryAllResult<Selector, El>>;
@@ -184,7 +220,9 @@ export class ElementRef<El extends Element> {
       throw new Error(`Selector "${selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${selector}', { optional: true })\` to ignore this error.`);
     }
 
-    return Array.from(elements).map((el) => ElementRef.from(el));
+    return Array.from(elements)
+        .map((el) => ElementRef.from(el, elementClass)) as
+            Array<ElementRef<QueryAllResult<Selector, El>>>;
   }
 
   /**

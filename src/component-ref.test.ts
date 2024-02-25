@@ -17,7 +17,7 @@ describe('component-ref', () => {
     describe('_from', () => {
       it('constructs a `ComponentRef` instance', () => {
         const el = document.createElement('noop-component');
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = ComponentRef._from(ElementRef.from(el, NoopComponent));
 
         expect(ref.host.native).toBe(el);
       });
@@ -81,17 +81,13 @@ describe('component-ref', () => {
         const onDisconnect2 = jasmine.createSpy<OnDisconnect>('onDisconnect2');
 
         const el = document.createElement('noop-component');
-        const ref = el.getComponentRef();
+        document.body.appendChild(el);
 
+        const ref = el.getComponentRef();
         ref.connected(jasmine.createSpy().and.returnValues(
           onDisconnect1,
           onDisconnect2,
         ));
-        expect(onDisconnect1).not.toHaveBeenCalled();
-        expect(onDisconnect2).not.toHaveBeenCalled();
-
-        // First connect.
-        document.body.appendChild(el);
         expect(onDisconnect1).not.toHaveBeenCalled();
         expect(onDisconnect2).not.toHaveBeenCalled();
 
@@ -118,15 +114,16 @@ describe('component-ref', () => {
         const onConnect2 = jasmine.createSpy<OnConnect>('onConnect2');
 
         const el = document.createElement('noop-component');
-        const ref = el.getComponentRef();
+        el.setAttribute('defer-hydration', '');
+        el.removeAttribute('defer-hydration');
 
+        const ref = el.getComponentRef();
         ref.connected(onConnect1);
         ref.connected(onConnect2);
 
         expect(onConnect1).not.toHaveBeenCalled();
         expect(onConnect2).not.toHaveBeenCalled();
 
-        document.body.appendChild(el);
         expect(onConnect1).toHaveBeenCalledOnceWith();
         expect(onConnect2).toHaveBeenCalledOnceWith();
       });
@@ -135,11 +132,11 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = el.getComponentRef();
 
         document.body.appendChild(el);
         expect(onConnect).not.toHaveBeenCalled();
 
+        const ref = el.getComponentRef();
         ref.connected(onConnect);
         expect(onConnect).toHaveBeenCalledOnceWith();
       });
@@ -148,13 +145,13 @@ describe('component-ref', () => {
         const onConnect = jasmine.createSpy<OnConnect>('onConnect');
 
         const el = document.createElement('noop-component');
-        const ref = el.getComponentRef();
 
         // Connect and disconnect the element.
         document.body.appendChild(el);
         el.remove();
 
         // Should not be called because the element is currently disconnected.
+        const ref = el.getComponentRef();
         ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();
 
@@ -167,14 +164,12 @@ describe('component-ref', () => {
     describe('effect', () => {
       it('schedules the effect for the next animation frame', async () => {
         const el = document.createElement('noop-component');
+        document.body.appendChild(el);
         const ref = el.getComponentRef();
 
         const effect = jasmine.createSpy<() => void>('effect');
 
         ref.effect(effect);
-        expect(effect).not.toHaveBeenCalled();
-
-        document.body.appendChild(el);
         expect(effect).not.toHaveBeenCalled();
 
         await el.stable();
@@ -206,7 +201,11 @@ describe('component-ref', () => {
       });
 
       it('does not initialize the effect until connected', async () => {
+        // Trigger hydration disconnected so component ref is available.
         const el = document.createElement('noop-component');
+        el.setAttribute('defer-hydration', '');
+        el.removeAttribute('defer-hydration');
+
         const ref = el.getComponentRef();
 
         const effect = jasmine.createSpy<() => void>('effect');
@@ -282,6 +281,7 @@ describe('component-ref', () => {
         const el = parseHtml(NoopComponent, `
           <noop-component>Hello!</noop-component>
         `);
+        document.body.appendChild(el);
         const ref = el.getComponentRef();
 
         const text = ref.live(ref.host, String);
@@ -445,6 +445,7 @@ describe('component-ref', () => {
             <span id="my-span"></span>
           </noop-component>
         `);
+        document.body.appendChild(el);
         const ref = el.getComponentRef();
 
         ref.live('span', String);
@@ -458,9 +459,12 @@ describe('component-ref', () => {
             <noop-component></noop-component>
           </noop-component>
         `);
+        document.body.appendChild(outerEl);
         const outerRef = outerEl.getComponentRef();
 
-        const innerEl = outerRef.host.query('noop-component').native;
+        const innerEl = outerRef.host.query('noop-component', {
+          elementClass: NoopComponent,
+        }).native;
         const innerRef = innerEl.getComponentRef();
 
         outerRef.live('noop-component', String);
@@ -716,9 +720,12 @@ describe('component-ref', () => {
             <noop-component value></noop-component>
           </noop-component>
         `);
+        document.body.appendChild(outerEl);
         const outerRef = outerEl.getComponentRef();
 
-        const innerEl = outerRef.host.query('noop-component').native;
+        const innerEl = outerRef.host.query('noop-component', {
+          elementClass: NoopComponent,
+        }).native;
         const innerRef = innerEl.getComponentRef();
 
         outerRef.liveAttr('noop-component', 'value', String);
@@ -790,7 +797,11 @@ describe('component-ref', () => {
       });
 
       it('does not invoke the signal until connected', async () => {
+        // Trigger hydration immediately so we can get the component ref.
         const el = document.createElement('noop-component');
+        el.setAttribute('defer-hydration', '');
+        el.removeAttribute('defer-hydration');
+
         const ref = el.getComponentRef();
         const sig = jasmine.createSpy<() => string>('sig')
             .and.returnValue('test');
@@ -1035,9 +1046,12 @@ describe('component-ref', () => {
             <noop-component></noop-component>
           </noop-component>
         `);
+        document.body.appendChild(outerEl);
         const outerRef = outerEl.getComponentRef();
 
-        const innerEl = outerRef.host.query('noop-component').native;
+        const innerEl = outerRef.host.query('noop-component', {
+          elementClass: NoopComponent,
+        }).native;
         const innerRef = innerEl.getComponentRef();
 
         outerRef.bind('noop-component', () => 'test1');
@@ -1429,9 +1443,12 @@ describe('component-ref', () => {
             <noop-component></noop-component>
           </noop-component>
         `);
+        document.body.appendChild(outerEl);
         const outerRef = outerEl.getComponentRef();
 
-        const innerEl = outerRef.host.query('noop-component').native;
+        const innerEl = outerRef.host.query('noop-component', {
+          elementClass: NoopComponent,
+        }).native;
         const innerRef = innerEl.getComponentRef();
 
         outerRef.bindAttr('noop-component', 'name', () => 'test1');

@@ -9,12 +9,15 @@ abstract class BrokenComponent extends HydroActiveComponent {
   public constructor(error: unknown) {
     super();
     this.#error = error;
-
-    this.#ref = ComponentRef._from(ElementRef.from(this));
-    this._registerComponentRef(this.#ref);
   }
 
   protected override hydrate(): void {
+    this.#ref = ComponentRef._from(ElementRef.from(
+      this,
+      BrokenComponent as unknown as { new(): BrokenComponent },
+    ));
+    this._registerComponentRef(this.#ref);
+
     throw this.#error;
   }
 

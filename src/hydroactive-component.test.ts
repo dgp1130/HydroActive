@@ -20,7 +20,12 @@ describe('hydroactive-component', () => {
     it('hydrates on upgrade when already connected to the DOM', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(ElementRef.from(this));
+            const ref = ComponentRef._from(ElementRef.from(
+              this,
+              HydroActiveComponent as unknown as {
+                new(): HydroActiveComponent,
+              },
+            ));
             this._registerComponentRef(ref);
           });
 
@@ -37,7 +42,12 @@ describe('hydroactive-component', () => {
     it('hydrates on connect', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(ElementRef.from(this));
+            const ref = ComponentRef._from(ElementRef.from(
+              this,
+              HydroActiveComponent as unknown as {
+                new(): HydroActiveComponent,
+              },
+            ));
             this._registerComponentRef(ref);
           });
 
@@ -59,7 +69,12 @@ describe('hydroactive-component', () => {
     it('does not hydrate a second time when moved around the DOM', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(ElementRef.from(this));
+            const ref = ComponentRef._from(ElementRef.from(
+              this,
+              HydroActiveComponent as unknown as {
+                new(): HydroActiveComponent,
+              },
+            ));
             this._registerComponentRef(ref);
           });
 
@@ -84,7 +99,12 @@ describe('hydroactive-component', () => {
       it('defers hydration', testCase('deferred', (el) => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(ElementRef.from(this));
+              const ref = ComponentRef._from(ElementRef.from(
+                this,
+                HydroActiveComponent as unknown as {
+                  new(): HydroActiveComponent,
+                },
+              ));
               this._registerComponentRef(ref);
             });
 
@@ -135,7 +155,12 @@ describe('hydroactive-component', () => {
       it('hydrates when `defer-hydration` is removed while disconnected from the DOM', testCase('disconnected-hydration', (el) => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(ElementRef.from(this));
+              const ref = ComponentRef._from(ElementRef.from(
+                this,
+                HydroActiveComponent as unknown as {
+                  new(): HydroActiveComponent,
+                },
+              ));
               this._registerComponentRef(ref);
             });
 
@@ -196,7 +221,10 @@ describe('hydroactive-component', () => {
 
         const el =
             document.createElement('lifecycle-comp') as HydroActiveComponent;
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = ComponentRef._from(ElementRef.from(
+          el,
+          HydroActiveComponent as unknown as { new(): HydroActiveComponent },
+        ));
         el._registerComponentRef(ref);
 
         ref.connected(onConnect);
@@ -233,7 +261,10 @@ describe('hydroactive-component', () => {
 
         const el = document.createElement('hydration-connect') as
             HydroActiveComponent;
-        const ref = ComponentRef._from(ElementRef.from(el));
+        const ref = ComponentRef._from(ElementRef.from(
+          el,
+          HydroActiveComponent as unknown as { new(): HydroActiveComponent },
+        ));
         el._registerComponentRef(ref);
         ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();

@@ -12,12 +12,12 @@ export class NoopComponent extends HydroActiveComponent {
 
   public constructor() {
     super();
-
-    this.#ref = ComponentRef._from(ElementRef.from(this));
-    this._registerComponentRef(this.#ref);
   }
 
   protected override hydrate(): void {
+    this.#ref = ComponentRef._from(ElementRef.from(this, NoopComponent));
+    this._registerComponentRef(this.#ref);
+
     this.hydrated = true;
   }
 
