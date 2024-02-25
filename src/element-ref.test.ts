@@ -1,6 +1,8 @@
 import { ElementRef } from './element-ref.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, toSerializer } from './serializers.js';
+import { defineBrokenComponent } from './testing/broken-component.js';
 import { parseHtml } from './testing/html-parser.js';
+import { NoopComponent } from './testing/noop-component.js';
 
 describe('element-ref', () => {
   describe('ElementRef', () => {
@@ -628,6 +630,139 @@ describe('element-ref', () => {
           // array of `HTMLInputElement`.
           const _inputs: ElementRef<HTMLInputElement>[] = result;
         };
+      });
+    });
+
+    describe('hydrate', () => {
+      it('hydrates the selected element', () => {
+        const el = ElementRef.from(parseHtml(
+          HTMLDivElement,
+          `<div><noop-component defer-hydration></noop-component></div>`,
+          [ NoopComponent ],
+        ));
+
+        // Starts dehydrated.
+        {
+          const noopComponent = el.native.firstElementChild! as NoopComponent;
+          expect(noopComponent.hydrated).toBeUndefined();
+        }
+
+        // Hydration works.
+        {
+          const noopComponent = el.hydrate('noop-component', NoopComponent);
+          expect(noopComponent.hydrated).toBeTrue();
+        }
+      });
+
+      it('throws an error when hydrating a non-existent element with `{optional: undefined}`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(() => el.hydrate('does-not-exist', NoopComponent))
+            .toThrowError(/did not resolve/);
+      });
+
+      it('throws an error when hydrating a non-existent element with `{optional: false}`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(() => el.hydrate('does-not-exist', NoopComponent, {
+          optional: false,
+        })).toThrowError(/did not resolve/);
+      });
+
+      it('returns `null` when hydrating a non-existent element with `{ optional: true }`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(el.hydrate('does-not-exist', NoopComponent, { optional: true }))
+            .toBeNull();
+      });
+
+      it('ignores hydration errors', async () => {
+        await jasmine.spyOnGlobalErrorsAsync(async () => {
+          const error = new Error('Oh noes!');
+          const broken = defineBrokenComponent('hydrate-error', error);
+
+          const el = ElementRef.from(parseHtml(HTMLDivElement, `
+            <div><hydrate-error defer-hydration></hydrate-error></div>
+          `, [ broken ]));
+
+          expect(() => el.hydrate('hydrate-error', broken)).not.toThrow();
+        });
+      });
+    });
+
+    describe('hydrateAll', () => {
+      it('hydrates the selected elements', () => {
+        const el = ElementRef.from(parseHtml(
+          HTMLDivElement,
+          `
+            <div>
+              <noop-component defer-hydration></noop-component>
+              <noop-component defer-hydration></noop-component>
+              <noop-component defer-hydration></noop-component>
+            </div>
+          `,
+          [ NoopComponent ],
+        ));
+
+        // Starts dehydrated.
+        {
+          const noopComponents = Array.from(el.native.children) as
+              Array<NoopComponent>;
+          expect(noopComponents.map((comp) => comp.hydrated))
+              .toEqual([ undefined, undefined, undefined ]);
+        }
+
+        // Hydration works.
+        {
+          const noopComponents = el.hydrateAll('noop-component', NoopComponent);
+          expect(noopComponents.map((comp) => comp.hydrated))
+              .toEqual([ true, true, true ]);
+        }
+      });
+
+      it('throws an error when hydrating zero elements with `{optional: undefined}`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(() => el.hydrateAll('does-not-exist', NoopComponent))
+            .toThrowError(/did not resolve/);
+      });
+
+      it('throws an error when hydrating zero elements with `{optional: false}`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(() => el.hydrateAll('does-not-exist', NoopComponent, {
+          optional: false,
+        })).toThrowError(/did not resolve/);
+      });
+
+      it('returns an empty array when hydrating zero elements with `{ optional: true }`', () => {
+        const el = ElementRef.from(parseHtml(HTMLDivElement, `<div></div>`));
+
+        expect(el.hydrateAll('does-not-exist', NoopComponent, {
+          optional: true,
+        })).toEqual([]);
+      });
+
+      it('ignores hydration errors', async () => {
+        // Ignore uncatchable `attributeChangedCallback` errors in broken
+        // components. See this discussion for why the errors are uncatchable:
+        // https://github.com/webcomponents-cg/community-protocols/pull/15#issuecomment-1962284394
+        await jasmine.spyOnGlobalErrorsAsync(async () => {
+          const error1 = new Error('Oh noes!');
+          const error2 = new Error('Not again!');
+
+          const broken1 = defineBrokenComponent('hydrate-all-error-1', error1);
+          const broken2 = defineBrokenComponent('hydrate-all-error-2', error2);
+
+          const el = ElementRef.from(parseHtml(HTMLDivElement, `
+            <div>
+              <hydrate-all-error-1 defer-hydration></hydrateAll-error-1>
+              <hydrate-all-error-2 defer-hydration></hydrateAll-error-1>
+            </div>
+          `, [ broken1, broken2 ]));
+
+          expect(() => el.hydrateAll('div > *', Element)).not.toThrow();
+        });
       });
     });
   });

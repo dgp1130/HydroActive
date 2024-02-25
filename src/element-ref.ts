@@ -2,6 +2,7 @@
  * @fileoverview Defines the {@link ElementRef} class and associated utilities.
  */
 
+import { hydrate } from './hydration.js';
 import { type QueriedElement } from './query.js';
 import { type AttrSerializerToken, type ElementSerializerToken, type ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { type AttrSerializable, type AttrSerializer, type ElementSerializable, type ElementSerializer, type Serialized, bigintSerializer, booleanSerializer, numberSerializer, stringSerializer, toSerializer } from './serializers.js';
@@ -128,12 +129,13 @@ export class ElementRef<El extends Element> {
 
   /**
    * Queries light DOM descendants for the provided selector and returns the
-   * first matching element wrapped in an {@link ElementRef}. Returns
-   * `undefined` if no element is found.
+   * first matching element wrapped in an {@link ElementRef}.
    *
-   * @param selector The selector to query for.
+   * @param selector The selector to query light DOM for.
+   * @param optional Whether to throw or return `null` if no element is found.
    * @returns An {@link ElementRef} which wraps the query result, or `null` if
-   *     no element is found.
+   *     no element is found and `optional` is `true`.
+   * @throws when `optional` is `false` and no element is found.
    */
   public query<Query extends string>(
     selector: Query,
@@ -163,12 +165,14 @@ export class ElementRef<El extends Element> {
    * Queries light DOM descendants for the provided selector and returns all
    * matching elements, each wrapped in an {@link ElementRef}. Always returns a
    * real {@link Array}, not a {@link NodeListOf} like
-   * {@link Element.prototype.querySelectorAll}. Returns an empty array when no
-   * elements match the given query.
+   * {@link Element.prototype.querySelectorAll}.
    *
-   * @param selector The selector to query for.
+   * @param selector The selector to query light DOM for.
+   * @param optional Whether to throw or return an empty array when no elements
+   *     are found.
    * @returns An {@link Array} of the queried elements, each wrapped in an
    *     {@link ElementRef}.
+   * @throws when `optional` is `false` and no elements are found.
    */
   public queryAll<Selector extends string>(
     selector: Selector,
@@ -181,6 +185,89 @@ export class ElementRef<El extends Element> {
     }
 
     return Array.from(elements).map((el) => ElementRef.from(el));
+  }
+
+  /**
+   * Queries light DOM descendants for the given selector and hydrates the
+   * discovered element.
+   *
+   * Does *not* throw if hydration fails for the underlying component.
+   *
+   * @param selector The selector to query light DOM for.
+   * @param clazz The class of the queried element, used to ensure the element
+   *     is defined and able to hydrate.
+   * @param optional Whether to throw or return `null` if no element is found.
+   * @returns The queried element after it is properly hydrated.
+   * @throws when `optional` is `false` and no element is found.
+   */
+  public hydrate<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    options?: { readonly optional?: false },
+  ): QueriedElement<Query, El>;
+  public hydrate<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    options?: { readonly optional: boolean },
+  ): QueriedElement<Query, El> | null;
+  public hydrate<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    { optional = false }: { readonly optional?: boolean } = {},
+  ): QueriedElement<Query, El> | null {
+    const child = this.native.querySelector(selector) as
+        QueriedElement<Query, El> | null;
+    if (!child) {
+      if (optional) {
+        return null;
+      } else {
+        throw new Error(`Selector "${selector}" did not resolve to an element. Is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${selector}', { optional: true })\` to ignore this error.`);
+      }
+    }
+
+    hydrate(child, clazz);
+
+    return child;
+  }
+
+  /**
+   * Queries light DOM descendants for the provided selector, hydrates, and
+   * returns all matching elements. Always returns a real {@link Array}, not a
+   * {@link NodeListOf} like {@link Element.prototype.querySelectorAll}.
+   *
+   * Does *not* throw if hydration fails for any underlying components.
+   *
+   * @param selector The selector to query light DOM for.
+   * @param optional Whether to throw or return an empty array when no elements
+   *     are found.
+   * @returns An {@link Array} of the queried elements, each wrapped in an
+   *     {@link ElementRef}.
+   * @throws when `optional` is `false` and no elements are found.
+   */
+  public hydrateAll<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    options?: { readonly optional?: false },
+  ): Array<QueriedElement<Query, El>>;
+  public hydrateAll<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    options?: { readonly optional: boolean },
+  ): Array<QueriedElement<Query, El>>;
+  public hydrateAll<Query extends string>(
+    selector: Query,
+    clazz: { new(): Element },
+    { optional = false }: { readonly optional?: boolean } = {},
+  ): Array<QueriedElement<Query, El>> {
+    const elements = Array.from(this.native.querySelectorAll(selector)) as
+        Array<QueriedElement<Query, El>>;
+    if (!optional && elements.length === 0) {
+      throw new Error(`Selector "${selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${selector}', { optional: true })\` to ignore this error.`);
+    }
+
+    for (const element of elements) hydrate(element, clazz);
+
+    return elements;
   }
 }
 
