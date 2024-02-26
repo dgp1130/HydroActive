@@ -1,19 +1,20 @@
-import { ElementRef, defineComponent } from 'hydroactive';
+import { AttrAccessor, defineComponent } from 'hydroactive';
+import { bind } from 'hydroactive/signal-accessors.js';
 
 /** Reads an attribute from the host element. */
-export const ReadAttr = defineComponent('read-attr', (comp) => {
-  // `comp.host` is an `ElementRef` of the host element (`read-attr`).
-  const host: ElementRef<HTMLElement> = comp.host;
+export const ReadAttr = defineComponent('read-attr', (comp, host) => {
+  // `comp.host` is an `ElementAccessor` of the host element (`read-attr`).
+  // `ElementAccessor` has an `attr` method which provides an `AttrAccessor`.
+  const idAttr: AttrAccessor = host.attr('user-id');
 
-  // `ElementRef` has an `attr` method, similar to `read` except that it takes
-  // its input from the named attribute.
-  const id: number = host.attr('user-id', Number);
+  // `AttrAccessor` has its own `read` method which reads from the attribute.
+  const id: number = idAttr.read(Number);
 
   // Look up the username based on the ID.
   const username = getUserById(id);
 
   // Update the `<span>` tag to have the username read from the attribute.
-  comp.bind('span', () => username);
+  bind(host.query('span').access(), comp, String, () => username);
 });
 
 declare global {

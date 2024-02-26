@@ -2,15 +2,17 @@ import { defineComponent } from 'hydroactive';
 import { signal } from 'hydroactive/signals.js';
 
 /** Creates a side effect from a signal. */
-export const SignalEffect = defineComponent('signal-effect', (comp) => {
-  const countLabel = comp.host.query('#count');
+export const SignalEffect = defineComponent('signal-effect', (comp, host) => {
+  const countLabel = host.query('#count').access();
   const initial = countLabel.read(Number);
   const count = signal(initial);
-  comp.listen('button', 'click', () => { count.set(count() + 1); });
+  host.query('button').access().listen(comp, 'click', () => {
+    count.set(count() + 1);
+  });
 
   // Track how many times the count has been updated.
   let updated = 0;
-  const updatesLabel = comp.host.query('#updates');
+  const updatesLabel = host.query('#updates').access();
 
   // Create a side effect whenever `count` is modified.
   comp.effect(() => {
@@ -20,12 +22,12 @@ export const SignalEffect = defineComponent('signal-effect', (comp) => {
     //
     // We use `ElementRef.prototype.native` here to get access to the underlying
     // `Element` object wrapped by the `countLabel` `ElementRef`.
-    countLabel.native.textContent = count().toString();
+    countLabel.element.textContent = count().toString();
 
     // Track each time the effect is executed and display it in the DOM. This is
     // the "side effect" of updating the count.
     updated++;
-    updatesLabel.native.textContent = updated.toString();
+    updatesLabel.element.textContent = updated.toString();
   });
 });
 

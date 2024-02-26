@@ -1,14 +1,9 @@
 import { defineComponent } from 'hydroactive';
-import { WriteableSignal } from 'hydroactive/signals.js';
+import { live } from 'hydroactive/signal-accessors.js';
 
 /** Says hello to HydroActive on hydration. */
-export const HelloWorld = defineComponent('hello-world', (comp) => {
-  // Create a "live" binding with the `#name` element and receive a `string`
-  // signal bound to the element's `textContent`. Whenever the signal changes,
-  // the `#name` element will be automatically updated.
-  const name: WriteableSignal<string> = comp.live('#name', String);
-
-  // Update the name in the DOM.
+export const HelloWorld = defineComponent('hello-world', (comp, host) => {
+  const name = live(host.query('span#name').access(), comp, String);
   name.set('HydroActive');
 });
 
