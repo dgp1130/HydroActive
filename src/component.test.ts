@@ -3,6 +3,7 @@ import { ComponentRef } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
+import { ElementAccessor } from './element-accessor.js';
 
 describe('component', () => {
   useTestCases();
@@ -50,7 +51,7 @@ describe('component', () => {
       expect(self).toBeUndefined();
     });
 
-    it('invokes hydrate callback with an `ElementRef` of the component host', () => {
+    it('invokes hydrate callback with an `ElementRef` and `ElementAccessor` of the component host', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
       defineComponent('host-component', hydrate);
 
@@ -59,7 +60,9 @@ describe('component', () => {
       document.body.appendChild(comp);
 
       expect(hydrate).toHaveBeenCalledOnceWith(
-          ComponentRef._from(ElementRef.from(comp)));
+        ComponentRef._from(ElementRef.from(comp)),
+        ElementAccessor.from(comp),
+      );
     });
 
     it('sets the class name', () => {
