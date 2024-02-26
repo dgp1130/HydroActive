@@ -19,11 +19,17 @@
         <nav><a href="/">Home</a></nav>
 
         <hello-world>
-            <h2>Hello World</h2>
+            <template shadowrootmode="closed">
+                <h2>Hello World</h2>
 
-            <div>Hello, <span id="name">World</span>!</div>
+                <div>
+                    <template shadowrootmode="open">
+                        Hello, <span id="name">World</span>!</div>
+                    </template>
+                </div>
 
-            <script src="./hello-world.js" type="module"></script>
+                <script src="./hello-world.js" type="module"></script>
+            </template>
         </hello-world>
     </body>
 </html>

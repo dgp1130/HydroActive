@@ -2,7 +2,7 @@ import { defineComponent } from 'hydroactive';
 
 /** Says hello to HydroActive on hydration. */
 export const HelloWorld = defineComponent('hello-world', (comp, host) => {
-  const name = host.query('span#name').access().live(comp, String);
+  const name = host.shadow.query('div').shadow.query('span#name').access().live(comp, String);
   name.set('HydroActive');
 });
 

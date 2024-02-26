@@ -19,11 +19,13 @@ function isHydrated(el: Element): boolean {
 }
 
 /** TODO */
-export class ElementAccessor<El extends Element> implements Queryable<El> {
-  protected constructor(public readonly native: El) {}
+export class ElementAccessor<El extends Element> extends Queryable<El> {
+  protected constructor(public readonly native: El) {
+    super(native);
+  }
 
   /** TODO */
-  public static from<El extends Element>(
+  public static override from<El extends Element>(
     native: El,
     elementClass?: typeof Element,
   ): ElementAccessor<El> {
@@ -49,14 +51,14 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   }
 
   /** TODO */
-  public query<Selector extends string>(selector: Selector):
+  public override query<Selector extends string>(selector: Selector):
       Dehydrated<QueriedElement<Selector, El>> {
     const result = queryEl(this.native, selector);
     return Dehydrated.from(result);
   }
 
   /** TODO */
-  public queryAll<Selector extends string>(selector: Selector):
+  public override queryAll<Selector extends string>(selector: Selector):
       Array<Dehydrated<QueriedElement<Selector, El>>> {
     return [];
   }

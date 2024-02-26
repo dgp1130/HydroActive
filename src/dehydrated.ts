@@ -1,6 +1,5 @@
 import { ElementAccessor } from './element-accessor.js';
-import { QueriedElement } from './query.js';
-import { Queryable, queryEl } from './queryable.js';
+import { Queryable } from './queryable.js';
 
 function isHydrated(el: Element): boolean {
   return !el.hasAttribute('defer-hydration');
@@ -11,25 +10,14 @@ function hydrate(el: Element): void {
 }
 
 /** TODO */
-export class Dehydrated<El extends Element> implements Queryable<El> {
-  private constructor(public readonly native: El) {}
+export class Dehydrated<El extends Element> extends Queryable<El> {
+  private constructor(public readonly native: El) {
+    super(native);
+  }
 
   /** TODO */
-  public static from<El extends Element>(native: El): Dehydrated<El> {
+  public static override from<El extends Element>(native: El): Dehydrated<El> {
     return new Dehydrated(native);
-  }
-
-  /** TODO */
-  public query<Selector extends string>(selector: Selector):
-      Dehydrated<QueriedElement<Selector, El>> {
-    const result = queryEl(this.native, selector);
-    return Dehydrated.from(result);
-  }
-
-  /** TODO */
-  public queryAll<Selector extends string>(selector: Selector):
-      Array<Dehydrated<QueriedElement<Selector, El>>> {
-    return []; // TODO
   }
 
   /** TODO */

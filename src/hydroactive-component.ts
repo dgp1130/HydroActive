@@ -8,6 +8,16 @@ export abstract class HydroActiveComponent extends HTMLElement {
   /** The associated {@link ComponentRef} for this component. */
   #ref?: ComponentRef;
 
+  /** TODO */
+  public /* internal */ _shadowRoot?: ShadowRoot;
+
+  public constructor() {
+    super();
+
+    const internals = this.attachInternals();
+    this._shadowRoot = internals.shadowRoot ?? undefined;
+  }
+
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
 
