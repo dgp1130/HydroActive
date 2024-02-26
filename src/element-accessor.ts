@@ -1,6 +1,5 @@
 import { ComponentRef } from './component-ref.js';
 import { Dehydrated } from './dehydrated.js';
-import { Hook } from './hook.js';
 import { QueriedElement } from './query.js';
 import { Queryable, queryEl } from './queryable.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
@@ -57,6 +56,12 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   }
 
   /** TODO */
+  public queryAll<Selector extends string>(selector: Selector):
+      Array<Dehydrated<QueriedElement<Selector, El>>> {
+    return [];
+  }
+
+  /** TODO */
   public read<Token extends ElementSerializerToken<any, El>>(token: Token):
       Serialized<ResolveSerializer<
         Token,
@@ -70,11 +75,6 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
     >(token);
 
     return serializer.deserializeFrom(this.native);
-  }
-
-  /** TODO: rename? */
-  public use<Result>(comp: ComponentRef, hook: Hook<El, Result>): Result {
-    return hook(comp, this);
   }
 
   /** TODO */
