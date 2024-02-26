@@ -3,6 +3,7 @@ import { ComponentRef } from './component-ref.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
+import { ElementAccessor } from './element-accessor.js';
 
 describe('component', () => {
   useTestCases();
@@ -59,7 +60,12 @@ describe('component', () => {
       document.body.appendChild(comp);
 
       expect(hydrate).toHaveBeenCalledOnceWith(
-          ComponentRef._from(ElementRef.from(comp)));
+        ComponentRef._from(ElementRef.from(comp)),
+        ElementAccessor.from(
+          comp,
+          HydroActiveComponent as unknown as { new(): HydroActiveComponent },
+        ),
+      );
     });
 
     it('sets the class name', () => {
