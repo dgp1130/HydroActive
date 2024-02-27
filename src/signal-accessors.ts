@@ -1,11 +1,55 @@
 import { ComponentRef } from './component-ref.js';
 import { ElementAccessor } from './element-accessor.js';
-import { ElementSerializerToken, resolveSerializer } from './serializer-tokens.js';
-import { ElementSerializer } from './serializers.js';
-import { Signal } from './signals.js';
+import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
+import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
+import { Signal, WriteableSignal, signal } from './signals.js';
 
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
+
+/**
+ * Creates a {@link WriteableSignal} initialized with the current value of the
+ * provided {@link ElementAccessor} as interpreted by the referenced
+ * {@link ElementSerializer}. Any mutations to the returned signal are
+ * automatically reflected back into the {@link ElementAccessor}.
+ *
+ * Automatically disables and re-enables itself based on the lifecycle of the
+ * provided {@link ComponentRef}.
+ *
+ * @param el The {@link ElementAccessor} to initialize from and bind to.
+ * @param comp The {@link ComponentRef} to create the effect on. This
+ *     {@link live} call will disable / re-enable itself based on lifecycle of
+ *     this provided {@link ComponentRef}.
+ * @param token A "token" which identifiers an {@link ElementSerializer} to
+ *     serialize the `signal` data to/from an element. A token is one of:
+ *     *   A primitive serializer - {@link String}, {@link Boolean},
+ *         {@link Number}, {@link BigInt}.
+ *     *   An {@link ElementSerializer} object.
+ *     *   An {@link ElementSerializable} object.
+ * @returns A {@link WriteableSignal<El>} initialized to the deserialized form
+ *     of the provided element. Mutations to the signal value are automatically
+ *     serialized back into the same DOM.
+ */
+export function live<
+  El extends Element,
+  Token extends ElementSerializerToken<any, El>,
+>(
+  el: ElementAccessor<El>,
+  comp: ComponentRef,
+  token: Token,
+): WriteableSignal<Serialized<ResolveSerializer<
+  Token,
+  ElementSerializer<unknown, El>,
+  ElementSerializable<unknown, El>
+>>> {
+  const serializer = resolveSerializer(token);
+  const initial = el.read(serializer);
+  const value = signal(initial);
+
+  bind(el, comp, serializer as any, value);
+
+  return value as any;
+}
 
 /**
  * Invokes the given signal in a reactive context, serializes the result, and
