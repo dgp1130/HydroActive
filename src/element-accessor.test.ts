@@ -1,3 +1,4 @@
+import { AttrAccessor } from './attribute-accessor.js';
 import { Dehydrated } from './dehydrated.js';
 import { ElementAccessor } from './element-accessor.js';
 import { AttrSerializable, AttrSerializer, ElementSerializable, ElementSerializer, toSerializer } from './serializers.js';
@@ -20,6 +21,32 @@ describe('element-accessor', () => {
         const el = document.createElement('div');
 
         expect(ElementAccessor.from(el).element).toBe(el);
+      });
+    });
+
+    describe('attr', () => {
+      it('returns an `AttrAccessor` for the given attribute on the underlying element', () => {
+        const el = ElementAccessor.from(
+            parseHtml(HTMLDivElement, `<div foo="bar"></div>`));
+
+        const foo = el.attr('foo');
+
+        expect(foo).toBeInstanceOf(AttrAccessor);
+        expect(foo.read(String)).toBe('bar');
+
+        // Make sure it's bound to the right element.
+        el.element.setAttribute('foo', 'baz');
+        expect(foo.read(String)).toBe('baz');
+      });
+
+      it('returns an `AttrAccessor` for the given attribute on the underlying element, even when the attribute is not set', () => {
+        const el = ElementAccessor.from(
+            parseHtml(HTMLDivElement, '<div></div>'));
+
+        const foo = el.attr('foo');
+
+        expect(foo).toBeInstanceOf(AttrAccessor);
+        expect(foo.exists()).toBeFalse();
       });
     });
 

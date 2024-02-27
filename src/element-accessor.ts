@@ -1,3 +1,4 @@
+import { AttrAccessor } from './attribute-accessor.js';
 import { Dehydrated } from './dehydrated.js';
 import { QueriedElement } from './query.js';
 import { Queryable, query, queryAll } from './queryable.js';
@@ -28,6 +29,18 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    */
   public static from<El extends Element>(native: El): ElementAccessor<El> {
     return new ElementAccessor(native);
+  }
+
+  /**
+   * Returns an {@link AttrAccessor} for the given attribute on the underlying
+   * element.
+   *
+   * @param name The name of the attribute to wrap in the {@link AttrAccessor}.
+   * @returns An {@link AttrAccessor} wrapping the given attribute on the
+   *     underlying element.
+   */
+  public attr(name: string): AttrAccessor {
+    return AttrAccessor.from(this.element, name);
   }
 
   /**
