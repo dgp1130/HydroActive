@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.js",
     "./serializers.js": "./src/serializers.js",
+    "./signal-accessors.js": "./src/signal-accessors.js",
     "./signals.js": "./src/signals.js",
     "./testing.js": "./src/testing.js"
   },
