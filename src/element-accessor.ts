@@ -1,6 +1,8 @@
 import { Dehydrated } from './dehydrated.js';
 import { QueriedElement } from './query.js';
 import { Queryable, query, queryAll } from './queryable.js';
+import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
+import { Serialized, ElementSerializer, ElementSerializable } from './serializers.js';
 
 /**
  * Wraps an element in a convenient wrapper for accessing it's contents with a
@@ -26,6 +28,33 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    */
   public static from<El extends Element>(native: El): ElementAccessor<El> {
     return new ElementAccessor(native);
+  }
+
+  /**
+   * Provides the value of the text content on the underlying element.
+   *
+   * @param token A "token" which identifiers an {@link ElementSerializer} to
+   *     deserialize the read attribute string. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   An {@link ElementSerializer} object.
+   *     *   A {@link ElementSerializable} object.
+   * @returns The value of the text content for this element deserialized based
+   *     on the input token.
+   */
+  public read<Token extends ElementSerializerToken<any, El>>(token: Token):
+      Serialized<ResolveSerializer<
+        Token,
+        ElementSerializer<unknown, El>,
+        ElementSerializable<unknown, El>
+      >> {
+    const serializer = resolveSerializer<
+      Token,
+      ElementSerializer<unknown, El>,
+      ElementSerializable<unknown, El>
+    >(token);
+
+    return serializer.deserializeFrom(this.element);
   }
 
   /**
