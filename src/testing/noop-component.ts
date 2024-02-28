@@ -9,6 +9,8 @@ import { HydroActiveComponent } from '../hydroactive-component.js';
 export class NoopComponent extends HydroActiveComponent {
   #ref!: ComponentRef;
 
+  public hydrated?: true;
+
   public constructor() {
     super();
 
@@ -16,7 +18,9 @@ export class NoopComponent extends HydroActiveComponent {
     this._registerComponentRef(this.#ref);
   }
 
-  protected override hydrate(): void { /* no-op */ }
+  protected override hydrate(): void {
+    this.hydrated = true;
+  }
 
   public getComponentRef(): ComponentRef {
     return this.#ref;
