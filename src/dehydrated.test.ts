@@ -1,8 +1,13 @@
 import { Dehydrated } from './dehydrated.js';
+import { ElementAccessor } from './element-accessor.js';
+import { isHydrated } from './hydration.js';
 import { parseHtml } from './testing.js';
 
 describe('dehydrated', () => {
   describe('Dehydrated', () => {
+    class DefinedElement extends HTMLElement {}
+    customElements.define('dehydrated-defined', DefinedElement);
+
     describe('from', () => {
       it('creates a new `Dehydrated`', () => {
         const dehydrated = Dehydrated.from(document.createElement('div'));
@@ -17,6 +22,123 @@ describe('dehydrated', () => {
         const dehydrated = Dehydrated.from(el);
 
         expect(dehydrated.unvalidatedElement).toBe(el);
+      });
+    });
+
+    describe('access', () => {
+      it('returns the underlying native element wrapped in an `ElementAccessor`', () => {
+        const el = document.createElement('div');
+
+        expect(Dehydrated.from(el).access().element).toBe(el);
+      });
+
+      it('returns the underlying native element with an explicit class wrapped in an `ElementAccessor`', () => {
+        const el = document.createElement('div');
+
+        expect(Dehydrated.from(el).access(HTMLDivElement).element).toBe(el);
+      });
+
+      it('returns the underlying hydrated custom element wrapped in an `ElementAccessor`', () => {
+        const el = document.createElement('dehydrated-defined') as
+            DefinedElement;
+
+        expect(Dehydrated.from(el).access(DefinedElement).element).toBe(el);
+      });
+
+      it('returns the underlying hydrated custom element wrapped in an `ElementAccessor` from a super-class definition', () => {
+        const el = document.createElement('dehydrated-defined');
+
+        const dehydrated = Dehydrated.from(el);
+        expect(dehydrated.access(HTMLElement))
+            .toBeInstanceOf(ElementAccessor);
+      });
+
+      it('throws an error when given a custom element with no class', () => {
+        const el = document.createElement('dehydrated-defined');
+
+        const dehydrated = Dehydrated.from(el);
+        expect(() => dehydrated.access())
+            .toThrowError(/requires an element class/);
+      });
+
+      it('throws an error when given the wrong class for the provided custom element', () => {
+        const el = document.createElement('dehydrated-defined');
+
+        const dehydrated = Dehydrated.from(el);
+        expect(() => dehydrated.access(HTMLDivElement))
+            .toThrowError(/does not extend `HTMLDivElement`/);
+      });
+
+      it('throws an error when given a not-yet-defined custom element', () => {
+        const el = document.createElement('not-yet-defined');
+
+        const dehydrated = Dehydrated.from(el);
+        expect(() => dehydrated.access(HTMLElement))
+            .toThrowError(/not defined/);
+      });
+
+      it('throws an error when given a defined, but not-yet-upgraded custom element', () => {
+        const doc = document.implementation.createHTMLDocument();
+        const el = doc.createElement('dehydrated-defined');
+
+        const dehydrated = Dehydrated.from(el);
+        expect(() => dehydrated.access(HTMLElement))
+            .toThrowError(/not been upgraded/);
+      });
+
+      it('narrows the return type to the given class', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const dehydrated = {} as Dehydrated<Element>;
+
+          dehydrated.access(HTMLDivElement) satisfies
+              ElementAccessor<HTMLDivElement>;
+        };
+      });
+
+      it('prevents accessing via a super-class', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const dehydrated = {} as Dehydrated<DefinedElement>;
+
+          // @ts-expect-error
+          dehydrated.access(Element);
+        };
+      });
+    });
+
+    describe('hydrate', () => {
+      it('hydrates and returns the underlying native element wrapped in an `ElementAccessor`', () => {
+        const el = document.createElement('div');
+        el.setAttribute('defer-hydration', '');
+
+        const hydrated = Dehydrated.from(el).hydrate(HTMLDivElement).element;
+
+        expect(hydrated).toBe(el);
+        expect(isHydrated(hydrated)).toBeTrue();
+      });
+
+      it('hydrates and returns the underlying custom element wrapped in an `ElementAccessor`', () => {
+        const el = document.createElement('dehydrated-defined');
+        el.setAttribute('defer-hydration', '');
+
+        const hydrated = Dehydrated.from(el).hydrate(DefinedElement).element;
+
+        expect(hydrated).toBe(el as DefinedElement);
+        expect(isHydrated(hydrated)).toBeTrue();
+      });
+
+      it('narrows the return type to the given class', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const dehydrated = {} as Dehydrated<Element>;
+
+          dehydrated.hydrate(HTMLDivElement) satisfies
+              ElementAccessor<HTMLDivElement>;
+        };
       });
     });
 

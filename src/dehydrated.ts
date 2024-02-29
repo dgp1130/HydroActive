@@ -1,5 +1,8 @@
 import { QueriedElement } from './query.js';
 import { Queryable, query, queryAll } from './queryable.js';
+import { ElementAccessor } from './element-accessor.js';
+import { hydrate, isHydrated } from './hydration.js';
+import { isCustomElement, isUpgraded } from './custom-elements.js';
 
 /**
  * Represents a "dehydrated" reference to an element. The element is *not*
@@ -52,6 +55,68 @@ export class Dehydrated<El extends Element> implements Queryable<El> {
    */
   public get unvalidatedElement(): Element {
     return this.#native;
+  }
+
+  /**
+   * Returns the underlying {@link El} wrapped in an {@link ElementAccessor}
+   * object. Does *not* hydrate the element, but also asserts that the element
+   * does not *need* to be hydrated.
+   *
+   * @param elementClass The class of the underlying. Only necessary if wrapping
+   *     a custom element. This helps ensure the element is consistently
+   *     hydrated.
+   * @returns The underlying element wrapped in an {@link ElementAccessor}
+   *     object.
+   * @throws If the element is not hydrated or is not an instance of the
+   *     provided class.
+   */
+  public access(): ElementAccessor<El>;
+  public access<AccessEl extends El>(elementClass: { new(): AccessEl }):
+      ElementAccessor<AccessEl>;
+  public access<AccessEl extends El>(elementClass?: { new(): AccessEl }):
+      ElementAccessor<AccessEl> {
+    if (isCustomElement(this.#native)) {
+      if (!elementClass) {
+        throw new Error(`Custom element \`${
+            this.#native.tagName.toLowerCase()}\` requires an element class.`);
+      }
+
+      if (!(this.#native instanceof elementClass)) {
+        throw new Error(`Custom element \`${
+            (this.#native as Element).tagName.toLowerCase()}\` does not extend \`${
+            elementClass.name}\`. Did you provide the wrong class or is the element not defined?`);
+      }
+
+      if (!isUpgraded(this.#native)) {
+        throw new Error(`Custom element \`${
+          this.#native.tagName.toLowerCase()}\` is either not defined or the element has not been upgraded.`);
+      }
+
+      if (!isHydrated(this.#native)) {
+        throw new Error(`Custom element \`${
+          this.#native.tagName.toLowerCase()}\` has not been hydrated.`);
+      }
+    }
+
+    return ElementAccessor.from(this.#native as AccessEl);
+  }
+
+  /**
+   * Hydrates the underlying {@link El} and returns it wrapped in an
+   * {@link ElementAccessor} object.
+   *
+   * @param elementClass The class of the element to hydrate. This helps ensure
+   *     that the custom element has been evaluated and defined.
+   * @returns The underlying element, hydrated and wrapped in an
+   *     {@link ElementAccessor} object.
+   * @throws If the element does not extend the provided class.
+   * @throws If the element is a custom element, but not upgraded.
+   * @throws If the element is already hydrated.
+   */
+  public hydrate<HydrateEl extends El>(elementClass: { new(): HydrateEl }):
+      ElementAccessor<HydrateEl> {
+    hydrate(this.#native, elementClass);
+    return ElementAccessor.from(this.#native);
   }
 
   /**
