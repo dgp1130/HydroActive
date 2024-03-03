@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>`deferred-comp` tests</title>
+        <meta charset="utf8">
+    </head>
+    <body>
+        <template test-case="deferred">
+            <is-land on:interaction>
+                <deferred-comp defer-hydration>
+                    <div>Hello, <span>World</span>!</div>
+                </deferred-comp>
+            </is-land>
+        </template>
+    </body>
+</html>

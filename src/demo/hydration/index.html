@@ -54,5 +54,33 @@
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
             Hydrate
         </button>
+
+        <div>
+            <h2>Deferred <code>&lt;is-land&gt;</code></h2>
+
+            <is-land on:interaction>
+                <div>Click to hydrate!</div>
+
+                <deferred-comp defer-hydration>
+                    <div>Hello, <span>World</span>!</div>
+
+                    <script src="./deferred-comp.js" type="module"></script>
+                </deferred-comp>
+
+                <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+            </is-land>
+
+            <is-land on:media="(max-width: 720px)">
+                <div>Narrow viewport to hydrate!</div>
+
+                <deferred-comp defer-hydration>
+                    <div>Hello, <span>World</span>!</div>
+
+                    <script src="./deferred-comp.js" type="module"></script>
+                </deferred-comp>
+
+                <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+            </is-land>
+        </div>
     </body>
 </html>
