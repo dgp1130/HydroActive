@@ -54,5 +54,69 @@
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
             Hydrate
         </button>
+
+        <is-land on:interaction>
+            <h2>Deferred <code>&lt;is-land&gt;</code></h2>
+
+            <div>Click to hydrate!</div>
+
+            <!-- Uses `defer-hydration`. -->
+            <deferred-comp defer-hydration id="is-land-deferred">
+                <div>Hello, <span>World</span>!</div>
+
+                <script src="./deferred-comp.js" type="module"></script>
+            </deferred-comp>
+
+            <style>
+                deferred-comp#is-land-deferred {
+                    color: red;
+                }
+            </style>
+
+            <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+        </is-land>
+
+        <is-land on:interaction>
+            <h2>Eager <code>&lt;is-land&gt;</code></h2>
+
+            <!-- Doesn't use `defer-hydration`. `<is-land>` still supports this,
+            but doesn't work because `./deferred-comp.js` is loaded first and
+            hydrates before `<is-land>` has a chance to stop it. -->
+            <deferred-comp>
+                <div>Hello, <span>World</span>!</div>
+
+                <script src="./deferred-comp.js" type="module"></script>
+            </deferred-comp>
+
+            <div>Doesn't use <code>defer-hydration</code>, and incorrectly
+            hydrates immediately. :(</div>
+
+            <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+        </is-land>
+
+        <is-land on:interaction>
+            <script src="/node_modules/@11ty/is-land/is-land.js" type="module"></script>
+
+            <h2>Styled <code>&lt;is-land&gt;</code></h2>
+
+            <!-- Doesn't use `defer-hydration`, but is loaded in the right
+            order. However is still styled incorrectly because `<is-land>` has
+            to change the tag name to `<is-land--deferred-styled-comp>` to
+            prevent it from hydrating before `<is-land>` is ready. -->
+            <deferred-styled-comp id="is-land-deferred">
+                <div>Hello, <span>World</span>!</div>
+
+                <script src="./deferred-styled-comp.js" type="module"></script>
+            </deferred-styled-comp>
+
+            <div>Doesn't use <code>defer-hydration</code>, but is styled
+            inconsistently as a result. :(</div>
+
+            <style>
+                deferred-styled-comp#is-land-deferred {
+                    color: red;
+                }
+            </style>
+        </is-land>
     </body>
 </html>
