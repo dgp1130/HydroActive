@@ -1,4 +1,5 @@
 import { AttrAccessor } from './attribute-accessor.js';
+import { ComponentRef } from './component-ref.js';
 import { Dehydrated } from './dehydrated.js';
 import { QueriedElement } from './query.js';
 import { Queryable, query, queryAll } from './queryable.js';
@@ -71,6 +72,54 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   }
 
   /**
+   * Creates an event listener for the given event which invokes the provided
+   * handler callback function. This listener is automatically created and
+   * removed as the component is connected and disconnected from the DOM,
+   * meaning the listener does not leak memory and does not need to be manually
+   * cleaned up.
+   *
+   * @param comp The {@link ComponentRef} object to bind the lifecycle to. The
+   *     listener will be automatically added / removed when the associated
+   *     component is connected / disconnected from the DOM.
+   * @param event The name of the event to listen for.
+   * @param handler The event handler to invoke whenever an associated event is
+   *     dispatched.
+   * @param options Additional options.
+   *     * `capture` - [See `capture` documentation for `addEventListener`.](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#capture)
+   *     * `passive` - [See `passive` documentation for `addEventListener`.](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#passive)
+   */
+  // Type `HTMLElement` events for improved autocompletion.
+  public listen<EventName extends keyof AllElementsEventMap>(
+    comp: ComponentRef,
+    event: EventName,
+    handler: (event: AllElementsEventMap[EventName]) => void,
+    options?: { capture?: boolean, passive?: boolean },
+  ): void;
+
+  // Overload with generic `string` types so we don't disallow custom events.
+  public listen(
+    comp: ComponentRef,
+    event: string,
+    handler: (event: Event) => void,
+    options?: { capture?: boolean, passive?: boolean },
+  ): void;
+
+  public listen(
+    comp: ComponentRef,
+    event: string,
+    handler: (event: Event) => void,
+    { capture, passive }: { capture?: boolean, passive?: boolean } = {},
+  ): void {
+    comp.connected(() => {
+      this.element.addEventListener(event, handler, { capture, passive });
+
+      return () => {
+        this.element.removeEventListener(event, handler, { capture })
+      };
+    });
+  }
+
+  /**
    * Queries light DOM descendants for the provided selector and returns the
    * first matching element wrapped in a {@link Dehydrated}.
    *
@@ -123,6 +172,19 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
     return Array.from(result).map((el) => Dehydrated.from(el));
   }
 }
+
+// An attempt to capture all the event maps a user might reasonably encounter
+// in an element discovered by an element query inside a component. Almost
+// certainly not exhaustive.
+type AllElementsEventMap =
+  & HTMLElementEventMap
+  & SVGElementEventMap
+  & SVGSVGElementEventMap
+  & MathMLElementEventMap
+  & HTMLVideoElementEventMap
+  & HTMLMediaElementEventMap
+  & HTMLFrameSetElementEventMap
+;
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `Dehydrated<null>`.

@@ -3,6 +3,7 @@ import { Dehydrated } from './dehydrated.js';
 import { ElementAccessor } from './element-accessor.js';
 import { AttrSerializable, AttrSerializer, ElementSerializable, ElementSerializer, toSerializer } from './serializers.js';
 import { parseHtml } from './testing.js';
+import { NoopComponent } from './testing/noop-component.js';
 
 describe('element-accessor', () => {
   describe('ElementAccessor', () => {
@@ -193,6 +194,151 @@ describe('element-accessor', () => {
           // @ts-expect-error
           el.read(serializable);
         };
+      });
+    });
+
+    describe('listen', () => {
+      it('listens invokes the given callback when the specified event is triggered', () => {
+        const el = document.createElement('noop-component');
+        document.body.appendChild(el);
+        const comp = el.getComponentRef();
+
+        const handler = jasmine.createSpy<(evt: Event) => void>('handler');
+
+        ElementAccessor.from(el).listen(comp, 'click', handler);
+        expect(handler).not.toHaveBeenCalled();
+
+        comp.host.native.click();
+
+        expect(handler).toHaveBeenCalledOnceWith(jasmine.any(Event));
+      });
+
+      it('removes event listener on disconnect', () => {
+        const el = document.createElement('noop-component');
+        const comp = el.getComponentRef();
+
+        const addSpy = spyOn(el, 'addEventListener').and.callThrough();
+        const removeSpy = spyOn(el, 'removeEventListener').and.callThrough();
+
+        const handler = jasmine.createSpy<() => void>('handler');
+
+        // Start listening while disconnected, nothing should happen yet.
+        ElementAccessor.from(el).listen(comp, 'click', handler);
+        expect(addSpy).not.toHaveBeenCalled();
+        expect(removeSpy).not.toHaveBeenCalled();
+
+        el.click();
+        expect(handler).not.toHaveBeenCalled();
+
+        // On connection, start listening.
+        document.body.appendChild(el);
+        expect(addSpy).toHaveBeenCalledTimes(1);
+        expect(removeSpy).not.toHaveBeenCalled();
+        expect(handler).not.toHaveBeenCalled();
+        addSpy.calls.reset();
+
+        // React to events.
+        el.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // On disconnect, stop listening.
+        el.remove();
+        expect(addSpy).not.toHaveBeenCalled();
+        expect(removeSpy).toHaveBeenCalledTimes(1);
+        expect(handler).not.toHaveBeenCalled();
+        removeSpy.calls.reset();
+
+        // Stop reacting to events.
+        el.click();
+        expect(handler).not.toHaveBeenCalled();
+      });
+
+      it('listens for events on the underlying element', () => {
+        const el = parseHtml(NoopComponent, `
+          <noop-component>
+            <div id="first">
+              <div id="child"></div>
+            </div>
+            <div id="second"></div>
+          </noop-component>
+        `);
+        document.body.appendChild(el);
+        const comp = el.getComponentRef();
+        const host = ElementAccessor.from(el);
+
+        const handler = jasmine.createSpy<() => void>('handler');
+
+        host.query('div#first').access().listen(comp, 'click', handler);
+
+        // Listen for direct events.
+        host.query('div#first').access().element.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Listen for descendant events.
+        host.query('div#child').access().element.click();
+        expect(handler).toHaveBeenCalledTimes(1);
+        handler.calls.reset();
+
+        // Do not listen for sibling events.
+        host.query('div#second').access().element.click();
+        expect(handler).not.toHaveBeenCalled();
+
+        // Do not listen for ancestor events.
+        el.click();
+        expect(handler).not.toHaveBeenCalled();
+      });
+
+      it('supports custom events', () => {
+        const el = document.createElement('noop-component');
+        document.body.appendChild(el);
+        const comp = el.getComponentRef();
+
+        const handler = jasmine.createSpy<(evt: Event) => void>('handler');
+
+        ElementAccessor.from(el).listen(comp, 'custom-event', handler);
+
+        const evt = new CustomEvent('custom-event');
+        el.dispatchEvent(evt);
+
+        expect(handler).toHaveBeenCalledOnceWith(evt);
+      });
+
+      it('propagates the `capture` option', () => {
+        const el = document.createElement('noop-component');
+        document.body.appendChild(el);
+        const comp = el.getComponentRef();
+
+        spyOn(el, 'addEventListener').and.callThrough();
+
+        ElementAccessor.from(el).listen(comp, 'click', () => {}, {
+          capture: true,
+        });
+
+        expect(el.addEventListener).toHaveBeenCalledOnceWith(
+          'click',
+          jasmine.any(Function),
+          jasmine.objectContaining({ capture: true }),
+        );
+      });
+
+      it('propagates the `passive` option', () => {
+        const el = document.createElement('noop-component');
+        document.body.appendChild(el);
+        const comp = el.getComponentRef();
+
+        spyOn(el, 'addEventListener').and.callThrough();
+
+        ElementAccessor.from(el).listen(comp, 'click', () => {}, {
+          passive: true,
+        });
+
+        expect(el.addEventListener).toHaveBeenCalledOnceWith(
+          'click',
+          jasmine.any(Function),
+          jasmine.objectContaining({ passive: true }),
+        );
       });
     });
 
