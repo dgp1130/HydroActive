@@ -66,33 +66,50 @@ It does this by providing an API to define custom elements with useful lifecycle
 convenient DOM APIs. One example would be:
 
 ```typescript
-import { defineComponent } from 'hydroactive';
+import { ElementAccessor, defineComponent } from 'hydroactive';
+import { WriteableSignal } from 'hydroactive/signals.js';
 
 // `defineComponent()` creates a web component class based on the given hydrate
-// function. The callback is invoked on hydration and provides a `comp` variable with
-// additional functionality to provide interactivity to the pre-rendered component.
-// Automatically calls `customElements.define` under the hood.
-const MyCounter = defineComponent('my-counter', (comp) => {
-  // `$.live()` automatically hydrates this property by doing
-  // `this.querySelector('span')!.textContent!` and parsing the result as a
-  // `Number`. Returns a `Signal` to provide reactive reads and writes.
-  // Whenever `count.set` is called, the `<span>` tag is automatically updated.
-  const count = comp.live('span', Number);
+// function. The callback is invoked on hydration and provides `comp` and `host`
+// parameters with additional functionality to provide interactivity to the
+// pre-rendered component. Automatically calls `customElements.define` under the
+// hood.
+const MyCounter = defineComponent('my-counter', (comp, host) => {
+    // Interacting with a site using HydroActive is a three-step process:
+    // 1. Query it - `host.query` queries the DOM for the selector and asserts
+    // it is found.
+    const countEl: ElementAccessor<HTMLSpanElement> = host.query('span#count')
+        // 2. Hydrate it - `.access` asserts that the element does not need to
+        // be hydrated. Alternatively, we could call `.hydrate()` to trigger
+        // hydration on a sub-component.
+        .access();
 
-  // Ergonomic wrapper to read an element from the element DOM and assert it exists.
-  // Also types the result based on the query, this implicitly has type
-  // `HTMLButtonElement`.
-  const incrementBtn = comp.host.query('button');
+    // 3. Enhance it - `live` creates a `Signal` which wraps the `textContent`
+    // of `countEl`. The text is interpreted as a `number` and implicitly
+    // converted. Also whenever `count.set` is called, the `<span>` tag is
+    // automatically updated.
+    const count: WriteableSignal<number> = live(countEl, comp, Number);
 
-  // Ergonomic wrapper to bind event listeners. Automatically removes and re-adds the
-  // listener when `<my-counter>` is disconnected from / reconnected to the DOM.
-  comp.listen(incrementBtn, 'click', () => {
-    // `count.set` automatically updates the underlying DOM with the new value.
-    count.set(count() + 1);
-  });
+    // Prints `5`, hydrated from initial HTML content.
+    console.log(count());
+
+    // HydroActive providers ergonomic wrappers to read elements from the DOM,
+    // assert they exist, and use them safely. It also types the result based on
+    // the query, this implicitly has type `ElementAccessor<HTMLButtonElement>`.
+    const incrementBtn = host.query('button').access();
+
+    // HydroActive also provides ergonomic wrapper to bind event listeners.
+    // This automatically removes and re-adds the listener when `<my-counter>`
+    // is disconnected from and reconnected to the DOM.
+    incrementButton.listen(comp, 'click', () => {
+        // `count.set` automatically updates the underlying DOM with the new
+        // value.
+        count.set(count() + 1);
+    });
 });
 
-// For TypeScript, don't forget to type `my-counter` tags as an instance of the class.
+// For TypeScript, don't forget to type `my-counter` tags as an instance of the
+// class.
 declare global {
     interface HTMLElementTagNameMap {
         'my-counter': InstanceType<typeof MyCounter>;
