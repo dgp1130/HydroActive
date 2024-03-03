@@ -28,5 +28,31 @@
         <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
             Hydrate
         </button>
+
+        <deferred-composition defer-hydration>
+            <h2>Deferred Composition</h2>
+
+            <deferred-composition-child id="first">
+                <div>
+                    <span id="subject">Devel</span> says "Hello!" to
+                    <span id="target">World</span>!
+                </div>
+            </deferred-composition-child>
+
+            <deferred-composition-child defer-hydration id="second">
+                <div>
+                    <span id="subject">Owen</span> says "Hello!" to
+                    <span id="target">World</span>!
+                </div>
+            </deferred-composition-child>
+
+            <div>The two speakers are named <span id="first-speaker">-</span>
+            and <span id="second-speaker">-</span>.</div>
+
+            <script src="./deferred-composition.js" type="module"></script>
+        </deferred-composition>
+        <button onclick="javascript:this.previousElementSibling.removeAttribute('defer-hydration'); this.disabled = true;">
+            Hydrate
+        </button>
     </body>
 </html>
