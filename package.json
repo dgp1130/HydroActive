@@ -13,7 +13,7 @@
     "start": "npm run -s demo",
     "build": "npm run -s clean && npm run -s build-lib",
     "build-lib": "tsc --project tsconfig.lib.json && npm run -s build-package",
-    "build-package": "cp package.json dist/",
+    "build-package": "cp package.json README.md dist/",
     "build-tests": "npm run -s clean && npm run -s build-tests-ts && npm run -s build-tests-html && npm run -s build-package",
     "build-tests-ts": "tsc -p tsconfig.test.json",
     "build-tests-html": "(cd src/ && find . -name '*.test.html' -exec cp --parents '{}' ../dist/src/ \\;)",
