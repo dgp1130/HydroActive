@@ -305,5 +305,24 @@ describe('dehydrated', () => {
         };
       });
     });
+
+    describe('shadow', () => {
+      it('supports querying the shadow root', () => {
+        const el = Dehydrated.from(parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open">
+              <span>Shadow</span>
+              <slot></slot>
+            </template>
+            <span>Light</span>
+          </div>
+        `));
+
+        expect(el.shadow.query('span').unvalidatedElement.textContent)
+            .toBe('Shadow');
+        expect(el.query('span').unvalidatedElement.textContent)
+            .toBe('Light');
+      });
+    });
   });
 });

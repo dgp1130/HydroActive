@@ -505,5 +505,24 @@ describe('element-accessor', () => {
         };
       });
     });
+
+    describe('shadow', () => {
+      it('supports querying the shadow root', () => {
+        const el = ElementAccessor.from(parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open">
+              <span>Shadow</span>
+              <slot></slot>
+            </template>
+            <span>Light</span>
+          </div>
+        `));
+
+        expect(el.shadow.query('span').access().element.textContent)
+            .toBe('Shadow');
+        expect(el.query('span').access().element.textContent)
+            .toBe('Light');
+      });
+    });
   });
 });

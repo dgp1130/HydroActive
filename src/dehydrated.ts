@@ -169,4 +169,17 @@ export class Dehydrated<El extends Element> implements Queryable<El> {
   ): Array<Dehydrated<QueryAllResult<Selector, El>>> {
     return this.#root.queryAll(selector, options);
   }
+
+  /**
+   * Returns a {@link ShadowRoot} which will query elements in the shadow root
+   * of this element.
+   *
+   * @returns A {@link ShadowRoot} which wraps the same element, however query
+   *     operations are scoped to the element's shadow root.
+   * @throws If this element does not have a shadow root or if the shadow root
+   *     is closed.
+   */
+  public get shadow(): QueryRoot<ShadowRoot> {
+    return this.#root.shadow;
+  }
 }

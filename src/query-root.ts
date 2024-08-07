@@ -3,39 +3,42 @@ import { QueriedElement } from './query.js';
 import { Queryable } from './queryable.js';
 
 /** TODO */
-export class QueryRoot<El extends Element> implements Queryable<El> {
-  readonly #root: El;
+export class QueryRoot<Root extends Element | ShadowRoot>
+    implements Queryable<Root> {
+  readonly #root: Root;
 
-  private constructor(root: El) {
+  private constructor(root: Root) {
     this.#root = root;
   }
 
   /**
-   * Creates a new {@link QueryRoot} from the provided underlying DOM element.
+   * Creates a new {@link QueryRoot} from the provided underlying DOM element or
+   * shadow root.
    *
    * @param root TODO
    * @returns TODO
    */
-  public static from<El extends Element>(root: El): QueryRoot<El> {
+  public static from<Root extends Element | ShadowRoot>(root: Root):
+      QueryRoot<Root> {
     return new QueryRoot(root);
   }
 
   /** TODO */
-  public get root(): El {
+  public get root(): Root {
     return this.#root;
   }
 
   public query<Query extends string>(selector: Query, options?: {
     readonly optional?: false,
-  }): QueryResult<Query, El>;
+  }): QueryResult<Query, Root>;
   public query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
-  }): QueryResult<Query, El> | null;
+  }): QueryResult<Query, Root> | null;
   public query<Query extends string>(selector: Query, { optional = false }: {
     readonly optional?: boolean,
-  } = {}): QueryResult<Query, El> | null {
+  } = {}): QueryResult<Query, Root> | null {
     const child = this.#root.querySelector(selector) as
-        QueriedElement<Query, El> | null;
+        QueriedElement<Query, Root> | null;
     if (!child) {
       if (optional) {
         return null;
@@ -46,15 +49,15 @@ export class QueryRoot<El extends Element> implements Queryable<El> {
       }
     }
 
-    return Dehydrated.from(child) as QueryResult<Query, El>;
+    return Dehydrated.from(child) as QueryResult<Query, Root>;
   }
 
   public queryAll<Query extends string>(
     selector: Query,
     { optional = false }: { optional?: boolean } = {},
-  ): Array<Dehydrated<QueryAllResult<Query, El>>> {
+  ): Array<Dehydrated<QueryAllResult<Query, Root>>> {
     const elements = this.#root.querySelectorAll(selector) as
-        NodeListOf<QueryAllResult<Query, El>>;
+        NodeListOf<QueryAllResult<Query, Root>>;
     if (!optional && elements.length === 0) {
       throw new Error(`Selector "${
           selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${
@@ -63,21 +66,40 @@ export class QueryRoot<El extends Element> implements Queryable<El> {
 
     return Array.from(elements, (el) => Dehydrated.from(el));
   }
+
+  public get shadow(): QueryRoot<ShadowRoot> {
+    if (this.#root instanceof ShadowRoot) {
+      throw new Error('The element is already scoped to its shadow root, no' +
+          ' need to call `shadow` again.');
+    }
+
+    const shadowRoot = this.#root.shadowRoot;
+    if (!shadowRoot) {
+      throw new Error('The element either does not have a shadow root, or its' +
+          ' shadow root is closed.');
+    }
+
+    return QueryRoot.from(shadowRoot);
+  }
 }
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `Dehydrated<null>`.
-export type QueryResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+export type QueryResult<
+  Query extends string,
+  Root extends Element | ShadowRoot
+> = QueriedElement<Query, Root> extends null
     ? null
-    : Dehydrated<QueriedElement<Query, Host>>
+    : Dehydrated<QueriedElement<Query, Root>>
 ;
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `null[]`, when any such values would be
 // filtered out of the result.
-export type QueryAllResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+export type QueryAllResult<
+  Query extends string,
+  Root extends Element | ShadowRoot
+> = QueriedElement<Query, Root> extends null
     ? Element
-    : QueriedElement<Query, Host>
+    : QueriedElement<Query, Root>
 ;

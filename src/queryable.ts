@@ -49,6 +49,17 @@ export interface Queryable<Root extends Element | ShadowRoot> {
     selector: Selector,
     options?: { optional?: boolean },
   ): Array<Queryable<QueryAllResult<Selector, Root>>>;
+
+  /**
+   * Returns a {@link ShadowRoot} which will query elements in the shadow root
+   * of this element.
+   *
+   * @returns A {@link ShadowRoot} which wraps the same element, however query
+   *     operations are scoped to the element's shadow root.
+   * @throws If this element does not have a shadow root or if the shadow root
+   *     is closed.
+   */
+  get shadow(): Queryable<ShadowRoot>;
 }
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
