@@ -41,18 +41,43 @@ export class QueryRoot<Root extends Element | ShadowRoot>
   public query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
   }): QueryResult<Query, Root> | null;
-  public query<Query extends string>(selector: Query, { optional = false }: {
+  public query<Query extends string>(selector: Query, options: {
     readonly optional?: boolean,
   } = {}): QueryResult<Query, Root> | null {
+    const { optional = false } = options;
+
     const child = this.#root.querySelector(selector) as
         QueriedElement<Query, Root> | null;
     if (!child) {
       if (optional) {
         return null;
       } else {
+        // Element was not found and will throw an error. Check if we were
+        // querying the light DOM but the element exists in the shadow DOM, as
+        // this might be indicative of forgetting to call `.shadow` so we can
+        // give a more accurate error message.
+        //
+        // We prefer `this.#root.shadowRoot` over `this.shadow` as the latter
+        // would throw if there is no shadow root.
+        if (this.#root instanceof Element && this.#root.shadowRoot) {
+          const shadowChild = QueryRoot.from(this.#root.shadowRoot).query(
+            selector,
+            {
+              ...options,
+              optional: true,
+            },
+          );
+
+          if (shadowChild) {
+            throw new Error(`Selector "${
+                selector}" did not resolve to an element, however the same selector was found in the shadow root. Did you mean to call \`.shadow.query(...)\`, is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${
+                selector}', { optional: true })\` to ignore this error.`);
+          }
+        }
+
         throw new Error(`Selector "${
-          selector}" did not resolve to an element. Is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${
-          selector}', { optional: true })\` to ignore this error.`);
+            selector}" did not resolve to an element. Is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${
+            selector}', { optional: true })\` to ignore this error.`);
       }
     }
 
@@ -61,11 +86,36 @@ export class QueryRoot<Root extends Element | ShadowRoot>
 
   public queryAll<Query extends string>(
     selector: Query,
-    { optional = false }: { optional?: boolean } = {},
+    options: { optional?: boolean } = {},
   ): Array<Dehydrated<QueryAllResult<Query, Root>>> {
+    const { optional = false } = options;
+
     const elements = this.#root.querySelectorAll(selector) as
         NodeListOf<QueryAllResult<Query, Root>>;
     if (!optional && elements.length === 0) {
+      // Element was not found and will throw an error. Check if we were
+      // querying the light DOM but the element exists in the shadow DOM, as
+      // this might be indicative of forgetting to call `.shadow` so we can
+      // give a more accurate error message.
+      //
+      // We prefer `this.#root.shadowRoot` over `this.shadow` as the latter
+      // would throw if there is no shadow root.
+      if (this.#root instanceof Element && this.#root.shadowRoot) {
+        const shadowChild = QueryRoot.from(this.#root.shadowRoot).query(
+          selector,
+          {
+            ...options,
+            optional: true,
+          },
+        );
+
+        if (shadowChild) {
+          throw new Error(`Selector "${
+              selector}" did not resolve to any elements, however the same selector was found in the shadow root. Did you mean to call \`.shadow.queryAll(...)\`, is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${
+              selector}', { optional: true })\` to ignore this error.`);
+        }
+      }
+
       throw new Error(`Selector "${
           selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${
           selector}', { optional: true })\` to ignore this error.`);

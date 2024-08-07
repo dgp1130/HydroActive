@@ -66,6 +66,19 @@ describe('query-root', () => {
         expect(() => QueryRoot.from(el).query('input', { optional: false }))
             .toThrowError(/did not resolve to an element/);
       });
+
+      it('throws an error suggesting `.shadow` when the queried element is missing, but found in the open shadow DOM', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open">
+              <span>Element</span>
+            </template>
+          </div>
+        `);
+
+        expect(() => QueryRoot.from(el).query('span'))
+            .toThrowError(/Did you mean to call `\.shadow\.query\(\.\.\.\)`/);
+      });
     });
 
     describe('queryAll', () => {
@@ -114,6 +127,21 @@ describe('query-root', () => {
 
         expect(() => QueryRoot.from(el).queryAll('input', { optional: false }))
             .toThrowError(/did not resolve to any elements/);
+      });
+
+      it('throws an error suggesting `.shadow` when the queried elements are missing, but found in the open shadow DOM', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open">
+              <span>First</span>
+              <span>Second</span>
+              <span>Third</span>
+            </template>
+          </div>
+        `);
+
+        expect(() => QueryRoot.from(el).queryAll('span')).toThrowError(
+            /Did you mean to call `\.shadow\.queryAll\(\.\.\.\)`/);
       });
     });
 
