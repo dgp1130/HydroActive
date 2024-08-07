@@ -170,6 +170,10 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   ): Array<Dehydrated<QueryAllResult<Selector, El>>> {
     return this.#root.queryAll(selector, options);
   }
+
+  public get shadow(): QueryRoot<ShadowRoot> {
+    return this.#root.shadow;
+  }
 }
 
 // An attempt to capture all the event maps a user might reasonably encounter

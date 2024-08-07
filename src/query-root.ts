@@ -73,6 +73,24 @@ export class QueryRoot<Root extends Element | ShadowRoot>
 
     return Array.from(elements, (el) => Dehydrated.from(el));
   }
+
+  public get shadow(): QueryRoot<ShadowRoot> {
+    // Verify we're not already scoped to a `ShadowRoot`. It won't have another
+    // `ShadowRoot` under it.
+    if (this.#root instanceof ShadowRoot) {
+      throw new Error('The element is already scoped to its shadow root, no' +
+          ' need to call `shadow` again.');
+    }
+
+    // Grab the `ShadowRoot` of this element.
+    const shadowRoot = this.#root.shadowRoot;
+    if (!shadowRoot) {
+      throw new Error('The element either does not have a shadow root, or its' +
+          ' shadow root is closed.');
+    }
+
+    return QueryRoot.from(shadowRoot);
+  }
 }
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to

@@ -169,4 +169,8 @@ export class Dehydrated<El extends Element> implements Queryable<El> {
   ): Array<Dehydrated<QueryAllResult<Selector, El>>> {
     return this.#root.queryAll(selector, options);
   }
+
+  public get shadow(): QueryRoot<ShadowRoot> {
+    return this.#root.shadow;
+  }
 }

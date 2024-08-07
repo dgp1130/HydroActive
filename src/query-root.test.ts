@@ -116,5 +116,48 @@ describe('query-root', () => {
             .toThrowError(/did not resolve to any elements/);
       });
     });
+
+    describe('shadow', () => {
+      it('returns the shadow root of the given element', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open"></template>
+          </div>
+        `);
+
+        expect(QueryRoot.from(el).shadow.root).toBe(el.shadowRoot!);
+      });
+
+      it('throws an error the input does not have a shadow root', () => {
+        const el = parseHtml(HTMLDivElement, `<div></div>`);
+
+        expect(() => QueryRoot.from(el).shadow)
+            .toThrowError(/does not have a shadow root/);
+      });
+
+      it('throws an error the input has a closed shadow root', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="closed"></template>
+          </div>
+        `);
+
+        expect(() => QueryRoot.from(el).shadow)
+            .toThrowError(/shadow root is closed/);
+      });
+
+      it('throws an error when called multiple times', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open"></template>
+          </div>
+        `);
+
+        const root = QueryRoot.from(el);
+        const firstShadow = root.shadow;
+        expect(() => firstShadow.shadow)
+            .toThrowError(/already scoped to its shadow root/);
+      });
+    });
   });
 });
