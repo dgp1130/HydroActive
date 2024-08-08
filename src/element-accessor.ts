@@ -29,10 +29,18 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    * Creates a new {@link ElementAccessor}.
    *
    * @param native The native {@link Element} to wrap.
+   * @param getClosedShadowRoot A function to get the closed shadow root of the
+   *     given root element. If the element does not have a closed shadow root
+   *     and will never receive one, this can be left `undefined`. Open shadow
+   *     root are automatically handled and do not require any additional input.
    * @returns An {@link ElementAccessor} wrapping the given element.
    */
-  public static from<El extends Element>(native: El): ElementAccessor<El> {
-    return new ElementAccessor(native, QueryRoot.from(native));
+  public static from<El extends Element>(
+    native: El,
+    getClosedShadowRoot?: () => ShadowRoot | null,
+  ): ElementAccessor<El> {
+    return new ElementAccessor(
+        native, QueryRoot.from(native, getClosedShadowRoot));
   }
 
   /**

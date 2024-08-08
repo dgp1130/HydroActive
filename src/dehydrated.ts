@@ -29,11 +29,18 @@ export class Dehydrated<El extends Element> implements Queryable<El> {
    *
    * @param native The underlying DOM element to wrap. May or may not already be
    *     hydrated.
+   * @param getClosedShadowRoot A function to get the closed shadow root of the
+   *     given root element. If the element does not have a closed shadow root
+   *     and will never receive one, this can be left `undefined`. Open shadow
+   *     root are automatically handled and do not require any additional input.
    * @returns A {@link Dehydrated} wrapper which ensures that future accesses to
    *     the element properly hydrate it.
    */
-  public static from<El extends Element>(native: El): Dehydrated<El> {
-    return new Dehydrated(native, QueryRoot.from(native));
+  public static from<El extends Element>(
+    native: El,
+    getClosedShadowRoot?: () => ShadowRoot | null,
+  ): Dehydrated<El> {
+    return new Dehydrated(native, QueryRoot.from(native, getClosedShadowRoot));
   }
 
   /**

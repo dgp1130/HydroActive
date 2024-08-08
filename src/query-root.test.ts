@@ -1,6 +1,18 @@
 import { QueryRoot } from './query-root.js';
 import { parseHtml } from './testing.js';
 
+/** Captures and exposes closed shadow roots for testing. */
+class ShadowComp extends HTMLElement {
+  public shadow: ShadowRoot | null;
+
+  constructor() {
+    super();
+    const internals = this.attachInternals();
+    this.shadow = internals.shadowRoot;
+  }
+}
+customElements.define('query-root--shadow-comp', ShadowComp);
+
 describe('query-root', () => {
   describe('QueryRoot', () => {
     describe('from', () => {
@@ -79,6 +91,37 @@ describe('query-root', () => {
         expect(() => QueryRoot.from(el).query('span'))
             .toThrowError(/Did you mean to call `\.shadow\.query\(\.\.\.\)`/);
       });
+
+      it('throws an error suggesting `.shadow` when the queried element is missing, but found in the closed shadow DOM', () => {
+        const el = parseHtml(ShadowComp, `
+          <query-root--shadow-comp>
+            <template shadowrootmode="closed">
+              <span>Element</span>
+            </template>
+          </query-root--shadow-comp>
+        `);
+
+        const root = QueryRoot.from(el, () => el.shadow);
+        expect(() => root.query('span'))
+            .toThrowError(/Did you mean to call `\.shadow\.query\(\.\.\.\)`/);
+      });
+
+      it('throws when given an element and shadow root which are not associated', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <span></span>
+            <span>
+              <template shadowrootmode="open"></template>
+            </span>
+          </div>
+        `,);
+
+        const [ span1, span2 ] = el.children;
+
+        const root = QueryRoot.from(span1!, () => span2!.shadowRoot!);
+        expect(() => root.query('not-a-match'))
+            .toThrowError(/does not belong to the associated element/);
+      });
     });
 
     describe('queryAll', () => {
@@ -143,10 +186,41 @@ describe('query-root', () => {
         expect(() => QueryRoot.from(el).queryAll('span')).toThrowError(
             /Did you mean to call `\.shadow\.queryAll\(\.\.\.\)`/);
       });
+
+      it('throws an error suggesting `.shadow` when the queried element is missing, but found in the closed shadow DOM', () => {
+        const el = parseHtml(ShadowComp, `
+          <query-root--shadow-comp>
+            <template shadowrootmode="closed">
+              <span>Element</span>
+            </template>
+          </query-root--shadow-comp>
+        `);
+
+        const root = QueryRoot.from(el, () => el.shadow);
+        expect(() => root.queryAll('span')).toThrowError(
+            /Did you mean to call `\.shadow\.queryAll\(\.\.\.\)`/);
+      });
+
+      it('throws when given an element and shadow root which are not associated', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <span></span>
+            <span>
+              <template shadowrootmode="open"></template>
+            </span>
+          </div>
+        `,);
+
+        const [ span1, span2 ] = el.children;
+
+        const root = QueryRoot.from(span1!, () => span2!.shadowRoot!);
+        expect(() => root.queryAll('not-a-match'))
+            .toThrowError(/does not belong to the associated element/);
+      });
     });
 
     describe('shadow', () => {
-      it('returns the shadow root of the given element', () => {
+      it('returns the open shadow root of the given element', () => {
         const el = parseHtml(HTMLDivElement, `
           <div>
             <template shadowrootmode="open"></template>
@@ -156,6 +230,17 @@ describe('query-root', () => {
         expect(QueryRoot.from(el).shadow.root).toBe(el.shadowRoot!);
       });
 
+      it('returns the closed shadow root of the given element when provided', () => {
+        const el = parseHtml(ShadowComp, `
+          <query-root--shadow-comp>
+            <template shadowrootmode="closed"></template>
+          </query-root--shadow-comp>
+        `);
+
+        const root = QueryRoot.from(el, () => el.shadow);
+        expect(root.shadow.root).toBe(el.shadow!);
+      });
+
       it('throws an error the input does not have a shadow root', () => {
         const el = parseHtml(HTMLDivElement, `<div></div>`);
 
@@ -163,7 +248,7 @@ describe('query-root', () => {
             .toThrowError(/does not have a shadow root/);
       });
 
-      it('throws an error the input has a closed shadow root', () => {
+      it('throws an error the input has an inaccessible closed shadow root', () => {
         const el = parseHtml(HTMLDivElement, `
           <div>
             <template shadowrootmode="closed"></template>
