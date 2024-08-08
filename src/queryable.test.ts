@@ -1,5 +1,4 @@
-import { Queryable, query, queryAll } from './queryable.js';
-import { parseHtml } from './testing.js';
+import { Queryable } from './queryable.js';
 
 describe('queryable', () => {
   describe('Queryable', () => {
@@ -96,99 +95,6 @@ describe('queryable', () => {
           result satisfies Array<Queryable<HTMLInputElement>>;
         };
       });
-    });
-  });
-
-  describe('query', () => {
-    it('returns the first queried element', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>First</span>
-          <span>Second</span>
-        </div>
-      `);
-
-      expect(query(el, 'span')!.textContent).toBe('First');
-    });
-
-    it('throws when no element is found by default', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(() => query(el, 'input'))
-          .toThrowError(/did not resolve to an element/);
-    });
-
-    it('returns `null` when no element is found and explicitly `optional`', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(query(el, 'input', { optional: true })).toBeNull();
-    });
-
-    it('throws when no element is found and explicitly not `optional`', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(() => query(el, 'input', { optional: false }))
-          .toThrowError(/did not resolve to an element/);
-    });
-  });
-
-  describe('queryAll', () => {
-    it('returns the first queried element', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>First</span>
-          <span>Second</span>
-          <span>Third</span>
-        </div>
-      `);
-
-      const items = Array.from(queryAll(el, 'span'))
-          .map((span) => span.textContent);
-      expect(items).toEqual([ 'First', 'Second', 'Third' ]);
-    });
-
-    it('throws when no element is found by default', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(() => queryAll(el, 'input'))
-          .toThrowError(/did not resolve to any elements/);
-    });
-
-    it('returns empty list when no element is found and explicitly `optional`', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(Array.from(queryAll(el, 'input', { optional: true }))).toEqual([]);
-    });
-
-    it('throws when no element is found and explicitly not `optional`', () => {
-      const el = parseHtml(HTMLDivElement, `
-        <div>
-          <span>Hello, World!</span>
-        </div>
-      `);
-
-      expect(() => queryAll(el, 'input', { optional: false }))
-          .toThrowError(/did not resolve to any elements/);
     });
   });
 });

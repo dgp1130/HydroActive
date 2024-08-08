@@ -1,6 +1,6 @@
 import { Dehydrated } from './dehydrated.js';
 import { QueriedElement } from './query.js';
-import { Queryable, query, queryAll } from './queryable.js';
+import { Queryable } from './queryable.js';
 
 /**
  * A base implementation of {@link Queryable}, this represents a "root" node
@@ -38,20 +38,36 @@ export class QueryRoot<El extends Element> implements Queryable<El> {
   public query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
   }): QueryResult<Query, El> | null;
-  public query<Query extends string>(selector: Query, options: {
+  public query<Query extends string>(selector: Query, { optional = false }: {
     readonly optional?: boolean,
   } = {}): QueryResult<Query, El> | null {
-    const child = query(this.#root as El, selector, options);
-    if (!child) return null;
+    const child = this.#root.querySelector(selector) as
+        QueriedElement<Query, El> | null;
+    if (!child) {
+      if (optional) {
+        return null;
+      } else {
+        throw new Error(`Selector "${
+          selector}" did not resolve to an element. Is the selector wrong, or does the element not exist? If it is expected that the element may not exist, consider calling \`.query('${
+          selector}', { optional: true })\` to ignore this error.`);
+      }
+    }
 
     return Dehydrated.from(child) as QueryResult<Query, El>;
   }
 
   public queryAll<Query extends string>(
     selector: Query,
-    options: { optional?: boolean } = {},
+    { optional = false }: { optional?: boolean } = {},
   ): Array<Dehydrated<QueryAllResult<Query, El>>> {
-    const elements = queryAll(this.#root as El, selector, options);
+    const elements = this.#root.querySelectorAll(selector) as
+        NodeListOf<QueryAllResult<Query, El>>;
+    if (!optional && elements.length === 0) {
+      throw new Error(`Selector "${
+          selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${
+          selector}', { optional: true })\` to ignore this error.`);
+    }
+
     return Array.from(elements, (el) => Dehydrated.from(el));
   }
 }
