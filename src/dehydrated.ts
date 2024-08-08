@@ -29,11 +29,15 @@ export class Dehydrated<El extends Element> implements Queryable<El> {
    *
    * @param native The underlying DOM element to wrap. May or may not already be
    *     hydrated.
+   * @param getShadowRoot TODO
    * @returns A {@link Dehydrated} wrapper which ensures that future accesses to
    *     the element properly hydrate it.
    */
-  public static from<El extends Element>(native: El): Dehydrated<El> {
-    return new Dehydrated(native, QueryRoot.from(native));
+  public static from<El extends Element>(
+    native: El,
+    getShadowRoot?: () => ShadowRoot | null,
+  ): Dehydrated<El> {
+    return new Dehydrated(native, QueryRoot.from(native, getShadowRoot));
   }
 
   /**

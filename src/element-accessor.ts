@@ -29,10 +29,14 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    * Creates a new {@link ElementAccessor}.
    *
    * @param native The native {@link Element} to wrap.
+   * @param getShadowRoot TODO
    * @returns An {@link ElementAccessor} wrapping the given element.
    */
-  public static from<El extends Element>(native: El): ElementAccessor<El> {
-    return new ElementAccessor(native, QueryRoot.from(native));
+  public static from<El extends Element>(
+    native: El,
+    getShadowRoot?: () => ShadowRoot | null,
+  ): ElementAccessor<El> {
+    return new ElementAccessor(native, QueryRoot.from(native, getShadowRoot));
   }
 
   /**
