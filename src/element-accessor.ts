@@ -7,15 +7,11 @@ import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './
 import { Serialized, ElementSerializer, ElementSerializable } from './serializers.js';
 
 /**
- * Wraps an element in a convenient wrapper for accessing it's contents with a
- * `Serializer`.
+ * Wraps an {@link Element} in a convenient wrapper for querying and accessing
+ * it's contents with serializers.
  */
 export class ElementAccessor<El extends Element> implements Queryable<El> {
-  /**
-   * The underlying wrapped {@link Element object}.
-   *
-   * @returns The {@link Element} wrapped by this {@link ElementAccessor}.
-   */
+  /** The underlying wrapped {@link Element} object. */
   public readonly element: El;
 
   readonly #root: QueryRoot<El>;
@@ -26,7 +22,7 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   }
 
   /**
-   * Creates a new {@link ElementAccessor}.
+   * Provides an {@link ElementAccessor} for the given element.
    *
    * @param native The native {@link Element} to wrap.
    * @param getClosedShadowRoot A function to get the closed shadow root of the
