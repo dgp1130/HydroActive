@@ -30,6 +30,10 @@ describe('query', () => {
       const _el: QueriedElement<':scope'> = {} as Element;
     });
 
+    typeTest('resolve `:scope` to `null` for `ShadowRoot`', () => {
+      const _el: QueriedElement<':scope', ShadowRoot> = null;
+    });
+
     typeTest('resolves a tag name with class', () => {
       const _el: HTMLInputElement = {} as QueriedElement<'input.clazz'>;
     });
@@ -116,6 +120,10 @@ describe('query', () => {
 
     typeTest('resolves queries without a tag name to `Element`', () => {
       const _el: QueriedElement<'.foo'> = {} as Element;
+    });
+
+    typeTest('resolves queries from a `ShadowRoot`', () => {
+      const _el: QueriedElement<'input', ShadowRoot> = {} as HTMLInputElement;
     });
   });
 });

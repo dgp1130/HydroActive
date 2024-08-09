@@ -8,15 +8,17 @@
  * return.
  *
  * @param Query The selector query to resolve.
- * @param Host The host element making the query.
+ * @param Root The root element or shadow root making the query.
  * @returns A union of all possible {@link Element} objects which may be
  *     returned by the query.
  */
 export type QueriedElement<
   Query extends string,
-  Host extends Element = Element,
+  Root extends Element | ShadowRoot = Element,
 > = Query extends ':scope'
-    ? Host
+    ? Root extends Element
+        ? Root
+        : null
     : Union<ElementsOf<TagNames<Selectors<Query>>>>
 ;
 
