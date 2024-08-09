@@ -1,10 +1,10 @@
 import { QueriedElement } from './query.js';
 
 /**
- * Represents an element which can query its descendants for those matching a
- * provided CSS selector.
+ * Represents an element or shadow root which can query its descendants for
+ * those matching a provided CSS selector.
  */
-export interface Queryable<El extends Element> {
+export interface Queryable<Root extends Element | ShadowRoot> {
   /**
    * Queries light DOM descendants for the provided selector and returns the
    * first matching element wrapped in a {@link Queryable}.
@@ -21,14 +21,14 @@ export interface Queryable<El extends Element> {
   query<Query extends string>(
     selector: Query,
     options?: { readonly optional?: false },
-  ): QueryResult<Query, El>;
+  ): QueryResult<Query, Root>;
   query<Query extends string>(
     selector: Query,
     options?: { readonly optional?: boolean },
-  ): QueryResult<Query, El> | null;
+  ): QueryResult<Query, Root> | null;
   query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
-  }): QueryResult<Query, El> | null;
+  }): QueryResult<Query, Root> | null;
 
   /**
    * Queries light DOM descendants for the provided selector and returns all
@@ -48,14 +48,14 @@ export interface Queryable<El extends Element> {
   queryAll<Selector extends string>(
     selector: Selector,
     options?: { optional?: boolean },
-  ): Array<Queryable<QueryAllResult<Selector, El>>>;
+  ): Array<Queryable<QueryAllResult<Selector, Root>>>;
 }
 
 /**
  * Queries light DOM descendants for the provided element with the selector and
  * returns the first matching element.
  *
- * @param root The element to query descendants of.
+ * @param root The element or shadow root to query descendants of.
  * @param selector The selector to query for.
  * @param optional Specifies what happens when an element is not found. If
  *     `optional` is `false` (default), an error is thrown. If `optional` is
@@ -64,13 +64,13 @@ export interface Queryable<El extends Element> {
  *     is `true` and no element is found.
  * @throws If no element is found and `optional` is `false` (default).
  */
-export function query<Query extends string, El extends Element>(
-  root: El,
+export function query<Query extends string, Root extends Element | ShadowRoot>(
+  root: Root,
   selector: Query,
   { optional = false }: { readonly optional?: boolean } = {},
-): QueriedElement<Query, El> | null {
+): QueriedElement<Query, Root> | null {
   const child = root.querySelector(selector) as
-      QueriedElement<Query, El> | null;
+      QueriedElement<Query, Root> | null;
   if (!child) {
     if (optional) {
       return null;
@@ -88,6 +88,7 @@ export function query<Query extends string, El extends Element>(
  * Queries light DOM descendants for the provided selector and returns all
  * matching elements.
  *
+ * @param root The element or shadow root to query descendants of.
  * @param selector The selector to query for.
  * @param optional Specifies what happens when no elements are found. If
  *     `optional` is `false` (default), an error is thrown. If `optional` is
@@ -95,13 +96,13 @@ export function query<Query extends string, El extends Element>(
  * @returns An {@link Array} of the queried elements.
  * @throws If no element is found and `optional` is `false` (default).
  */
-export function queryAll<Query extends string, El extends Element>(
-  root: El,
-  selector: Query,
-  { optional }: { optional?: boolean } = {},
-): NodeListOf<QueryAllResult<Query, El>> {
+export function queryAll<
+  Query extends string,
+  Root extends Element | ShadowRoot
+>(root: Root, selector: Query, { optional }: { optional?: boolean } = {}):
+    NodeListOf<QueryAllResult<Query, Root>> {
   const elements = root.querySelectorAll(selector) as
-    NodeListOf<QueryAllResult<Query, El>>;
+    NodeListOf<QueryAllResult<Query, Root>>;
   if (!optional && elements.length === 0) {
     throw new Error(`Selector "${
         selector}" did not resolve to any elements. Is the selector wrong, or do the elements not exist? If it is expected that the elements may not exist, consider calling \`.queryAll('${
@@ -113,17 +114,17 @@ export function queryAll<Query extends string, El extends Element>(
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `Queryable<null>`.
-type QueryResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+type QueryResult<Query extends string, Root extends Element | ShadowRoot> =
+  QueriedElement<Query, Root> extends null
     ? null
-    : Queryable<QueriedElement<Query, Host>>
+    : Queryable<QueriedElement<Query, Root>>
 ;
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `null[]`, when any such values would be
 // filtered out of the result.
-type QueryAllResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+type QueryAllResult<Query extends string, Root extends Element | ShadowRoot> =
+  QueriedElement<Query, Root> extends null
     ? Element
-    : QueriedElement<Query, Host>
+    : QueriedElement<Query, Root>
 ;

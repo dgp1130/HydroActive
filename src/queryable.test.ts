@@ -61,6 +61,17 @@ describe('queryable', () => {
           null satisfies typeof result;
         };
       });
+
+      it('can query a shadow root', () => {
+        // Type only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const queryable = {} as Queryable<ShadowRoot>;
+          const result = queryable.query('input');
+
+          result satisfies Queryable<HTMLInputElement>;
+        };
+      });
     });
 
     describe('queryAll', () => {
@@ -70,6 +81,17 @@ describe('queryable', () => {
         () => {
           const queryable = {} as Queryable<Element>;
           const result = queryable.queryAll('.foo #bar > [baz] input');
+
+          result satisfies Array<Queryable<HTMLInputElement>>;
+        };
+      });
+
+      it('can query a shadow root', () => {
+        // Type only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const queryable = {} as Queryable<ShadowRoot>;
+          const result = queryable.queryAll('input');
 
           result satisfies Array<Queryable<HTMLInputElement>>;
         };
