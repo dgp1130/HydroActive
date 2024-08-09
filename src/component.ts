@@ -1,14 +1,14 @@
 /** @fileoverview Defines symbols related to component definition. */
 
+import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
-import { ElementAccessor } from './element-accessor.js';
 import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
 export type HydrateLifecycle = (
   comp: ComponentRef,
-  host: ElementAccessor<HydroActiveComponent>,
+  host: ComponentAccessor<HydroActiveComponent>,
 ) => void;
 
 /**
@@ -18,10 +18,10 @@ export type HydrateLifecycle = (
 export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
     Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
-    override hydrate(): void {
+    public override hydrate(): void {
       const ref = ComponentRef._from(ElementRef.from(this));
       this._registerComponentRef(ref);
-      hydrate(ref, ElementAccessor.from(this));
+      hydrate(ref, ComponentAccessor.fromComponent(this));
     }
   };
 
