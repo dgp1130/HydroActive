@@ -13,6 +13,7 @@ export class NoopComponent extends HydroActiveComponent {
 
   public constructor() {
     super();
+    this._elementInternals = this.attachInternals();
 
     this.#ref = ComponentRef._from(ElementRef.from(this));
     this._registerComponentRef(this.#ref);
