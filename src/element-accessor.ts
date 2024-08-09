@@ -1,8 +1,8 @@
 import { AttrAccessor } from './attribute-accessor.js';
 import { ComponentRef } from './component-ref.js';
 import { Dehydrated } from './dehydrated.js';
-import { QueriedElement } from './query.js';
-import { Queryable, query, queryAll } from './queryable.js';
+import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
+import { Queryable } from './queryable.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { Serialized, ElementSerializer, ElementSerializable } from './serializers.js';
 
@@ -18,8 +18,11 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    */
   public readonly element: El;
 
-  protected constructor(element: El) {
+  readonly #root: QueryRoot<El>;
+
+  protected constructor(element: El, root: QueryRoot<El>) {
     this.element = element;
+    this.#root = root;
   }
 
   /**
@@ -29,7 +32,7 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    * @returns An {@link ElementAccessor} wrapping the given element.
    */
   public static from<El extends Element>(native: El): ElementAccessor<El> {
-    return new ElementAccessor(native);
+    return new ElementAccessor(native, QueryRoot.from(native));
   }
 
   /**
@@ -143,10 +146,7 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
   public query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
   }): QueryResult<Query, El> | null {
-    const result = query(this.element, selector, options);
-    if (!result) return result;
-
-    return Dehydrated.from(result) as QueryResult<Query, El>;
+    return this.#root.query(selector, options);
   }
 
   /**
@@ -164,12 +164,11 @@ export class ElementAccessor<El extends Element> implements Queryable<El> {
    *     {@link Dehydrated}.
    * @throws If no element is found and `optional` is `false` (default).
    */
-  queryAll<Selector extends string>(
+  public queryAll<Selector extends string>(
     selector: Selector,
     options?: { optional?: boolean },
   ): Array<Dehydrated<QueryAllResult<Selector, El>>> {
-    const result = queryAll(this.element, selector, options);
-    return Array.from(result).map((el) => Dehydrated.from(el));
+    return this.#root.queryAll(selector, options);
   }
 }
 
@@ -184,21 +183,4 @@ type AllElementsEventMap =
   & HTMLVideoElementEventMap
   & HTMLMediaElementEventMap
   & HTMLFrameSetElementEventMap
-;
-
-// `QueriedElement` returns `null` when given a pseudo-element selector. Need to
-// avoid boxing this `null` into `Dehydrated<null>`.
-type QueryResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
-    ? null
-    : Dehydrated<QueriedElement<Query, Host>>
-;
-
-// `QueriedElement` returns `null` when given a pseudo-element selector. Need to
-// avoid boxing this `null` into `null[]`, when any such values would be
-// filtered out of the result.
-type QueryAllResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
-    ? Element
-    : QueriedElement<Query, Host>
 ;
