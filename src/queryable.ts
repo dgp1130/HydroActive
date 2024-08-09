@@ -4,7 +4,7 @@ import { QueriedElement } from './query.js';
  * Represents an element which can query its descendants for those matching a
  * provided CSS selector.
  */
-export interface Queryable<El extends Element> {
+export interface Queryable<Root extends Element | ShadowRoot> {
   /**
    * Queries light DOM descendants for the provided selector and returns the
    * first matching element wrapped in a {@link Queryable}.
@@ -21,14 +21,14 @@ export interface Queryable<El extends Element> {
   query<Query extends string>(
     selector: Query,
     options?: { readonly optional?: false },
-  ): QueryResult<Query, El>;
+  ): QueryResult<Query, Root>;
   query<Query extends string>(
     selector: Query,
     options?: { readonly optional?: boolean },
-  ): QueryResult<Query, El> | null;
+  ): QueryResult<Query, Root> | null;
   query<Query extends string>(selector: Query, options?: {
     readonly optional?: boolean,
-  }): QueryResult<Query, El> | null;
+  }): QueryResult<Query, Root> | null;
 
   /**
    * Queries light DOM descendants for the provided selector and returns all
@@ -48,7 +48,7 @@ export interface Queryable<El extends Element> {
   queryAll<Selector extends string>(
     selector: Selector,
     options?: { optional?: boolean },
-  ): Array<Queryable<QueryAllResult<Selector, El>>>;
+  ): Array<Queryable<QueryAllResult<Selector, Root>>>;
 }
 
 /**
@@ -113,17 +113,17 @@ export function queryAll<Query extends string, El extends Element>(
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `Queryable<null>`.
-type QueryResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+type QueryResult<Query extends string, Root extends Element | ShadowRoot> =
+  QueriedElement<Query, Root> extends null
     ? null
-    : Queryable<QueriedElement<Query, Host>>
+    : Queryable<QueriedElement<Query, Root>>
 ;
 
 // `QueriedElement` returns `null` when given a pseudo-element selector. Need to
 // avoid boxing this `null` into `null[]`, when any such values would be
 // filtered out of the result.
-type QueryAllResult<Query extends string, Host extends Element> =
-  QueriedElement<Query, Host> extends null
+type QueryAllResult<Query extends string, Root extends Element | ShadowRoot> =
+  QueriedElement<Query, Root> extends null
     ? Element
-    : QueriedElement<Query, Host>
+    : QueriedElement<Query, Root>
 ;
