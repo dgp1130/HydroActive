@@ -6,7 +6,7 @@ import { QueryRoot } from './query-root.js';
  * Wraps a {@link HydroActiveComponent} in a convenient wrapper for querying and
  * accessing it's contents with serializers.
  */
-export class ComponentAccessor<Comp extends HydroActiveComponent>
+export class ComponentAccessor<out Comp extends HydroActiveComponent>
     extends ElementAccessor<Comp> {
   /**
    * Provides a {@link ComponentAccessor} for the given component.

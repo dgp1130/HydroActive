@@ -10,7 +10,7 @@ import { Serialized, ElementSerializer, ElementSerializable } from './serializer
  * Wraps an {@link Element} in a convenient wrapper for querying and accessing
  * it's contents with serializers.
  */
-export class ElementAccessor<El extends Element> implements Queryable<El> {
+export class ElementAccessor<out El extends Element> implements Queryable<El> {
   /** The underlying wrapped {@link Element} object. */
   public readonly element: El;
 

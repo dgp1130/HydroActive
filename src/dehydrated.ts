@@ -15,7 +15,7 @@ import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
  * This prevents unintentional usage of elements which have not yet been
  * hydrated.
  */
-export class Dehydrated<El extends Element> implements Queryable<El> {
+export class Dehydrated<out El extends Element> implements Queryable<El> {
   readonly #native: El;
   readonly #root: QueryRoot<El>;
 

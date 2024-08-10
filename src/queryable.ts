@@ -4,7 +4,7 @@ import { QueriedElement } from './query.js';
  * Represents an element or shadow root which can query its descendants for
  * those matching a provided CSS selector.
  */
-export interface Queryable<Root extends Element | ShadowRoot> {
+export interface Queryable<out Root extends Element | ShadowRoot> {
   /**
    * Queries light DOM descendants for the provided selector and returns the
    * first matching element wrapped in a {@link Queryable}.

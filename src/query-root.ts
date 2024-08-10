@@ -9,7 +9,7 @@ import { Queryable } from './queryable.js';
  * asserting results are found by default and typing the result based on the
  * input query.
  */
-export class QueryRoot<Root extends Element | ShadowRoot>
+export class QueryRoot<out Root extends Element | ShadowRoot>
     implements Queryable<Root> {
   /** The root to use for queries. */
   readonly #root: Root;
