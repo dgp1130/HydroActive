@@ -9,6 +9,16 @@ describe('query-root', () => {
 
         expect(QueryRoot.from(el).root).toBe(el);
       });
+
+      it('creates a `QueryRoot` from a shadow root', () => {
+        const el = parseHtml(HTMLDivElement, `
+          <div>
+            <template shadowrootmode="open"></template>
+          </div>
+        `);
+
+        expect(QueryRoot.from(el.shadowRoot!).root).toBe(el.shadowRoot!);
+      });
     });
 
     describe('query', () => {
