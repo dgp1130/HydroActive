@@ -1,11 +1,5 @@
 /** @fileoverview Defines utilities related to parsing HTML for testing. */
 
-// Add the `includeShadowRoots` option to `DOMParser.prototype.parseFromString`.
-type ParseFromString = (html: string, type: DOMParserSupportedType, options?: {
-  includeShadowRoots?: boolean,
-}) => Document;
-const parseFromString = DOMParser.prototype.parseFromString as ParseFromString;
-
 /**
  * Parses the given HTML text and returns the root element. The result is
  * asserted and typed as an instance of `resultComponent`. Any rendered custom
@@ -32,10 +26,7 @@ export function parseHtml<Result extends typeof Element>(
 ): InstanceType<Result> {
   const deps = dependencies.concat(resultComponent);
 
-  // Parse the HTML with declarative shadow DOM enabled.
-  const doc = parseFromString.call(new DOMParser(), html, 'text/html', {
-    includeShadowRoots: true,
-  });
+  const doc = (Document as any).parseHTMLUnsafe(html); // TODO
 
   // Assert that exactly one root element is returned.
   const [ rootEl ] = doc.body.children;

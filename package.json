@@ -34,7 +34,7 @@
     "@11ty/is-land": "^4.0.0",
     "@types/jasmine": "^4.3.1",
     "@web/test-runner": "^0.15.3",
-    "@web/test-runner-puppeteer": "^0.14.2",
+    "@web/test-runner-puppeteer": "^0.16.0",
     "http-server": "^14.1.1",
     "jasmine-core": "^4.5.0",
     "typescript": "^5.5.4"
