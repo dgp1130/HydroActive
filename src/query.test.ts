@@ -30,8 +30,8 @@ describe('query', () => {
       const _el: QueriedElement<':scope'> = {} as Element;
     });
 
-    typeTest('resolve `:scope` to `null` for `ShadowRoot`', () => {
-      const _el: QueriedElement<':scope', ShadowRoot> = null;
+    typeTest('resolve `:scope` to `Element` for `ShadowRoot`', () => {
+      const _el: QueriedElement<':scope', ShadowRoot> = {} as Element;
     });
 
     typeTest('resolves a tag name with class', () => {

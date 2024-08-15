@@ -18,7 +18,7 @@ export type QueriedElement<
 > = Query extends ':scope'
     ? Root extends Element
         ? Root
-        : null
+        : Element
     : Union<ElementsOf<TagNames<Selectors<Query>>>>
 ;
 
