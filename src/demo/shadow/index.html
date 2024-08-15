@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Shadow DOM Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Shadow DOM Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <open-shadow>
+            <template shadowrootmode="open">
+                <style>
+                    div { color: red; }
+                </style>
+
+                <h2>Open Shadow</h2>
+
+                <div>Hello</div>
+                <slot></slot>
+
+                <script src="./open-shadow.js" type="module"></script>
+            </template>
+
+            <div>Goodbye</div>
+        </open-shadow>
+
+        <closed-shadow>
+            <template shadowrootmode="closed">
+                <style>
+                    div { color: blue; }
+                </style>
+
+                <h2>Closed Shadow</h2>
+
+                <div>Hello</div>
+                <slot></slot>
+
+                <script src="./closed-shadow.js" type="module"></script>
+            </template>
+
+            <div>Goodbye</div>
+        </closed-shadow>
+    </body>
+</html>

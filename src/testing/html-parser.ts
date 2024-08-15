@@ -26,7 +26,7 @@ export function parseHtml<Result extends typeof Element>(
 ): InstanceType<Result> {
   const deps = dependencies.concat(resultComponent);
 
-  const doc = (Document as any).parseHTMLUnsafe(html); // TODO
+  const doc = Document.parseHTMLUnsafe(html);
 
   // Assert that exactly one root element is returned.
   const [ rootEl ] = doc.body.children;
@@ -35,8 +35,8 @@ export function parseHtml<Result extends typeof Element>(
         `Expected parsed HTML to have exactly *one* root element:\n\n${html}`);
   }
 
-  // `DOMParser` puts elements into a different document, so we need to adopt
-  // them to the current document before they can be upgraded.
+  // `parseHTMLUnsafe` puts elements into a different document, so we need to
+  // adopt them to the current document before they can be upgraded.
   const el = document.adoptNode(rootEl) as Element;
 
   // Parsed HTML might contain custom elements, upgrade it before returning.
