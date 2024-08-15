@@ -66,6 +66,15 @@ jasmineEnv.addReporter({
 
   async jasmineDone(result) {
     console.log(`Tests ${result.overallStatus}!`);
+
+    // Tests may be "incomplete" if no spec is found (no `it`) or a test was
+    // focused (`fit`).
+    if (result.incompleteReason) {
+      failedSpecs.push({
+        message: result.incompleteReason,
+      });
+    }
+
     await sessionFinished({
       passed: result.overallStatus === 'passed',
       errors: failedSpecs,
