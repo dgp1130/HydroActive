@@ -1,4 +1,4 @@
-import { ComponentRef, ElementRef } from 'hydroactive';
+import { ComponentRef } from '../component-ref.js';
 import { HydroActiveComponent } from '../hydroactive-component.js';
 
 /**
@@ -14,7 +14,7 @@ export class NoopComponent extends HydroActiveComponent {
   public constructor() {
     super();
 
-    this.#ref = ComponentRef._from(ElementRef.from(this));
+    this.#ref = ComponentRef._from(() => this.isConnected);
     this._registerComponentRef(this.#ref);
   }
 

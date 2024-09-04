@@ -39,7 +39,6 @@ export abstract class HydroActiveComponent extends HTMLElement {
   protected abstract hydrate(): void;
 
   public /* internal */ _registerComponentRef(ref: ComponentRef): void {
-    if (ref.host.native !== this) throw new Error('Registered `ComponentRef` must be associated with this component.');
     if (this.#ref) throw new Error('Already registered a `ComponentRef`.');
 
     this.#ref = ref;

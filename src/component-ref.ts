@@ -1,5 +1,3 @@
-import { ElementRef } from './element-ref.js';
-import { HydroActiveComponent } from './hydroactive-component.js';
 import { effect } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
@@ -18,11 +16,7 @@ export type OnDisconnect = () => void;
  * the component it references (not shared with other components).
  */
 export class ComponentRef {
-  readonly #host: ElementRef<HydroActiveComponent>;
   readonly #scheduler = UiScheduler.from();
-
-  /** The custom element hosting the HydroActive component. */
-  public get host(): ElementRef<HydroActiveComponent> { return this.#host; }
 
   /** All callbacks to invoke when the component is connected to the DOM. */
   readonly #connectedCallbacks: Array<OnConnect> = [];
@@ -35,8 +29,14 @@ export class ComponentRef {
    */
   readonly #disconnectedCallbacks: Array<OnDisconnect> = [];
 
-  private constructor(host: ElementRef<HydroActiveComponent>) {
-    this.#host = host;
+  /**
+   * Returns whether or not the associated component is currently connected to a
+   * document.
+   */
+  readonly #isConnected: () => boolean;
+
+  private constructor(isConnected: () => boolean) {
+    this.#isConnected = isConnected;
   }
 
   /**
@@ -45,10 +45,12 @@ export class ComponentRef {
    * INTERNAL ONLY: Do not call directly. HydroActive should always provide a
    * {@link ComponentRef} to you, it should never be necessary to create one
    * manually.
+   *
+   * @param isConnected Returns whether or not the associated component is
+   *     currently connected to a document.
    */
-  public /* internal */ static _from(host: ElementRef<HydroActiveComponent>):
-      ComponentRef {
-    return new ComponentRef(host);
+  public /* internal */ static _from(isConnected: () => boolean): ComponentRef {
+    return new ComponentRef(isConnected);
   }
 
   public /* internal */ _onConnect(): void {
@@ -101,7 +103,7 @@ export class ComponentRef {
   public connected(onConnect: OnConnect): void {
     this.#connectedCallbacks.push(onConnect);
 
-    if (this.#host.native.isConnected) this.#invokeOnConnect(onConnect);
+    if (this.#isConnected()) this.#invokeOnConnect(onConnect);
   }
 
   /**

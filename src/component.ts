@@ -2,7 +2,6 @@
 
 import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
-import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
@@ -19,7 +18,7 @@ export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
     Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
-      const ref = ComponentRef._from(ElementRef.from(this));
+      const ref = ComponentRef._from(() => this.isConnected);
       this._registerComponentRef(ref);
       hydrate(ComponentAccessor.fromComponent(this), ref);
     }

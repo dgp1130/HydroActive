@@ -1,7 +1,6 @@
 import { type HydrateLifecycle, defineComponent } from './component.js';
 import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
-import { ElementRef } from './element-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 
@@ -61,7 +60,7 @@ describe('component', () => {
 
       expect(hydrate).toHaveBeenCalledOnceWith(
         ComponentAccessor.fromComponent(comp),
-        ComponentRef._from(ElementRef.from(comp)),
+        ComponentRef._from(() => comp.isConnected),
       );
     });
 

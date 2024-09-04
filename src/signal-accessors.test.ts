@@ -427,8 +427,7 @@ describe('signal-accessors', () => {
       `));
       const outerComp = outerHost.element.getComponentRef();
 
-      const innerHost = ElementAccessor.from(
-          outerComp.host.query('noop-component').native);
+      const innerHost = outerHost.query('noop-component').access(NoopComponent);
       const innerComp = innerHost.element.getComponentRef();
 
       bind(

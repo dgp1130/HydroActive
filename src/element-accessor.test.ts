@@ -296,7 +296,7 @@ describe('element-accessor', () => {
         ElementAccessor.from(el).listen(comp, 'click', handler);
         expect(handler).not.toHaveBeenCalled();
 
-        comp.host.native.click();
+        el.click();
 
         expect(handler).toHaveBeenCalledOnceWith(jasmine.any(Event));
       });
