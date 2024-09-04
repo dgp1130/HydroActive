@@ -13,7 +13,7 @@ export const AutoCounter = defineComponent('auto-counter', (host, comp) => {
   // Run some code when the component is connected to or disconnected from the
   // document. This can be used to clean up resources which might cause the
   // component to leak memory when not in use.
-  comp.connected(() => {
+  host.connected(() => {
     // Executed when the component is connected to the DOM (or on hydration if
     // already connected). Create a timer to automatically update the count
     // every second.

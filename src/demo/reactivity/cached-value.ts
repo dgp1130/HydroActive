@@ -5,7 +5,7 @@ import { cached } from 'hydroactive/signals.js';
 /** Uses `cached` to avoid repeatedly executing an expensive computed signal. */
 export const CachedValue = defineComponent('cached-value', (host, comp) => {
   const count = live(host.query('#count').access(), comp, Number);
-  host.query('button').access().listen(comp, 'click', () => {
+  host.query('button').access().listen(host, 'click', () => {
     count.set(count() + 1);
   });
 

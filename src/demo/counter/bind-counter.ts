@@ -28,7 +28,7 @@ export const BindCounter = defineComponent('bind-counter', (host, comp) => {
 
   // ^ `live(label, comp, Number)` implicitly does all of the above.
 
-  comp.connected(() => {
+  host.connected(() => {
     const handle = setInterval(() => {
       count.set(count() + 1);
     }, 1_000);

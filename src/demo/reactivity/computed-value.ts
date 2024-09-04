@@ -14,7 +14,7 @@ export const ComputedValue = defineComponent('computed-value', (host, comp) => {
   // Bind the negative version of the count to the negative label.
   bind(host.query('#negative').access(), comp, Number, () => negative());
 
-  host.query('button').access().listen(comp, 'click', () => {
+  host.query('button').access().listen(host, 'click', () => {
     count.set(count() + 1);
   });
 });

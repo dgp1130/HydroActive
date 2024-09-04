@@ -6,7 +6,7 @@ export const SignalEffect = defineComponent('signal-effect', (host, comp) => {
   const countLabel = host.query('#count').access();
   const initial = countLabel.read(Number);
   const count = signal(initial);
-  host.query('button').access().listen(comp, 'click', () => {
+  host.query('button').access().listen(host, 'click', () => {
     count.set(count() + 1);
   });
 

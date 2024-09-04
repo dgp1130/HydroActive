@@ -10,10 +10,10 @@ export const ButtonCounter = defineComponent('button-counter', (host, comp) => {
   // Listen for click events and update the count accordingly. Event listeners
   // are automatically removed when the component is disconnected from the DOM,
   // no need to manually remove them.
-  host.query('#decrement').access().listen(comp, 'click', () => {
+  host.query('#decrement').access().listen(host, 'click', () => {
     count.set(count() - 1);
   });
-  host.query('#increment').access().listen(comp, 'click', () => {
+  host.query('#increment').access().listen(host, 'click', () => {
     count.set(count() + 1);
   });
 });

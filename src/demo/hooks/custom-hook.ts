@@ -1,4 +1,6 @@
-import { ComponentRef, defineComponent } from 'hydroactive';
+import { defineComponent } from 'hydroactive';
+import { ComponentAccessor } from 'hydroactive/component-accessor.js';
+import { HydroActiveComponent } from 'hydroactive/hydroactive-component.js';
 import { bind } from 'hydroactive/signal-accessors.js';
 import { Signal, signal } from 'hydroactive/signals.js';
 
@@ -8,7 +10,7 @@ export const CustomHook = defineComponent('custom-hook', (host, comp) => {
 
   // Create a signal which is automatically incremented every second. Bound to
   // the component's lifecycle.
-  const count = useTimer(comp, initial);
+  const count = useTimer(host, initial);
 
   bind(host.query('span').access(), comp, Number, () => count());
 });
@@ -24,10 +26,13 @@ declare global {
  * multiple components. The only trick here is accepting `comp` as an input
  * parameter so it can tie into the component's lifecycle appropriately.
  */
-function useTimer(comp: ComponentRef, initial: number): Signal<number> {
+function useTimer(
+  host: ComponentAccessor<HydroActiveComponent>,
+  initial: number,
+): Signal<number> {
   const count = signal(initial);
 
-  comp.connected(() => {
+  host.connected(() => {
     const handle = setInterval(() => {
       count.set(count() + 1);
     }, 1_000);
