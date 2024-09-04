@@ -58,9 +58,10 @@ describe('component', () => {
           document.createElement('host-component') as HydroActiveComponent;
       document.body.appendChild(comp);
 
+      const accessor = ComponentAccessor.fromComponent(comp);
       expect(hydrate).toHaveBeenCalledOnceWith(
-        ComponentAccessor.fromComponent(comp),
-        ComponentRef._from(() => comp.isConnected),
+        accessor,
+        ComponentRef._from(accessor),
       );
     });
 

@@ -1,8 +1,10 @@
 import './testing/noop-component.js';
 
-import { ComponentRef, OnConnect, OnDisconnect } from './component-ref.js';
+import { OnConnect, OnDisconnect } from './connectable.js';
+import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
+import { ComponentAccessor } from './component-accessor.js';
 
 type Hydrate = HydroActiveComponent['hydrate'];
 
@@ -19,7 +21,8 @@ describe('hydroactive-component', () => {
     it('hydrates on upgrade when already connected to the DOM', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(() => this.isConnected);
+            const accessor = ComponentAccessor.fromComponent(this);
+            const ref = ComponentRef._from(accessor);
             this._registerComponentRef(ref);
           });
 
@@ -36,7 +39,8 @@ describe('hydroactive-component', () => {
     it('hydrates on connect', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(() => this.isConnected);
+            const accessor = ComponentAccessor.fromComponent(this);
+            const ref = ComponentRef._from(accessor);
             this._registerComponentRef(ref);
           });
 
@@ -58,7 +62,8 @@ describe('hydroactive-component', () => {
     it('does not hydrate a second time when moved around the DOM', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(() => this.isConnected);
+            const accessor = ComponentAccessor.fromComponent(this);
+            const ref = ComponentRef._from(accessor);
             this._registerComponentRef(ref);
           });
 
@@ -83,7 +88,8 @@ describe('hydroactive-component', () => {
       it('defers hydration', testCase('deferred', (el) => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(() => this.isConnected);
+              const accessor = ComponentAccessor.fromComponent(this);
+              const ref = ComponentRef._from(accessor);
               this._registerComponentRef(ref);
             });
 
@@ -134,7 +140,8 @@ describe('hydroactive-component', () => {
       it('hydrates when `defer-hydration` is removed while disconnected from the DOM', testCase('disconnected-hydration', (el) => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(() => this.isConnected);
+              const accessor = ComponentAccessor.fromComponent(this);
+              const ref = ComponentRef._from(accessor);
               this._registerComponentRef(ref);
             });
 
@@ -195,7 +202,8 @@ describe('hydroactive-component', () => {
 
         const el =
             document.createElement('lifecycle-comp') as HydroActiveComponent;
-        const ref = ComponentRef._from(() => el.isConnected);
+        const accessor = ComponentAccessor.fromComponent(el);
+        const ref = ComponentRef._from(accessor);
         el._registerComponentRef(ref);
 
         ref.connected(onConnect);
@@ -232,8 +240,10 @@ describe('hydroactive-component', () => {
 
         const el = document.createElement('hydration-connect') as
             HydroActiveComponent;
-        const ref = ComponentRef._from(() => el.isConnected);
+        const accessor = ComponentAccessor.fromComponent(el);
+        const ref = ComponentRef._from(accessor);
         el._registerComponentRef(ref);
+
         ref.connected(onConnect);
         expect(onConnect).not.toHaveBeenCalled();
 

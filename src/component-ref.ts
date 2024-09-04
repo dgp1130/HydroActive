@@ -1,14 +1,6 @@
+import { Connectable, OnConnect } from './connectable.js';
 import { effect } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
-
-/**
- * The type of the function invoked on connect. May optionally return a
- * disconnect function to be invoked when the component is disconnected.
- */
-export type OnConnect = () => OnDisconnect | void;
-
-/** The type of the function invoked on disconnect. */
-export type OnDisconnect = () => void;
 
 /**
  * Provides an ergonomic API for accessing the internal content and lifecycle
@@ -17,26 +9,10 @@ export type OnDisconnect = () => void;
  */
 export class ComponentRef {
   readonly #scheduler = UiScheduler.from();
+  readonly #connectable: Connectable;
 
-  /** All callbacks to invoke when the component is connected to the DOM. */
-  readonly #connectedCallbacks: Array<OnConnect> = [];
-
-  /**
-   * All callbacks to invoke when the component is disconnected from the DOM.
-   *
-   * Note that these callbacks should only ever be called *once*. Subsequent
-   * disconnect events should not trigger already-invoked disconnect listeners.
-   */
-  readonly #disconnectedCallbacks: Array<OnDisconnect> = [];
-
-  /**
-   * Returns whether or not the associated component is currently connected to a
-   * document.
-   */
-  readonly #isConnected: () => boolean;
-
-  private constructor(isConnected: () => boolean) {
-    this.#isConnected = isConnected;
+  private constructor(connectable: Connectable) {
+    this.#connectable = connectable;
   }
 
   /**
@@ -49,24 +25,8 @@ export class ComponentRef {
    * @param isConnected Returns whether or not the associated component is
    *     currently connected to a document.
    */
-  public /* internal */ static _from(isConnected: () => boolean): ComponentRef {
-    return new ComponentRef(isConnected);
-  }
-
-  public /* internal */ _onConnect(): void {
-    for (const connectedCallback of this.#connectedCallbacks) {
-      this.#invokeOnConnect(connectedCallback);
-    }
-  }
-
-  public /* internal */ _onDisconnect(): void {
-    for (const onDisconnect of this.#disconnectedCallbacks) {
-      onDisconnect();
-    }
-
-    // Clear all the disconnect listeners. They will be re-added when their
-    // associated connect listeners are invoked.
-    this.#disconnectedCallbacks.splice(0, this.#disconnectedCallbacks.length);
+  public /* internal */ static _from(connectable: Connectable): ComponentRef {
+    return new ComponentRef(connectable);
   }
 
   public /* internal */ async _stable(): Promise<void> {
@@ -101,9 +61,7 @@ export class ComponentRef {
    * @param onConnect The function to invoke when the component is connected.
    */
   public connected(onConnect: OnConnect): void {
-    this.#connectedCallbacks.push(onConnect);
-
-    if (this.#isConnected()) this.#invokeOnConnect(onConnect);
+    this.#connectable.connected(onConnect);
   }
 
   /**
@@ -120,14 +78,5 @@ export class ComponentRef {
     this.connected(() => {
       return effect(callback, this.#scheduler);
     });
-  }
-
-  /**
-   * Invokes the given {@link OnConnect} handler and registers its disconnect
-   * callback if provided.
-   */
-  #invokeOnConnect(onConnect: OnConnect): void {
-    const onDisconnect = onConnect();
-    if (onDisconnect) this.#disconnectedCallbacks.push(onDisconnect);
   }
 }

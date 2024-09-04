@@ -51,17 +51,12 @@ export abstract class HydroActiveComponent extends HTMLElement {
   }
 
   connectedCallback(): void {
-    // The "connect" event triggers _before_ the "hydrate" event when they
-    // happen simultaneously. `ComponentRef` should know to invoke connect
-    // callbacks discovered post-connection time, such as during hydration.
-    this.#ref?._onConnect();
     this.#connector.connect();
 
     this.#requestHydration();
   }
 
   disconnectedCallback(): void {
-    this.#ref?._onDisconnect();
     this.#connector.disconnect();
   }
 

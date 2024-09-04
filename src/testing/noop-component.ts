@@ -16,10 +16,9 @@ export class NoopComponent extends HydroActiveComponent {
   public constructor() {
     super();
 
-    this.#ref = ComponentRef._from(() => this.isConnected);
-    this._registerComponentRef(this.#ref);
-
     this.#accessor = ComponentAccessor.fromComponent(this);
+    this.#ref = ComponentRef._from(this.#accessor);
+    this._registerComponentRef(this.#ref);
   }
 
   protected override hydrate(): void {

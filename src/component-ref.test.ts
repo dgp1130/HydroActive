@@ -1,7 +1,9 @@
 import './testing/noop-component.js';
 
-import { ComponentRef, type OnDisconnect, type OnConnect } from './component-ref.js';
+import { OnConnect, OnDisconnect } from './connectable.js';
+import { ComponentRef } from './component-ref.js';
 import { signal } from './signals.js';
+import { ComponentAccessor } from './component-accessor.js';
 
 describe('component-ref', () => {
   afterEach(() => {
@@ -13,7 +15,11 @@ describe('component-ref', () => {
   describe('ComponentRef', () => {
     describe('_from', () => {
       it('constructs a `ComponentRef` instance', () => {
-        const ref = ComponentRef._from(() => true);
+        const el = document.createElement('noop-component');
+        const accessor = ComponentAccessor.fromComponent(el);
+
+        const ref = ComponentRef._from(accessor);
+
         expect(ref).toBeInstanceOf(ComponentRef);
       });
     });
