@@ -1,3 +1,4 @@
+import { ComponentAccessor } from '../component-accessor.js';
 import { ComponentRef } from '../component-ref.js';
 import { HydroActiveComponent } from '../hydroactive-component.js';
 
@@ -8,6 +9,7 @@ import { HydroActiveComponent } from '../hydroactive-component.js';
  */
 export class NoopComponent extends HydroActiveComponent {
   #ref!: ComponentRef;
+  #accessor!: ComponentAccessor<this>;
 
   public hydrated?: true;
 
@@ -16,6 +18,8 @@ export class NoopComponent extends HydroActiveComponent {
 
     this.#ref = ComponentRef._from(() => this.isConnected);
     this._registerComponentRef(this.#ref);
+
+    this.#accessor = ComponentAccessor.fromComponent(this);
   }
 
   protected override hydrate(): void {
@@ -24,6 +28,10 @@ export class NoopComponent extends HydroActiveComponent {
 
   public getComponentRef(): ComponentRef {
     return this.#ref;
+  }
+
+  public getComponentAccessor(): ComponentAccessor<this> {
+    return this.#accessor;
   }
 }
 

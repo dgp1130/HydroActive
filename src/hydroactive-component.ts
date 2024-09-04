@@ -1,4 +1,5 @@
 import { ComponentRef } from './component-ref.js';
+import { Connectable, Connector } from './connectable.js';
 
 /**
  * A map of {@link HydroActiveComponent} elements to their associated
@@ -35,6 +36,11 @@ export abstract class HydroActiveComponent extends HTMLElement {
     internalsMap.set(this, this.attachInternals());
   }
 
+  #connector = Connector.from(() => this.isConnected);
+  public /* internal */ get _connectable(): Connectable {
+    return this.#connector;
+  }
+
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
 
@@ -49,12 +55,14 @@ export abstract class HydroActiveComponent extends HTMLElement {
     // happen simultaneously. `ComponentRef` should know to invoke connect
     // callbacks discovered post-connection time, such as during hydration.
     this.#ref?._onConnect();
+    this.#connector.connect();
 
     this.#requestHydration();
   }
 
   disconnectedCallback(): void {
     this.#ref?._onDisconnect();
+    this.#connector.disconnect();
   }
 
   // Trigger hydration when the `defer-hydration` attribute is removed.

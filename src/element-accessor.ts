@@ -1,5 +1,5 @@
 import { AttrAccessor } from './attribute-accessor.js';
-import { ComponentRef } from './component-ref.js';
+import { Connectable } from './connectable.js';
 import { Dehydrated } from './dehydrated.js';
 import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
 import { Queryable } from './queryable.js';
@@ -105,7 +105,7 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
    * meaning the listener does not leak memory and does not need to be manually
    * cleaned up.
    *
-   * @param comp The {@link ComponentRef} object to bind the lifecycle to. The
+   * @param host The {@link Connectable} object to bind the lifecycle to. The
    *     listener will be automatically added / removed when the associated
    *     component is connected / disconnected from the DOM.
    * @param event The name of the event to listen for.
@@ -117,7 +117,7 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
    */
   // Type `HTMLElement` events for improved autocompletion.
   public listen<EventName extends keyof AllElementsEventMap>(
-    comp: ComponentRef,
+    host: Connectable,
     event: EventName,
     handler: (event: AllElementsEventMap[EventName]) => void,
     options?: { capture?: boolean, passive?: boolean },
@@ -125,19 +125,19 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
 
   // Overload with generic `string` types so we don't disallow custom events.
   public listen(
-    comp: ComponentRef,
+    host: Connectable,
     event: string,
     handler: (event: Event) => void,
     options?: { capture?: boolean, passive?: boolean },
   ): void;
 
   public listen(
-    comp: ComponentRef,
+    host: Connectable,
     event: string,
     handler: (event: Event) => void,
     { capture, passive }: { capture?: boolean, passive?: boolean } = {},
   ): void {
-    comp.connected(() => {
+    host.connected(() => {
       this.element.addEventListener(event, handler, { capture, passive });
 
       return () => {

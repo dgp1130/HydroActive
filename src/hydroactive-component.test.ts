@@ -245,6 +245,45 @@ describe('hydroactive-component', () => {
       });
     });
 
+    describe('_connectable', () => {
+      it('triggers connected callback when the component is connected to the document', () => {
+        const onConnect = jasmine.createSpy<OnConnect>('onConnect');
+
+        const el = document.createElement('noop-component');
+
+        el._connectable.connected(onConnect);
+        expect(onConnect).not.toHaveBeenCalled();
+
+        document.body.append(el);
+        expect(onConnect).toHaveBeenCalledOnceWith();
+      });
+
+      it('triggers disconnected callback when the component is disconnected from the document', () => {
+        const onDisconnect = jasmine.createSpy<OnDisconnect>('onDisconnect');
+
+        const el = document.createElement('noop-component');
+
+        el._connectable.connected(() => onDisconnect);
+        expect(onDisconnect).not.toHaveBeenCalled();
+
+        document.body.append(el);
+        expect(onDisconnect).not.toHaveBeenCalled();
+
+        el.remove();
+        expect(onDisconnect).toHaveBeenCalledOnceWith();
+      });
+
+      it('triggers connected callback immediately when the component is already connected to the document', () => {
+        const onConnect = jasmine.createSpy<OnConnect>('onConnect');
+
+        const el = document.createElement('noop-component');
+        document.body.append(el);
+
+        el._connectable.connected(onConnect);
+        expect(onConnect).toHaveBeenCalledOnceWith();
+      });
+    });
+
     describe('stable', () => {
       it('resolves when the component is stable of all effects', async () => {
         const el = document.createElement('noop-component');
