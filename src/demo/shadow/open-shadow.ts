@@ -1,15 +1,12 @@
 import { defineComponent } from 'hydroactive';
-import { live } from 'hydroactive/signal-accessors.js';
 
 /** Accesses the shadow DOM with `host.shadow`. */
-export const OpenShadow = defineComponent('open-shadow', (host, comp) => {
+export const OpenShadow = defineComponent('open-shadow', (host) => {
   // Query the shadow DOM under `host.shadow`.
-  const shadowDiv = live(host.shadow.query('div').access(), comp, String);
-  shadowDiv.set('I\'m red!');
+  host.shadow.query('div').access().write('I\'m red!', String);
 
   // Query the light DOM under `host`.
-  const lightDiv = live(host.query('div').access(), comp, String);
-  lightDiv.set('I\'m not...');
+  host.query('div').access().write('I\'m not...', String);
 });
 
 declare global {

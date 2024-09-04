@@ -197,6 +197,94 @@ describe('element-accessor', () => {
       });
     });
 
+    describe('write', () => {
+      it('serializes the input value with the given serializer and writes it to the text content of the element', () => {
+        {
+          const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+              `<div>Hello, World!</div>`));
+          el.write('Goodbye, World!', String);
+          expect(el.element.textContent).toBe('Goodbye, World!');
+        }
+
+        {
+          const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+              `<div>12345</div>`));
+          el.write(54321, Number);
+          expect(el.element.textContent).toBe('54321');
+        }
+
+        {
+          const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+              `<div>true</div>`));
+          el.write(false, Boolean);
+          expect(el.element.textContent).toBe('false');
+        }
+
+        {
+          const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+              `<div>12345</div>`));
+          el.write(54321n, BigInt);
+          expect(el.element.textContent).toBe('54321');
+        }
+      });
+
+      it('writes with the given custom element serializer', () => {
+        const serializer: ElementSerializer<{ foo: string }, Element> = {
+          serializeTo({ foo }: { foo: string }, el: Element): void {
+            el.textContent = foo;
+          },
+
+          deserializeFrom(): { foo: string } {
+            throw new Error('Unimplemented');
+          },
+        };
+
+        const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+            `<div>Hello, World!</div>`));
+        el.write({ foo: 'bar' }, serializer);
+        expect(el.element.textContent).toBe('bar');
+      });
+
+      it('writes with the given custom element serializable', () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): ElementSerializer<User, Element> {
+            return {
+              serializeTo(user: User, element: Element): void {
+                element.textContent = user.name;
+              },
+
+              deserializeFrom(element: Element): User {
+                return new User(element.textContent!);
+              },
+            };
+          }
+        }
+
+        const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+            `<div>Hello</div>`));
+        el.write(new User('Devel'), User);
+        expect(el.element.textContent).toBe('Devel');
+      });
+
+      it('throws an error if the serialization process throws', () => {
+        const err = new Error('Failed to deserialize.');
+        const serializer: ElementSerializer<string, Element> = {
+          serializeTo(): void {
+            throw err;
+          },
+
+          deserializeFrom(): string {
+            throw new Error('Unimplemented');
+          }
+        };
+
+        const el = ElementAccessor.from(parseHtml(HTMLDivElement,
+            `<div>Hello, World!</div>`));
+        expect(() => el.write('unused', serializer)).toThrow(err);
+      });
+    });
+
     describe('listen', () => {
       it('listens invokes the given callback when the specified event is triggered', () => {
         const el = document.createElement('noop-component');

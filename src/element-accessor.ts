@@ -55,7 +55,7 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
    * Provides the value of the text content on the underlying element.
    *
    * @param token A "token" which identifiers an {@link ElementSerializer} to
-   *     deserialize the read attribute string. A token is one of:
+   *     deserialize the read string. A token is one of:
    *     *   A primitive serializer - {@link String}, {@link Boolean},
    *         {@link Number}, {@link BigInt}.
    *     *   An {@link ElementSerializer} object.
@@ -76,6 +76,26 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
     >(token);
 
     return serializer.deserializeFrom(this.element);
+  }
+
+  /**
+   * Writes the given {@param value}, serialized with the serializer provided by
+   * {@param token}, to the current element.
+   *
+   * @param value The value to be serialized and written to the element.
+   * @param token A "token" which identifiers an {@link ElementSerializer} to
+   *     serialize the value. A token is one of:
+   *     *   A primitive serializer - {@link String}, {@link Boolean},
+   *         {@link Number}, {@link BigInt}.
+   *     *   An {@link ElementSerializer} object.
+   *     *   A {@link ElementSerializable} object.
+   */
+  public write<Value, Token extends ElementSerializerToken<Value, El>>(
+    value: Value,
+    token: Token,
+  ): void {
+    const serializer = resolveSerializer(token) as ElementSerializer<Value, El>;
+    serializer.serializeTo(value, this.element);
   }
 
   /**
