@@ -2,7 +2,7 @@ import { defineComponent } from 'hydroactive';
 import { live } from 'hydroactive/signal-accessors.js';
 
 /** Says hello to HydroActive on hydration. */
-export const DeferredComp = defineComponent('deferred-comp', (comp, host) => {
+export const DeferredComp = defineComponent('deferred-comp', (host, comp) => {
   const name = live(host.query('span').access(), comp, String);
   name.set('HydroActive');
 });

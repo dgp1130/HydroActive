@@ -2,7 +2,7 @@ import { defineComponent } from 'hydroactive';
 import { live } from 'hydroactive/signal-accessors.js';
 
 /** Says hello to HydroActive on hydration. */
-export const HelloWorld = defineComponent('hello-world', (comp, host) => {
+export const HelloWorld = defineComponent('hello-world', (host, comp) => {
   const name = live(host.query('span#name').access(), comp, String);
   name.set('HydroActive');
 });

@@ -4,7 +4,7 @@ import { live } from 'hydroactive/signal-accessors.js';
 /**
  * A counter which increments and decrements the count based on button clicks.
  */
-export const ButtonCounter = defineComponent('button-counter', (comp, host) => {
+export const ButtonCounter = defineComponent('button-counter', (host, comp) => {
   const count = live(host.query('span').access(), comp, Number);
 
   // Listen for click events and update the count accordingly. Event listeners

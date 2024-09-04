@@ -2,7 +2,7 @@ import { defineComponent } from 'hydroactive';
 import { live } from 'hydroactive/signal-accessors.js';
 
 /** Accesses the shadow DOM with `host.shadow`. */
-export const OpenShadow = defineComponent('open-shadow', (comp, host) => {
+export const OpenShadow = defineComponent('open-shadow', (host, comp) => {
   // Query the shadow DOM under `host.shadow`.
   const shadowDiv = live(host.shadow.query('div').access(), comp, String);
   shadowDiv.set('I\'m red!');

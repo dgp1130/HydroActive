@@ -70,11 +70,11 @@ import { ElementAccessor, defineComponent } from 'hydroactive';
 import { WriteableSignal } from 'hydroactive/signals.js';
 
 // `defineComponent()` creates a web component class based on the given hydrate
-// function. The callback is invoked on hydration and provides `comp` and `host`
+// function. The callback is invoked on hydration and provides `host` and `comp`
 // parameters with additional functionality to provide interactivity to the
 // pre-rendered component. Automatically calls `customElements.define` under the
 // hood.
-const MyCounter = defineComponent('my-counter', (comp, host) => {
+const MyCounter = defineComponent('my-counter', (host, comp) => {
     // Interacting with a site using HydroActive is a three-step process:
     // 1. Query it - `host.query` queries the DOM for the selector and asserts
     // it is found.

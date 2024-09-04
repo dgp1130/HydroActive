@@ -3,7 +3,7 @@ import { DeferredCompositionChild } from './deferred-composition-child.js';
 import { bind } from 'hydroactive/signal-accessors.js';
 
 /** Demonstrates accessing and hydrating child components. */
-export const DeferredComposition = defineComponent('deferred-composition', (comp, host) => {
+export const DeferredComposition = defineComponent('deferred-composition', (host, comp) => {
   // `.access` asserts the component is already hydrated.
   const firstName = host.query('#first')
       .access(DeferredCompositionChild)

@@ -60,8 +60,8 @@ describe('component', () => {
       document.body.appendChild(comp);
 
       expect(hydrate).toHaveBeenCalledOnceWith(
-        ComponentRef._from(ElementRef.from(comp)),
         ComponentAccessor.fromComponent(comp),
+        ComponentRef._from(ElementRef.from(comp)),
       );
     });
 

@@ -6,7 +6,7 @@ import { WriteableSignal, signal } from 'hydroactive/signals.js';
  * Automatically increments the count over time. Uses `comp.bind` instead of
  * `comp.live` to demonstrate the underlying primitives.
  */
-export const BindCounter = defineComponent('bind-counter', (comp, host) => {
+export const BindCounter = defineComponent('bind-counter', (host, comp) => {
   // Queries the DOM for the `<span>` tag.
   const span: Dehydrated<HTMLSpanElement> = host.query('span');
 
