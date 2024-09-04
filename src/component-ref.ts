@@ -1,4 +1,4 @@
-import { Connectable, OnConnect } from './connectable.js';
+import { Connectable } from './connectable.js';
 import { effect } from './signals.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
@@ -34,37 +34,6 @@ export class ComponentRef {
   }
 
   /**
-   * Sets up the given handler to be invoked whenever the component is connected
-   * to the DOM. If the handler returns a function, that function will be
-   * invoked the next time the component is disconnected. This provides a useful
-   * API for maintaining state which needs to be cleaned up while avoiding
-   * memory leaks in the component.
-   *
-   * The connect handler may be invoked multiple times if the component is
-   * disconnected and reconnected to the DOM.
-   *
-   * Example:
-   *
-   * ```typescript
-   * component('my-component', (comp) => {
-   *   comp.connected(() => {
-   *     console.log('I am connected!');
-   *
-   *     // Optional cleanup work to be run on disconnect.
-   *     return () => {
-   *       console.log('I am disconnected!');
-   *     };
-   *   });
-   * });
-   * ```
-   *
-   * @param onConnect The function to invoke when the component is connected.
-   */
-  public connected(onConnect: OnConnect): void {
-    this.#connectable.connected(onConnect);
-  }
-
-  /**
    * Schedules the side-effectful callback to be invoked and tracks signal usage
    * within it. When any dependency signal changes, the effect is re-run on the
    * next animation frame.
@@ -75,7 +44,7 @@ export class ComponentRef {
    * @param callback The side-effectful callback to be invoked.
    */
   public effect(callback: () => void): void {
-    this.connected(() => {
+    this.#connectable.connected(() => {
       return effect(callback, this.#scheduler);
     });
   }

@@ -289,11 +289,11 @@ describe('element-accessor', () => {
       it('listens invokes the given callback when the specified event is triggered', () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const comp = el.getComponentRef();
+        const host = el.getComponentAccessor();
 
         const handler = jasmine.createSpy<(evt: Event) => void>('handler');
 
-        ElementAccessor.from(el).listen(comp, 'click', handler);
+        ElementAccessor.from(el).listen(host, 'click', handler);
         expect(handler).not.toHaveBeenCalled();
 
         el.click();
@@ -303,7 +303,7 @@ describe('element-accessor', () => {
 
       it('removes event listener on disconnect', () => {
         const el = document.createElement('noop-component');
-        const comp = el.getComponentRef();
+        const host = el.getComponentAccessor();
 
         const addSpy = spyOn(el, 'addEventListener').and.callThrough();
         const removeSpy = spyOn(el, 'removeEventListener').and.callThrough();
@@ -311,7 +311,7 @@ describe('element-accessor', () => {
         const handler = jasmine.createSpy<() => void>('handler');
 
         // Start listening while disconnected, nothing should happen yet.
-        ElementAccessor.from(el).listen(comp, 'click', handler);
+        ElementAccessor.from(el).listen(host, 'click', handler);
         expect(addSpy).not.toHaveBeenCalled();
         expect(removeSpy).not.toHaveBeenCalled();
 
@@ -352,12 +352,11 @@ describe('element-accessor', () => {
           </noop-component>
         `);
         document.body.appendChild(el);
-        const comp = el.getComponentRef();
-        const host = ElementAccessor.from(el);
+        const host = el.getComponentAccessor();
 
         const handler = jasmine.createSpy<() => void>('handler');
 
-        host.query('div#first').access().listen(comp, 'click', handler);
+        host.query('div#first').access().listen(host, 'click', handler);
 
         // Listen for direct events.
         host.query('div#first').access().element.click();
@@ -381,11 +380,11 @@ describe('element-accessor', () => {
       it('supports custom events', () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const comp = el.getComponentRef();
+        const host = el.getComponentAccessor();
 
         const handler = jasmine.createSpy<(evt: Event) => void>('handler');
 
-        ElementAccessor.from(el).listen(comp, 'custom-event', handler);
+        ElementAccessor.from(el).listen(host, 'custom-event', handler);
 
         const evt = new CustomEvent('custom-event');
         el.dispatchEvent(evt);
@@ -396,11 +395,11 @@ describe('element-accessor', () => {
       it('propagates the `capture` option', () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const comp = el.getComponentRef();
+        const host = el.getComponentAccessor();
 
         spyOn(el, 'addEventListener').and.callThrough();
 
-        ElementAccessor.from(el).listen(comp, 'click', () => {}, {
+        ElementAccessor.from(el).listen(host, 'click', () => {}, {
           capture: true,
         });
 
@@ -414,11 +413,11 @@ describe('element-accessor', () => {
       it('propagates the `passive` option', () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const comp = el.getComponentRef();
+        const host = el.getComponentAccessor();
 
         spyOn(el, 'addEventListener').and.callThrough();
 
-        ElementAccessor.from(el).listen(comp, 'click', () => {}, {
+        ElementAccessor.from(el).listen(host, 'click', () => {}, {
           passive: true,
         });
 
