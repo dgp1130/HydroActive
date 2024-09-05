@@ -90,4 +90,20 @@ export class AttrAccessor {
     >(token);
     return serializer.deserialize(serialized);
   }
+
+  /**
+   * Writes the underlying attribute by serializing the input value with the
+   * {@link AttrSerializer} referenced by the provided token.
+   *
+   * @param value The value to serialize and write to the attribute.
+   * @param token A token which resolves to an {@link AttrSerializer} to
+   *     serialize the attribute value with.
+   */
+  public write<Value, Token extends AttrSerializerToken<Value>>(
+    value: Value,
+    token: Token,
+  ): void {
+    const serializer = resolveSerializer(token) as AttrSerializer<Value>;
+    this.#native.setAttribute(this.#name, serializer.serialize(value));
+  }
 }

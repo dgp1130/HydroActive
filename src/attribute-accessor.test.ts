@@ -279,5 +279,161 @@ describe('attribute-accessor', () => {
         };
       });
     });
+
+    describe('write', () => {
+      it('serializes and writes the given value to the attribute', () => {
+        const el = document.createElement('div');
+        const attr = AttrAccessor.from(el, 'foo');
+
+        attr.write('bar', String);
+
+        expect(el.getAttribute('foo')).toBe('bar');
+      });
+
+      it('serializes the attribute with the given primitive serializer', () => {
+        {
+          const el = document.createElement('div');
+          const attr = AttrAccessor.from(el, 'name');
+
+          attr.write('Devel', String);
+
+          expect(el.getAttribute('name')).toBe('Devel');
+        }
+
+        {
+          const el = document.createElement('div');
+          const attr = AttrAccessor.from(el, 'id');
+
+          attr.write(12345, Number);
+
+          expect(el.getAttribute('id')).toBe('12345');
+        }
+
+        {
+          const el = document.createElement('div');
+          const attr = AttrAccessor.from(el, 'id');
+
+          attr.write(12345n, BigInt);
+
+          expect(el.getAttribute('id')).toBe('12345');
+        }
+      });
+
+      it('deserializes booleans based on text value, not attribute presence', () => {
+        {
+          const el = document.createElement('div');
+          const attr = AttrAccessor.from(el, 'enabled');
+
+          attr.write(false, Boolean);
+
+          expect(el.getAttribute('enabled')).toBe('false');
+        }
+
+        {
+          const el = document.createElement('div');
+          const attr = AttrAccessor.from(el, 'enabled');
+
+          attr.write(true, Boolean);
+
+          expect(el.getAttribute('enabled')).toBe('true');
+        }
+      });
+
+      it('deserializes the attribute with the given custom serializer', () => {
+        const serializer: AttrSerializer<{ foo: string }> = {
+          serialize(value: { foo: string }): string {
+            return value.foo;
+          },
+
+          deserialize(): { foo: string } {
+            return { foo: 'bar' };
+          }
+        };
+
+        const el = document.createElement('div');
+        const attr = AttrAccessor.from(el, 'hello');
+
+        attr.write({ foo: 'bar' }, serializer);
+
+        expect(el.getAttribute('hello')).toBe('bar');
+      });
+
+      it('deserializes the attribute with the given serializable', () => {
+        class User {
+          public constructor(private name: string) {}
+          public static [toSerializer](): AttrSerializer<User> {
+            return {
+              serialize(user: User): string {
+                return user.name;
+              },
+
+              deserialize(name: string): User {
+                return new User(name);
+              },
+            };
+          }
+        }
+
+        const el = document.createElement('div');
+        const attr = AttrAccessor.from(el, 'name');
+
+        attr.write(new User('Devel'), User);
+
+        expect(el.getAttribute('name')).toBe('Devel');
+      });
+
+      it('throws an error if the deserialization process throws', () => {
+        const err = new Error('Failed to deserialize.');
+        const serializer: AttrSerializer<string> = {
+          serialize(): string {
+            throw err;
+          },
+
+          deserialize(): string {
+            return 'unused';
+          }
+        };
+
+        const el = document.createElement('div');
+        const attr = AttrAccessor.from(el, 'hello');
+
+        expect(() => attr.write('test', serializer)).toThrow(err);
+      });
+
+      it('throws a compile-time error when used with an element serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const attr = {} as AttrAccessor;
+
+          const serializer = {} as ElementSerializer<number, Element>;
+          // @ts-expect-error
+          attr.write(1234, serializer);
+
+          const serializable = {} as ElementSerializable<number, Element>;
+          // @ts-expect-error
+          attr.write(1234, serializable);
+        };
+      });
+
+      it('throws a compile-time error when used with an incompatible serializer', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const attr = {} as AttrAccessor;
+
+          // @ts-expect-error
+          attr.write('test', Number);
+
+          const serializer = {} as AttrSerializer<number>;
+          // @ts-expect-error
+          attr.write('test', serializer);
+
+          const serializable = {} as AttrSerializable<number>;
+          // @ts-expect-error
+          attr.write('test', serializable);
+        };
+      });
+    });
   });
 });
