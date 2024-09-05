@@ -3,8 +3,8 @@ import { bind, live } from 'hydroactive/signal-accessors.js';
 import { cached } from 'hydroactive/signals.js';
 
 /** Uses `cached` to avoid repeatedly executing an expensive computed signal. */
-export const CachedValue = defineComponent('cached-value', (host, comp) => {
-  const count = live(host.query('#count').access(), comp, Number);
+export const CachedValue = defineComponent('cached-value', (host, root) => {
+  const count = live(host.query('#count').access(), root, Number);
   host.query('button').access().listen(host, 'click', () => {
     count.set(count() + 1);
   });
@@ -19,8 +19,8 @@ export const CachedValue = defineComponent('cached-value', (host, comp) => {
 
   // `pi` is read twice here, and both will update automatically, but it will
   // only be computed once.
-  bind(host.query('#pi').access(), comp, String, () => pi());
-  bind(host.query('#pi-again').access(), comp, String, () => pi());
+  bind(host.query('#pi').access(), root, String, () => pi());
+  bind(host.query('#pi-again').access(), root, String, () => pi());
 });
 
 declare global {

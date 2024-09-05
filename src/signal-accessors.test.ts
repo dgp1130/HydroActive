@@ -1,7 +1,6 @@
-import { ComponentRef } from './component-ref.js';
 import { ElementAccessor } from './element-accessor.js';
 import { ElementSerializer, toSerializer, ElementSerializable, AttrSerializer, AttrSerializable } from './serializers.js';
-import { WriteableSignal, signal } from './signals.js';
+import { ReactiveRoot, WriteableSignal, signal } from './signals.js';
 import { bind, live } from './signal-accessors.js';
 import { parseHtml } from './testing.js';
 import { NoopComponent } from './testing/noop-component.js';
@@ -13,99 +12,92 @@ describe('signal-accessors', () => {
 
   describe('live', () => {
     it('returns an initialized signal', () => {
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component>Hello!</noop-component>
       `);
-      const comp = host.getComponentRef();
 
-      const text = live(ElementAccessor.from(host), comp, String);
+      const text = live(ElementAccessor.from(el), el.root, String);
       expect(text()).toBe('Hello!');
     });
 
     it('binds to the provided DOM element', async () => {
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component>test</noop-component>
       `);
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      document.body.appendChild(el);
 
-      const text = live(ElementAccessor.from(host), comp, String);
+      const text = live(ElementAccessor.from(el), el.root, String);
       expect(text()).toBe('test');
 
       text.set('test2');
       expect(text()).toBe('test2');
-      await host.stable();
-      expect(host.textContent!).toBe('test2');
+      await el.stable();
+      expect(el.textContent!).toBe('test2');
     });
 
     it('processes the DOM element based on the provided primitive serializer token', async () => {
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component>test1</noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(host), comp, String);
+        const value = live(ElementAccessor.from(el), el.root, String);
         expect(value()).toBe('test1');
 
         value.set('test2');
-        await host.stable();
-        expect(host.textContent!).toBe('test2');
+        await el.stable();
+        expect(el.textContent!).toBe('test2');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component>1234</noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(host), comp, Number);
+        const value = live(ElementAccessor.from(el), el.root, Number);
         expect(value()).toBe(1234);
 
         value.set(4321);
-        await host.stable();
-        expect(host.textContent!).toBe('4321');
+        await el.stable();
+        expect(el.textContent!).toBe('4321');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component>true</noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(host), comp, Boolean);
+        const value = live(ElementAccessor.from(el), el.root, Boolean);
         expect(value()).toBe(true);
 
         value.set(false);
-        await host.stable();
-        expect(host.textContent!).toBe('false');
+        await el.stable();
+        expect(el.textContent!).toBe('false');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component>1234</noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(host), comp, BigInt);
+        const value = live(ElementAccessor.from(el), el.root, BigInt);
         expect(value()).toBe(1234n);
 
         value.set(4321n);
-        await host.stable();
-        expect(host.textContent!).toBe('4321');
+        await el.stable();
+        expect(el.textContent!).toBe('4321');
       }
     });
 
     it('processes the DOM element based on the provided custom serializer', async () => {
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component></noop-component>
       `);
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      document.body.appendChild(el);
 
       const serializer: ElementSerializer<string, Element> = {
         serializeTo(value: string, element: Element): void {
@@ -117,12 +109,12 @@ describe('signal-accessors', () => {
         },
       };
 
-      const value = live(ElementAccessor.from(host), comp, serializer);
+      const value = live(ElementAccessor.from(el), el.root, serializer);
       expect(value()).toBe('deserialized');
 
       value.set('test');
-      await host.stable();
-      expect(host.textContent!).toBe('serialized: test');
+      await el.stable();
+      expect(el.textContent!).toBe('serialized: test');
     });
 
     it('processes the DOM element based on the provided serializable', async () => {
@@ -141,18 +133,17 @@ describe('signal-accessors', () => {
         }
       }
 
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component>Devel</noop-component>
       `);
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      document.body.appendChild(el);
 
-      const value = live(ElementAccessor.from(host), comp, User);
+      const value = live(ElementAccessor.from(el), el.root, User);
       expect(value()).toEqual(new User('Devel'));
 
       value.set(new User('Devel without a Cause'));
-      await host.stable();
-      expect(host.textContent!).toBe('Devel without a Cause');
+      await el.stable();
+      expect(el.textContent!).toBe('Devel without a Cause');
     });
 
     it('throws an error when binding to the same element multiple times', () => {
@@ -161,15 +152,14 @@ describe('signal-accessors', () => {
           <span id="my-span"></span>
         </noop-component>
       `);
-      const comp = el.getComponentRef();
 
       const host = ElementAccessor.from(el);
       const span = host.query('span').access();
-      live(span, comp, String);
+      live(span, el.root, String);
 
       // Different `ElementAccessor` instance.
       const spanAgain = host.query('#my-span').access();
-      expect(() => live(spanAgain, comp, String))
+      expect(() => live(spanAgain, el.root, String))
           .toThrowError(/cannot bind it again/);
     });
 
@@ -179,13 +169,11 @@ describe('signal-accessors', () => {
           <noop-component></noop-component>
         </noop-component>
       `));
-      const outerComp = outerEl.element.getComponentRef();
 
       const innerEl = outerEl.query('noop-component').access(NoopComponent);
-      const innerComp = innerEl.element.getComponentRef();
 
-      live(innerEl, outerComp, String);
-      expect(() => live(innerEl, innerComp, String))
+      live(innerEl, outerEl.element.root, String);
+      expect(() => live(innerEl, innerEl.element.root, String))
           .toThrowError(/cannot bind it again/);
     });
 
@@ -194,21 +182,21 @@ describe('signal-accessors', () => {
       expect().nothing();
       () => {
         const host = {} as ElementAccessor<NoopComponent>;
-        const comp = {} as ComponentRef;
+        const root = {} as ReactiveRoot;
 
         // Primitive serializer tokens.
-        live(host, comp, String) satisfies WriteableSignal<string>;
-        live(host, comp, Number) satisfies WriteableSignal<number>;
-        live(host, comp, Boolean) satisfies WriteableSignal<boolean>;
-        live(host, comp, BigInt) satisfies WriteableSignal<bigint>;
+        live(host, root, String) satisfies WriteableSignal<string>;
+        live(host, root, Number) satisfies WriteableSignal<number>;
+        live(host, root, Boolean) satisfies WriteableSignal<boolean>;
+        live(host, root, BigInt) satisfies WriteableSignal<bigint>;
 
         // Custom `ElementSerializer` type.
         const serializer = {} as ElementSerializer<string, Element>;
-        live(host, comp, serializer) satisfies WriteableSignal<string>;
+        live(host, root, serializer) satisfies WriteableSignal<string>;
 
         // Custom `ElementSerializable` type.
         const serializable = {} as ElementSerializable<string, Element>;
-        live(host, comp, serializable) satisfies WriteableSignal<string>;
+        live(host, root, serializable) satisfies WriteableSignal<string>;
       };
     });
 
@@ -216,16 +204,16 @@ describe('signal-accessors', () => {
       // Type-only test, only needs to compile, not execute.
       expect().nothing();
       () => {
-        const comp = {} as ComponentRef;
         const div = {} as ElementAccessor<HTMLDivElement>;
+        const root = {} as ReactiveRoot;
 
         const divSerializer = {} as ElementSerializer<number, HTMLDivElement>;
-        live(div, comp, divSerializer);
+        live(div, root, divSerializer);
 
         const inputSerializer =
             {} as ElementSerializable<number, HTMLInputElement>;
         // @ts-expect-error
-        live(div, comp, inputSerializer);
+        live(div, root, inputSerializer);
       };
     });
 
@@ -234,133 +222,125 @@ describe('signal-accessors', () => {
       expect().nothing();
       () => {
         const host = {} as ElementAccessor<NoopComponent>;
-        const comp = {} as ComponentRef;
+        const root = {} as ReactiveRoot;
 
         const serializer = {} as AttrSerializer<string>;
         // @ts-expect-error
-        live(host, comp, serializer);
+        live(host, root, serializer);
 
         const serializable = {} as AttrSerializable<string>;
         // @ts-expect-error
-        live(host, comp, serializable);
+        live(host, root, serializable);
       };
     });
   });
 
   describe('bind', () => {
     it('updates the provided element\'s text content reactively', async () => {
-      const host = document.createElement('noop-component');
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      const el = document.createElement('noop-component');
+      document.body.appendChild(el);
 
-      expect(host.textContent).toBe('');
+      expect(el.textContent).toBe('');
 
       const value = signal('1');
-      bind(ElementAccessor.from(host), comp, String, () => value());
-      await host.stable();
-      expect(host.textContent).toBe('1');
+      bind(ElementAccessor.from(el), el.root, String, () => value());
+      await el.stable();
+      expect(el.textContent).toBe('1');
 
       value.set('2');
-      await host.stable();
-      expect(host.textContent).toBe('2');
+      await el.stable();
+      expect(el.textContent).toBe('2');
     });
 
     it('does not invoke the signal until connected', async () => {
-      const host = document.createElement('noop-component');
-      const comp = host.getComponentRef();
+      const el = document.createElement('noop-component');
 
       const sig = jasmine.createSpy<() => string>('sig')
           .and.returnValue('test');
 
-      bind(ElementAccessor.from(host), comp, String, sig);
-      await host.stable();
+      bind(ElementAccessor.from(el), el.root, String, sig);
+      await el.stable();
       expect(sig).not.toHaveBeenCalled();
 
-      document.body.appendChild(host);
+      document.body.appendChild(el);
 
-      await host.stable();
+      await el.stable();
       expect(sig).toHaveBeenCalledOnceWith();
     });
 
     it('pauses updates while disconnected', async () => {
-      const host = document.createElement('noop-component');
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      const el = document.createElement('noop-component');
+      document.body.appendChild(el);
 
       const value = signal('1');
       const sig = jasmine.createSpy<() => string>('sig')
           .and.callFake(() => value());
 
-      bind(ElementAccessor.from(host), comp, String, sig);
-      await host.stable();
+      bind(ElementAccessor.from(el), el.root, String, sig);
+      await el.stable();
       expect(sig).toHaveBeenCalledOnceWith();
-      expect(host.textContent).toBe('1');
+      expect(el.textContent).toBe('1');
       sig.calls.reset();
 
-      host.remove();
+      el.remove();
 
       value.set('2');
-      await host.stable();
+      await el.stable();
       expect(sig).not.toHaveBeenCalled();
-      expect(host.textContent).toBe('1'); // Does not update.
+      expect(el.textContent).toBe('1'); // Does not update.
     });
 
     it('serializes with an explicit primitive serializer', async () => {
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        bind(ElementAccessor.from(host), comp, String, () => 'test');
-        await host.stable();
-        expect(host.textContent!).toBe('test');
+        bind(ElementAccessor.from(el), el.root, String, () => 'test');
+        await el.stable();
+        expect(el.textContent!).toBe('test');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        bind(ElementAccessor.from(host), comp, Number, () => 1234);
-        await host.stable();
-        expect(host.textContent!).toBe('1234');
+        bind(ElementAccessor.from(el), el.root, Number, () => 1234);
+        await el.stable();
+        expect(el.textContent!).toBe('1234');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        bind(ElementAccessor.from(host), comp, Boolean, () => true);
-        await host.stable();
-        expect(host.textContent!).toBe('true');
+        bind(ElementAccessor.from(el), el.root, Boolean, () => true);
+        await el.stable();
+        expect(el.textContent!).toBe('true');
       }
 
       {
-        const host = parseHtml(NoopComponent, `
+        const el = parseHtml(NoopComponent, `
           <noop-component></noop-component>
         `);
-        document.body.appendChild(host);
-        const comp = host.getComponentRef();
+        document.body.appendChild(el);
 
-        bind(ElementAccessor.from(host), comp, BigInt, () => 1234n);
-        await host.stable();
-        expect(host.textContent!).toBe('1234');
+        bind(ElementAccessor.from(el), el.root, BigInt, () => 1234n);
+        await el.stable();
+        expect(el.textContent!).toBe('1234');
       }
     });
 
     it('serializes with a custom `Serializer`', async () => {
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component></noop-component>
       `);
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      document.body.appendChild(el);
 
       const serializer: ElementSerializer<undefined, Element> = {
         serializeTo(_value: undefined, element: Element): void {
@@ -372,9 +352,9 @@ describe('signal-accessors', () => {
         },
       };
 
-      bind(ElementAccessor.from(host), comp, serializer, () => undefined);
-      await host.stable();
-      expect(host.textContent!).toBe('undefined');
+      bind(ElementAccessor.from(el), el.root, serializer, () => undefined);
+      await el.stable();
+      expect(el.textContent!).toBe('undefined');
     });
 
     it('serializes with a custom `Serializable`', async () => {
@@ -394,49 +374,44 @@ describe('signal-accessors', () => {
         }
       }
 
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component></noop-component>
       `);
-      document.body.appendChild(host);
-      const comp = host.getComponentRef();
+      document.body.appendChild(el);
 
-      bind(ElementAccessor.from(host), comp, User, () => new User('Devel'));
-      await host.stable();
-      expect(host.textContent!).toBe('Devel');
+      bind(ElementAccessor.from(el), el.root, User, () => new User('Devel'));
+      await el.stable();
+      expect(el.textContent!).toBe('Devel');
     });
 
     it('throws an error when binding to the same element multiple times', () => {
-      const host = parseHtml(NoopComponent, `
+      const el = parseHtml(NoopComponent, `
         <noop-component>
           <span></span>
         </noop-component>
       `);
-      const comp = host.getComponentRef();
 
-      const span = ElementAccessor.from(host).query('span').access();
-      bind(span, comp, String, () => 'test');
-      expect(() => bind(span, comp, String, () => 'test2'))
+      const span = ElementAccessor.from(el).query('span').access();
+      bind(span, el.root, String, () => 'test');
+      expect(() => bind(span, el.root, String, () => 'test2'))
           .toThrowError(/cannot bind it again/);
     });
 
     it('throws an error when binding to the same element multiple times from different components', () => {
-      const outerHost = ElementAccessor.from(parseHtml(NoopComponent, `
+      const outerEl = ElementAccessor.from(parseHtml(NoopComponent, `
         <noop-component>
           <noop-component id="inner"></noop-component>
         </noop-component>
       `));
-      const outerComp = outerHost.element.getComponentRef();
-
-      const innerHost = outerHost.query('noop-component').access(NoopComponent);
-      const innerComp = innerHost.element.getComponentRef();
+      const innerEl = outerEl.query('noop-component').access(NoopComponent);
 
       bind(
-        outerHost.query('#inner').access(NoopComponent),
-        outerComp,
+        outerEl.query('#inner').access(NoopComponent),
+        outerEl.element.root,
         String,
         () => 'test1',
       );
-      expect(() => bind(innerHost, innerComp, String, () => 'test2'))
+      expect(() => bind(innerEl, innerEl.element.root, String, () => 'test2'))
           .toThrowError(/cannot bind it again/);
     });
 
@@ -445,39 +420,39 @@ describe('signal-accessors', () => {
       expect().nothing();
       () => {
         const host = {} as ElementAccessor<NoopComponent>;
-        const comp = {} as ComponentRef;
+        const root = {} as ReactiveRoot;
 
         // Correct primitive types.
-        bind(host, comp, String, () => 'test');
-        bind(host, comp, Number, () => 1234);
-        bind(host, comp, Boolean, () => true);
-        bind(host, comp, BigInt, () => 1234n);
+        bind(host, root, String, () => 'test');
+        bind(host, root, Number, () => 1234);
+        bind(host, root, Boolean, () => true);
+        bind(host, root, BigInt, () => 1234n);
 
         // Incorrect primitive types.
         // @ts-expect-error
-        bind(host, comp, Number, () => 'test');
+        bind(host, root, Number, () => 'test');
         // @ts-expect-error
-        bind(host, comp, String, () => 1234);
+        bind(host, root, String, () => 1234);
         // @ts-expect-error
-        bind(host, comp, String, () => true);
+        bind(host, root, String, () => true);
         // @ts-expect-error
-        bind(host, comp, String, () => 1234n);
+        bind(host, root, String, () => 1234n);
 
         // Correct serializer types.
         const serializer = {} as ElementSerializer<string, Element>;
-        bind(host, comp, serializer, () => 'test');
+        bind(host, root, serializer, () => 'test');
 
         // Incorrect serializer types.
         // @ts-expect-error
-        bind(host, comp, serializer, () => 1234);
+        bind(host, root, serializer, () => 1234);
 
         // Correct serializable types.
         const serializable = {} as ElementSerializable<string, Element>;
-        bind(host, comp, serializable, () => 'test');
+        bind(host, root, serializable, () => 'test');
 
         // Incorrect serializable types.
         // @ts-expect-error
-        bind(host, comp, serializable, () => 1234);
+        bind(host, root, serializable, () => 1234);
       };
     });
 
@@ -486,20 +461,20 @@ describe('signal-accessors', () => {
       expect().nothing();
       () => {
         const host = {} as ElementAccessor<HTMLDivElement>;
-        const comp = {} as ComponentRef;
+        const root = {} as ReactiveRoot;
 
         const divSerializer = {} as ElementSerializer<number, HTMLDivElement>;
-        bind(host, comp, divSerializer, () => 1234);
+        bind(host, root, divSerializer, () => 1234);
 
         const inputSerializer =
             {} as ElementSerializable<number, HTMLInputElement>;
         // @ts-expect-error
-        bind(host, comp, inputSerializer, () => 1234);
+        bind(host, root, inputSerializer, () => 1234);
 
         const elSerializer = {} as ElementSerializer<number, Element>;
-        bind(host, comp, elSerializer, () => 1234);
+        bind(host, root, elSerializer, () => 1234);
         // @ts-expect-error
-        bind(host, comp as ElementAccessor<Element>, divSerializer, () => 1234);
+        bind(host, root as ElementAccessor<Element>, divSerializer, () => 1234);
       };
     });
 
@@ -508,15 +483,15 @@ describe('signal-accessors', () => {
       expect().nothing();
       () => {
         const host = {} as ElementAccessor<NoopComponent>;
-        const comp = {} as ComponentRef;
+        const root = {} as ReactiveRoot;
 
         const serializer = {} as AttrSerializer<string>;
         // @ts-expect-error
-        bind(host, comp, serializer, () => 'test');
+        bind(host, root, serializer, () => 'test');
 
         const serializable = {} as AttrSerializable<string>;
         // @ts-expect-error
-        bind(host, comp, serializable, () => 'test');
+        bind(host, root, serializable, () => 'test');
       };
     });
   });

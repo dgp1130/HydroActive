@@ -1,6 +1,5 @@
 import { type HydrateLifecycle, defineComponent } from './component.js';
 import { ComponentAccessor } from './component-accessor.js';
-import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
@@ -63,10 +62,7 @@ describe('component', () => {
       const scheduler = TestScheduler.from();
       const root = ReactiveRootImpl.from(comp._connectable, scheduler);
       const accessor = ComponentAccessor.fromComponent(comp);
-      expect(hydrate).toHaveBeenCalledOnceWith(
-        accessor,
-        ComponentRef._from(root, scheduler),
-      );
+      expect(hydrate).toHaveBeenCalledOnceWith(accessor, root);
     });
 
     it('sets the class name', () => {

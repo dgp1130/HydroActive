@@ -1,8 +1,7 @@
-import { ComponentRef } from './component-ref.js';
 import { ElementAccessor } from './element-accessor.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
-import { Signal, WriteableSignal, signal } from './signals.js';
+import { ReactiveRoot, Signal, WriteableSignal, signal } from './signals.js';
 
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
@@ -14,12 +13,12 @@ const boundElements = new WeakSet<Element>();
  * automatically reflected back into the {@link ElementAccessor}.
  *
  * Automatically disables and re-enables itself based on the lifecycle of the
- * provided {@link ComponentRef}.
+ * provided {@link ReactiveRoot}.
  *
  * @param el The {@link ElementAccessor} to initialize from and bind to.
- * @param comp The {@link ComponentRef} to create the effect on. This
+ * @param root The {@link ReactiveRoot} to create the effect on. This
  *     {@link live} call will disable / re-enable itself based on lifecycle of
- *     this provided {@link ComponentRef}.
+ *     this provided {@link ReactiveRoot}.
  * @param token A "token" which identifiers an {@link ElementSerializer} to
  *     serialize the `signal` data to/from an element. A token is one of:
  *     *   A primitive serializer - {@link String}, {@link Boolean},
@@ -35,7 +34,7 @@ export function live<
   Token extends ElementSerializerToken<any, El>,
 >(
   el: ElementAccessor<El>,
-  comp: ComponentRef,
+  root: ReactiveRoot,
   token: Token,
 ): WriteableSignal<Serialized<ResolveSerializer<
   Token,
@@ -46,7 +45,7 @@ export function live<
   const initial = el.read(serializer);
   const value = signal(initial);
 
-  bind(el, comp, serializer as any, value);
+  bind(el, root, serializer as any, value);
 
   return value as any;
 }
@@ -57,12 +56,12 @@ export function live<
  * Automatically re-renders whenever a signal dependency is modified.
  *
  * Automatically disables and re-enables itself based on the lifecycle of the
- * provided {@link ComponentRef}.
+ * provided {@link ReactiveRoot}.
  *
  * @param el The {@link ElementAccessor} to bind to.
- * @param comp The {@link ComponentRef} to create the effect on. This
+ * @param root The {@link ReactiveRoot} to create the effect on. This
  *     {@link bind} call will disable / re-enable itself based on lifecycle of
- *     this {@link ComponentRef}.
+ *     this {@link ReactiveRoot}.
  * @param token A "token" which identifiers an {@link ElementSerializer} to
  *     serialize the `signal` result to an element. A token is one of:
  *     *   A primitive serializer - {@link String}, {@link Boolean},
@@ -77,7 +76,7 @@ export function bind<
   Token extends ElementSerializerToken<Value, El>,
 >(
   el: ElementAccessor<El>,
-  comp: ComponentRef,
+  root: ReactiveRoot,
   token: Token,
   sig: Signal<Value>,
 ): void {
@@ -90,7 +89,7 @@ export function bind<
   // Resolve the serializer immediately, since that isn't dependent on the
   // value and we don't want to do this for every invocation of effect.
   const serializer = resolveSerializer(token) as ElementSerializer<Value, El>;
-  comp.effect(() => {
+  root.effect(() => {
     // Invoke the user-defined callback in a reactive context.
     const value = sig();
 
