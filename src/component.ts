@@ -3,6 +3,8 @@
 import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
+import { ReactiveRootImpl } from './signals/reactive-root.js';
+import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
 export type HydrateLifecycle = (
@@ -18,8 +20,10 @@ export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
     Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
+      const scheduler = UiScheduler.from();
       const accessor = ComponentAccessor.fromComponent(this);
-      const ref = ComponentRef._from(accessor);
+      const root = ReactiveRootImpl.from(accessor, scheduler);
+      const ref = ComponentRef._from(root, scheduler);
       this._registerComponentRef(ref);
       hydrate(accessor, ref);
     }

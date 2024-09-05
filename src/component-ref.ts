@@ -1,6 +1,4 @@
-import { Connectable } from './connectable.js';
-import { effect } from './signals.js';
-import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
+import { ReactiveRoot, Scheduler } from './signals.js';
 
 /**
  * Provides an ergonomic API for accessing the internal content and lifecycle
@@ -8,11 +6,12 @@ import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
  * the component it references (not shared with other components).
  */
 export class ComponentRef {
-  readonly #scheduler = UiScheduler.from();
-  readonly #connectable: Connectable;
+  readonly #root: ReactiveRoot;
+  readonly #scheduler: Scheduler;
 
-  private constructor(connectable: Connectable) {
-    this.#connectable = connectable;
+  private constructor(root: ReactiveRoot, scheduler: Scheduler) {
+    this.#root = root;
+    this.#scheduler = scheduler;
   }
 
   /**
@@ -22,11 +21,14 @@ export class ComponentRef {
    * {@link ComponentRef} to you, it should never be necessary to create one
    * manually.
    *
-   * @param isConnected Returns whether or not the associated component is
-   *     currently connected to a document.
+   * @param root The {@link ReactiveRoot} to register effects to.
+   * @param scheduler The {@link Scheduler} to check stability on. This *must*
+   *     be the same scheduler used by {@link root}.
+   * @returns A {@link ComponentRef} for scheduling effects.
    */
-  public /* internal */ static _from(connectable: Connectable): ComponentRef {
-    return new ComponentRef(connectable);
+  public /* internal */ static _from(root: ReactiveRoot, scheduler: Scheduler):
+      ComponentRef {
+    return new ComponentRef(root, scheduler);
   }
 
   public /* internal */ async _stable(): Promise<void> {
@@ -44,8 +46,6 @@ export class ComponentRef {
    * @param callback The side-effectful callback to be invoked.
    */
   public effect(callback: () => void): void {
-    this.#connectable.connected(() => {
-      return effect(callback, this.#scheduler);
-    });
+    this.#root.effect(callback);
   }
 }

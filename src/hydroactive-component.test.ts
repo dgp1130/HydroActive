@@ -1,10 +1,11 @@
 import './testing/noop-component.js';
 
-import { OnConnect, OnDisconnect } from './connectable.js';
 import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 import { ComponentAccessor } from './component-accessor.js';
+import { ReactiveRootImpl } from './signals/reactive-root.js';
+import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 
 type Hydrate = HydroActiveComponent['hydrate'];
 
@@ -22,7 +23,9 @@ describe('hydroactive-component', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
             const accessor = ComponentAccessor.fromComponent(this);
-            const ref = ComponentRef._from(accessor);
+            const scheduler = TestScheduler.from();
+            const root = ReactiveRootImpl.from(accessor, scheduler);
+            const ref = ComponentRef._from(root, scheduler);
             this._registerComponentRef(ref);
           });
 
@@ -40,7 +43,9 @@ describe('hydroactive-component', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
             const accessor = ComponentAccessor.fromComponent(this);
-            const ref = ComponentRef._from(accessor);
+            const scheduler = TestScheduler.from();
+            const root = ReactiveRootImpl.from(accessor, scheduler);
+            const ref = ComponentRef._from(root, scheduler);
             this._registerComponentRef(ref);
           });
 
@@ -63,7 +68,9 @@ describe('hydroactive-component', () => {
       const hydrate = jasmine.createSpy<Hydrate>('hydrate')
           .and.callFake(function (this: HydroActiveComponent): void {
             const accessor = ComponentAccessor.fromComponent(this);
-            const ref = ComponentRef._from(accessor);
+            const scheduler = TestScheduler.from();
+            const root = ReactiveRootImpl.from(accessor, scheduler);
+            const ref = ComponentRef._from(root, scheduler);
             this._registerComponentRef(ref);
           });
 
@@ -89,7 +96,9 @@ describe('hydroactive-component', () => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
               const accessor = ComponentAccessor.fromComponent(this);
-              const ref = ComponentRef._from(accessor);
+              const scheduler = TestScheduler.from();
+              const root = ReactiveRootImpl.from(accessor, scheduler);
+              const ref = ComponentRef._from(root, scheduler);
               this._registerComponentRef(ref);
             });
 
@@ -141,7 +150,9 @@ describe('hydroactive-component', () => {
         const hydrate = jasmine.createSpy<Hydrate>('hydrate')
             .and.callFake(function (this: HydroActiveComponent): void {
               const accessor = ComponentAccessor.fromComponent(this);
-              const ref = ComponentRef._from(accessor);
+              const scheduler = TestScheduler.from();
+              const root = ReactiveRootImpl.from(accessor, scheduler);
+              const ref = ComponentRef._from(root, scheduler);
               this._registerComponentRef(ref);
             });
 

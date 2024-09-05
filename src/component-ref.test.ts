@@ -1,9 +1,10 @@
 import './testing/noop-component.js';
 
-import { OnConnect, OnDisconnect } from './connectable.js';
+import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
 import { signal } from './signals.js';
-import { ComponentAccessor } from './component-accessor.js';
+import { ReactiveRootImpl } from './signals/reactive-root.js';
+import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 
 describe('component-ref', () => {
   afterEach(() => {
@@ -18,7 +19,9 @@ describe('component-ref', () => {
         const el = document.createElement('noop-component');
         const accessor = ComponentAccessor.fromComponent(el);
 
-        const ref = ComponentRef._from(accessor);
+        const scheduler = TestScheduler.from();
+        const root = ReactiveRootImpl.from(accessor, scheduler);
+        const ref = ComponentRef._from(root, scheduler);
 
         expect(ref).toBeInstanceOf(ComponentRef);
       });
