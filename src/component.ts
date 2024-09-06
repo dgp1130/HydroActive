@@ -1,15 +1,15 @@
 /** @fileoverview Defines symbols related to component definition. */
 
-import { ComponentAccessor } from './component-accessor.js';
 import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
+import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRoot } from './signals.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
 export type HydrateLifecycle = (
-  host: ComponentAccessor<HydroActiveComponent>,
+  host: SignalComponentAccessor<HydroActiveComponent>,
   root: ReactiveRoot,
 ) => void;
 
@@ -22,8 +22,8 @@ export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
       const scheduler = UiScheduler.from();
-      const accessor = ComponentAccessor.fromComponent(this);
-      const root = ReactiveRootImpl.from(accessor, scheduler);
+      const root = ReactiveRootImpl.from(this._connectable, scheduler);
+      const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
       const ref = ComponentRef._from(root, scheduler);
       this._registerComponentRef(ref);
       hydrate(accessor, root);

@@ -1,6 +1,6 @@
 import { type HydrateLifecycle, defineComponent } from './component.js';
-import { ComponentAccessor } from './component-accessor.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
+import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
@@ -59,9 +59,9 @@ describe('component', () => {
           document.createElement('host-component') as HydroActiveComponent;
       document.body.appendChild(comp);
 
-      const scheduler = TestScheduler.from();
-      const root = ReactiveRootImpl.from(comp._connectable, scheduler);
-      const accessor = ComponentAccessor.fromComponent(comp);
+      const root = ReactiveRootImpl.from(
+          comp._connectable, TestScheduler.from());
+      const accessor = SignalComponentAccessor.fromSignalComponent(comp, root);
       expect(hydrate).toHaveBeenCalledOnceWith(accessor, root);
     });
 
