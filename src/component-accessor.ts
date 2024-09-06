@@ -11,7 +11,7 @@ export class ComponentAccessor<out Comp extends HydroActiveComponent>
     extends ElementAccessor<Comp> implements Connectable {
   readonly #connectable: Connectable;
 
-  private constructor(
+  protected constructor(
     comp: Comp,
     root: QueryRoot<Comp>,
     connectable: Connectable,
@@ -24,11 +24,27 @@ export class ComponentAccessor<out Comp extends HydroActiveComponent>
   /**
    * Provides a {@link ComponentAccessor} for the given component.
    *
-   * @param native The {@link HydroActiveComponent} to wrap.
-   * @returns An {@link ElementAccessor} wrapping the given element.
+   * @param comp The {@link Comp} to wrap in an accessor.
+   * @returns A {@link ComponentAccessor} wrapping the given component.
    */
   public static fromComponent<Comp extends HydroActiveComponent>(comp: Comp):
       ComponentAccessor<Comp> {
+    return new ComponentAccessor(
+      ...ComponentAccessor.fromComponentCtorArgs(comp),
+    );
+  }
+
+  /**
+   * Provides {@link ComponentAccessor} constructor arguments in a composable
+   * manner for subclasses.
+   *
+   * @param comp The {@link Comp} to wrap with an accessor.
+   * @returns Arguments for the constructor function of
+   * {@link ComponentAccessor}.
+   */
+  protected static fromComponentCtorArgs<Comp extends HydroActiveComponent>(
+    comp: Comp,
+  ): [ comp: Comp, root: QueryRoot<Comp>, connectable: Connectable ] {
     // It might be tempting to delete `comp` from `elementInternalsMap`, but we
     // can't because multiple `ComponentAccessors` might be created from the
     // same component and should have the same behavior.
@@ -39,7 +55,7 @@ export class ComponentAccessor<out Comp extends HydroActiveComponent>
       () => internals?.shadowRoot ?? null,
     );
 
-    return new ComponentAccessor(comp, root, comp._connectable);
+    return [ comp, root, comp._connectable ];
   }
 
   public connected(...params: Parameters<Connectable['connected']>):
