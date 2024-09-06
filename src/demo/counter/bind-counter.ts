@@ -6,7 +6,7 @@ import { WriteableSignal, signal } from 'hydroactive/signals.js';
  * Automatically increments the count over time. Uses `bind` instead of `live`
  * to demonstrate the underlying primitives.
  */
-export const BindCounter = defineComponent('bind-counter', (host, root) => {
+export const BindCounter = defineComponent('bind-counter', (host) => {
   // Queries the DOM for the `<span>` tag.
   const span: Dehydrated<HTMLSpanElement> = host.query('span');
 
@@ -24,9 +24,9 @@ export const BindCounter = defineComponent('bind-counter', (host, root) => {
 
   // Binds the signal back to the `<span>` tag. Anytime `count` changes, the
   // `<span>` will be automatically updated.
-  bind(label, root, Number, () => count());
+  bind(label, host, Number, () => count());
 
-  // ^ `live(label, root, Number)` implicitly does all of the above.
+  // ^ `live(label, host, Number)` implicitly does all of the above.
 
   host.connected(() => {
     const handle = setInterval(() => {

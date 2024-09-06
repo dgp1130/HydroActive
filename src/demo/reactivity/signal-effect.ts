@@ -2,7 +2,7 @@ import { defineComponent } from 'hydroactive';
 import { signal } from 'hydroactive/signals.js';
 
 /** Creates a side effect from a signal. */
-export const SignalEffect = defineComponent('signal-effect', (host, root) => {
+export const SignalEffect = defineComponent('signal-effect', (host) => {
   const countLabel = host.query('#count').access();
   const initial = countLabel.read(Number);
   const count = signal(initial);
@@ -15,7 +15,7 @@ export const SignalEffect = defineComponent('signal-effect', (host, root) => {
   const updatesLabel = host.query('#updates').access();
 
   // Create a side effect whenever `count` is modified.
-  root.effect(() => {
+  host.effect(() => {
     // Update the count label in the effect. Calling `count()` inside the effect
     // creates a dependency on `count`. Anytime `count` changes in the future,
     // this effect will be automatically re-run.
