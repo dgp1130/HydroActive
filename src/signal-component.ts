@@ -3,6 +3,7 @@
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
+import { Class } from './utils/types.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
 export type SignalHydrateLifecycle =
@@ -37,12 +38,6 @@ export function defineSignalComponent(
 
   return Component;
 }
-
-/**
- * Analogous to `Class<T>` in Java. Represents the class object of the given
- * instance type.
- */
-type Class<Instance> = { new(): Instance };
 
 function skewerCaseToPascalCase(skewerCase: string): string {
   return skewerCase.split('-')
