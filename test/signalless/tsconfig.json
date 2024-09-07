@@ -1,0 +1,10 @@
+/** @fileoverview Config for the signalless compilation. */
+
+{
+  "extends": "../../tsconfig.base.json",
+  "files": ["index.ts"],
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../../dist/test/signalless",
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "signalless",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "npm run -s bundle",
+    "bundle": "npm run -s bundle-signalless && npm run -s bundle-signalfull",
+    "bundle-signalless": "../../node_modules/.bin/esbuild signalless.js --bundle --format=esm --outfile=../../dist/test/signalless/signalless.js",
+    "bundle-signalfull": "../../node_modules/.bin/esbuild signalfull.js --bundle --format=esm --outfile=../../dist/test/signalless/signalfull.js",
+    "test-signalfull": "grep \"src/signals/graph.js\" ../../dist/test/signalless/signalfull.js > /dev/null",
+    "test-signalless": "! grep \"src/signals/graph.js\" ../../dist/test/signalless/signalless.js",
+    "test": "npm run bundle && npm run -s test-signalfull && npm run -s test-signalless"
+  },
+  "dependencies": {
+    "hydroactive": "file:../../dist/lib"
+  }
+}
