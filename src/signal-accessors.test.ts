@@ -16,7 +16,7 @@ describe('signal-accessors', () => {
         <noop-component>Hello!</noop-component>
       `);
 
-      const text = live(ElementAccessor.from(el), el.root, String);
+      const text = live(el.getComponentAccessor(), el.root, String);
       expect(text()).toBe('Hello!');
     });
 
@@ -26,7 +26,7 @@ describe('signal-accessors', () => {
       `);
       document.body.appendChild(el);
 
-      const text = live(ElementAccessor.from(el), el.root, String);
+      const text = live(el.getComponentAccessor(), el.root, String);
       expect(text()).toBe('test');
 
       text.set('test2');
@@ -42,7 +42,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(el), el.root, String);
+        const value = live(el.getComponentAccessor(), el.root, String);
         expect(value()).toBe('test1');
 
         value.set('test2');
@@ -56,7 +56,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(el), el.root, Number);
+        const value = live(el.getComponentAccessor(), el.root, Number);
         expect(value()).toBe(1234);
 
         value.set(4321);
@@ -70,7 +70,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(el), el.root, Boolean);
+        const value = live(el.getComponentAccessor(), el.root, Boolean);
         expect(value()).toBe(true);
 
         value.set(false);
@@ -84,7 +84,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        const value = live(ElementAccessor.from(el), el.root, BigInt);
+        const value = live(el.getComponentAccessor(), el.root, BigInt);
         expect(value()).toBe(1234n);
 
         value.set(4321n);
@@ -109,7 +109,7 @@ describe('signal-accessors', () => {
         },
       };
 
-      const value = live(ElementAccessor.from(el), el.root, serializer);
+      const value = live(el.getComponentAccessor(), el.root, serializer);
       expect(value()).toBe('deserialized');
 
       value.set('test');
@@ -138,7 +138,7 @@ describe('signal-accessors', () => {
       `);
       document.body.appendChild(el);
 
-      const value = live(ElementAccessor.from(el), el.root, User);
+      const value = live(el.getComponentAccessor(), el.root, User);
       expect(value()).toEqual(new User('Devel'));
 
       value.set(new User('Devel without a Cause'));
@@ -153,7 +153,7 @@ describe('signal-accessors', () => {
         </noop-component>
       `);
 
-      const host = ElementAccessor.from(el);
+      const host = el.getComponentAccessor();
       const span = host.query('span').access();
       live(span, el.root, String);
 
@@ -243,7 +243,7 @@ describe('signal-accessors', () => {
       expect(el.textContent).toBe('');
 
       const value = signal('1');
-      bind(ElementAccessor.from(el), el.root, String, () => value());
+      bind(el.getComponentAccessor(), el.root, String, () => value());
       await el.stable();
       expect(el.textContent).toBe('1');
 
@@ -258,7 +258,7 @@ describe('signal-accessors', () => {
       const sig = jasmine.createSpy<() => string>('sig')
           .and.returnValue('test');
 
-      bind(ElementAccessor.from(el), el.root, String, sig);
+      bind(el.getComponentAccessor(), el.root, String, sig);
       await el.stable();
       expect(sig).not.toHaveBeenCalled();
 
@@ -276,7 +276,7 @@ describe('signal-accessors', () => {
       const sig = jasmine.createSpy<() => string>('sig')
           .and.callFake(() => value());
 
-      bind(ElementAccessor.from(el), el.root, String, sig);
+      bind(el.getComponentAccessor(), el.root, String, sig);
       await el.stable();
       expect(sig).toHaveBeenCalledOnceWith();
       expect(el.textContent).toBe('1');
@@ -297,7 +297,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        bind(ElementAccessor.from(el), el.root, String, () => 'test');
+        bind(el.getComponentAccessor(), el.root, String, () => 'test');
         await el.stable();
         expect(el.textContent!).toBe('test');
       }
@@ -308,7 +308,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        bind(ElementAccessor.from(el), el.root, Number, () => 1234);
+        bind(el.getComponentAccessor(), el.root, Number, () => 1234);
         await el.stable();
         expect(el.textContent!).toBe('1234');
       }
@@ -319,7 +319,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        bind(ElementAccessor.from(el), el.root, Boolean, () => true);
+        bind(el.getComponentAccessor(), el.root, Boolean, () => true);
         await el.stable();
         expect(el.textContent!).toBe('true');
       }
@@ -330,7 +330,7 @@ describe('signal-accessors', () => {
         `);
         document.body.appendChild(el);
 
-        bind(ElementAccessor.from(el), el.root, BigInt, () => 1234n);
+        bind(el.getComponentAccessor(), el.root, BigInt, () => 1234n);
         await el.stable();
         expect(el.textContent!).toBe('1234');
       }
@@ -352,7 +352,7 @@ describe('signal-accessors', () => {
         },
       };
 
-      bind(ElementAccessor.from(el), el.root, serializer, () => undefined);
+      bind(el.getComponentAccessor(), el.root, serializer, () => undefined);
       await el.stable();
       expect(el.textContent!).toBe('undefined');
     });
@@ -379,7 +379,7 @@ describe('signal-accessors', () => {
       `);
       document.body.appendChild(el);
 
-      bind(ElementAccessor.from(el), el.root, User, () => new User('Devel'));
+      bind(el.getComponentAccessor(), el.root, User, () => new User('Devel'));
       await el.stable();
       expect(el.textContent!).toBe('Devel');
     });
@@ -391,7 +391,7 @@ describe('signal-accessors', () => {
         </noop-component>
       `);
 
-      const span = ElementAccessor.from(el).query('span').access();
+      const span = el.getComponentAccessor().query('span').access();
       bind(span, el.root, String, () => 'test');
       expect(() => bind(span, el.root, String, () => 'test2'))
           .toThrowError(/cannot bind it again/);

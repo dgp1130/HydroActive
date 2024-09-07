@@ -1,8 +1,8 @@
-import { ComponentAccessor } from '../component-accessor.js';
 import { ComponentRef } from '../component-ref.js';
 import { ReactiveRoot } from '../signals.js';
 import { ReactiveRootImpl } from '../signals/reactive-root.js';
 import { HydroActiveComponent } from '../hydroactive-component.js';
+import { SignalComponentAccessor } from '../signal-component-accessor.js';
 import { UiScheduler } from '../signals/schedulers/ui-scheduler.js';
 
 /**
@@ -12,7 +12,7 @@ import { UiScheduler } from '../signals/schedulers/ui-scheduler.js';
  */
 export class NoopComponent extends HydroActiveComponent {
   #ref!: ComponentRef;
-  #accessor!: ComponentAccessor<this>;
+  #accessor!: SignalComponentAccessor<this>;
 
   public readonly root: ReactiveRoot;
 
@@ -22,8 +22,9 @@ export class NoopComponent extends HydroActiveComponent {
     super();
 
     const scheduler = UiScheduler.from();
-    this.#accessor = ComponentAccessor.fromComponent(this);
-    this.root = ReactiveRootImpl.from(this.#accessor, scheduler);
+    this.root = ReactiveRootImpl.from(this._connectable, scheduler);
+    this.#accessor =
+        SignalComponentAccessor.fromSignalComponent(this, this.root);
     this.#ref = ComponentRef._from(this.root, scheduler);
     this._registerComponentRef(this.#ref);
   }
@@ -36,7 +37,7 @@ export class NoopComponent extends HydroActiveComponent {
     return this.#ref;
   }
 
-  public getComponentAccessor(): ComponentAccessor<this> {
+  public getComponentAccessor(): SignalComponentAccessor<this> {
     return this.#accessor;
   }
 }

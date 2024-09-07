@@ -202,11 +202,11 @@ describe('hydroactive-component', () => {
       it('resolves when the component is stable of all effects', async () => {
         const el = document.createElement('noop-component');
         document.body.appendChild(el);
-        const ref = el.getComponentRef();
+        const accessor = el.getComponentAccessor();
 
         const effect = jasmine.createSpy<() => void>('effect');
 
-        ref.effect(effect);
+        accessor.effect(effect);
         await expectAsync(el.stable()).toBePending();
         expect(effect).not.toHaveBeenCalled();
 
