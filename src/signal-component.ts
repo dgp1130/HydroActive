@@ -3,6 +3,7 @@
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
+import { skewerCaseToPascalCase } from './utils/casing.js';
 import { Class } from './utils/types.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
@@ -37,10 +38,4 @@ export function defineSignalComponent(
   customElements.define(tagName, Component);
 
   return Component;
-}
-
-function skewerCaseToPascalCase(skewerCase: string): string {
-  return skewerCase.split('-')
-      .map((word) => `${word[0]?.toUpperCase() ?? ''}${word.slice(1)}`)
-      .join('');
 }
