@@ -1,4 +1,5 @@
 export { AttrAccessor } from './attribute-accessor.js';
+export { type BaseHydrateLifecycle, defineBaseComponent } from './base-component.js';
 export { type SignalHydrateLifecycle, defineSignalComponent } from './signal-component.js';
 export { type Connectable, type OnConnect, type OnDisconnect } from './connectable.js';
 export { Dehydrated } from './dehydrated.js';
