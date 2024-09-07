@@ -1,11 +1,11 @@
-import { type HydrateLifecycle, defineSignalComponent } from './signal-component.js';
+import { type SignalHydrateLifecycle, defineSignalComponent } from './signal-component.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 
-describe('component', () => {
+describe('signal-component', () => {
   useTestCases();
 
   afterEach(() => {
@@ -16,14 +16,14 @@ describe('component', () => {
 
   describe('defineSignalComponent', () => {
     it('upgrades already rendered components', testCase('already-rendered', () => {
-      const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
       defineSignalComponent('already-rendered', hydrate);
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     }));
 
     it('upgrades components rendered after definition', () => {
-      const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
 
       defineSignalComponent('new-component', hydrate);
       expect(hydrate).not.toHaveBeenCalled();
@@ -51,8 +51,8 @@ describe('component', () => {
       expect(self).toBeUndefined();
     });
 
-    it('invokes hydrate callback with an `ElementRef` and `ComponentAccessor` of the component host', () => {
-      const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
+    it('invokes hydrate callback with a `SignalComponentAccessor` of the component host', () => {
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
       defineSignalComponent('host-component', hydrate);
 
       const comp =
@@ -62,7 +62,7 @@ describe('component', () => {
       const root = ReactiveRootImpl.from(
           comp._connectable, TestScheduler.from());
       const accessor = SignalComponentAccessor.fromSignalComponent(comp, root);
-      expect(hydrate).toHaveBeenCalledOnceWith(accessor, root);
+      expect(hydrate).toHaveBeenCalledOnceWith(accessor);
     });
 
     it('sets the class name', () => {

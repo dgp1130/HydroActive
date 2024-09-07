@@ -1,29 +1,30 @@
-/** @fileoverview Defines symbols related to component definition. */
+/** @fileoverview Defines symbols related to signal component definition. */
 
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
-import { ReactiveRoot } from './signals.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
-export type HydrateLifecycle = (
-  host: SignalComponentAccessor<HydroActiveComponent>,
-  root: ReactiveRoot,
-) => void;
+export type SignalHydrateLifecycle =
+    (host: SignalComponentAccessor<HydroActiveComponent>) => void;
 
 /**
- * Defines a component of the given tag name with the provided hydration
+ * Defines a signal component of the given tag name with the provided hydration
  * callback.
+ *
+ * @param tagName The tag name to use for the defined custom element.
+ * @param hydrate The function to trigger when the component hydrates.
+ * @returns The defined custom element class.
  */
 export function defineSignalComponent(
   tagName: string,
-  hydrate: HydrateLifecycle,
+  hydrate: SignalHydrateLifecycle,
 ): Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
       const root = ReactiveRootImpl.from(this._connectable, this._scheduler);
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
-      hydrate(accessor, root);
+      hydrate(accessor);
     }
   };
 
