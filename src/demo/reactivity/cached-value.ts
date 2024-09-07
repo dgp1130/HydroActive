@@ -1,9 +1,9 @@
-import { defineComponent } from 'hydroactive';
+import { defineSignalComponent } from 'hydroactive';
 import { bind, live } from 'hydroactive/signal-accessors.js';
 import { cached } from 'hydroactive/signals.js';
 
 /** Uses `cached` to avoid repeatedly executing an expensive computed signal. */
-export const CachedValue = defineComponent('cached-value', (host) => {
+export const CachedValue = defineSignalComponent('cached-value', (host) => {
   const count = live(host.query('#count').access(), host, Number);
   host.query('button').access().listen(host, 'click', () => {
     count.set(count() + 1);

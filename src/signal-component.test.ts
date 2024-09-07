@@ -1,4 +1,4 @@
-import { type HydrateLifecycle, defineComponent } from './component.js';
+import { type HydrateLifecycle, defineSignalComponent } from './signal-component.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
@@ -14,10 +14,10 @@ describe('component', () => {
     }
   });
 
-  describe('defineComponent', () => {
+  describe('defineSignalComponent', () => {
     it('upgrades already rendered components', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
-      defineComponent('already-rendered', hydrate);
+      defineSignalComponent('already-rendered', hydrate);
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     }));
@@ -25,7 +25,7 @@ describe('component', () => {
     it('upgrades components rendered after definition', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
 
-      defineComponent('new-component', hydrate);
+      defineSignalComponent('new-component', hydrate);
       expect(hydrate).not.toHaveBeenCalled();
 
       const comp = document.createElement('new-component');
@@ -43,7 +43,7 @@ describe('component', () => {
         self = this;
       }
 
-      defineComponent('this-component', hydrate);
+      defineSignalComponent('this-component', hydrate);
 
       const comp = document.createElement('this-component');
       document.body.appendChild(comp);
@@ -53,7 +53,7 @@ describe('component', () => {
 
     it('invokes hydrate callback with an `ElementRef` and `ComponentAccessor` of the component host', () => {
       const hydrate = jasmine.createSpy<HydrateLifecycle>('hydrate');
-      defineComponent('host-component', hydrate);
+      defineSignalComponent('host-component', hydrate);
 
       const comp =
           document.createElement('host-component') as HydroActiveComponent;
@@ -67,17 +67,17 @@ describe('component', () => {
 
     it('sets the class name', () => {
       {
-        const Comp = defineComponent('foo-bar-baz', () => {});
+        const Comp = defineSignalComponent('foo-bar-baz', () => {});
         expect(Comp.name).toBe('FooBarBaz');
       }
 
       {
-        const Comp = defineComponent('foo-bar-', () => {});
+        const Comp = defineSignalComponent('foo-bar-', () => {});
         expect(Comp.name).toBe('FooBar');
       }
 
       {
-        const Comp = defineComponent('foo-----bar', () => {});
+        const Comp = defineSignalComponent('foo-----bar', () => {});
         expect(Comp.name).toBe('FooBar');
       }
     });

@@ -1,9 +1,9 @@
-import { defineComponent } from 'hydroactive';
+import { defineSignalComponent } from 'hydroactive';
 import { bind, live } from 'hydroactive/signal-accessors.js';
 import { Signal } from 'hydroactive/signals.js';
 
 /** Displays a value computed from another value in the DOM. */
-export const ComputedValue = defineComponent('computed-value', (host) => {
+export const ComputedValue = defineSignalComponent('computed-value', (host) => {
   // Create a signal for the real underlying value.
   const count = live(host.query('#count').access(), host, Number);
 

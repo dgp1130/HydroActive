@@ -15,8 +15,10 @@ export type HydrateLifecycle = (
  * Defines a component of the given tag name with the provided hydration
  * callback.
  */
-export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
-    Class<HydroActiveComponent> {
+export function defineSignalComponent(
+  tagName: string,
+  hydrate: HydrateLifecycle,
+): Class<HydroActiveComponent> {
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
       const root = ReactiveRootImpl.from(this._connectable, this._scheduler);

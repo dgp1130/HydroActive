@@ -1,11 +1,11 @@
-import { defineComponent } from 'hydroactive';
+import { defineSignalComponent } from 'hydroactive';
 import { ComponentAccessor } from 'hydroactive/component-accessor.js';
 import { HydroActiveComponent } from 'hydroactive/hydroactive-component.js';
 import { bind } from 'hydroactive/signal-accessors.js';
 import { Signal, signal } from 'hydroactive/signals.js';
 
 /** Demonstrates a custom hook for controlling the count timer. */
-export const CustomHook = defineComponent('custom-hook', (host) => {
+export const CustomHook = defineSignalComponent('custom-hook', (host) => {
   const initial = host.query('span').access().read(Number);
 
   // Create a signal which is automatically incremented every second. Bound to

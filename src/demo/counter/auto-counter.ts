@@ -1,8 +1,8 @@
-import { defineComponent } from 'hydroactive';
+import { defineSignalComponent } from 'hydroactive';
 import { live } from 'hydroactive/signal-accessors.js';
 
 /** Automatically increments the count over time. */
-export const AutoCounter = defineComponent('auto-counter', (host) => {
+export const AutoCounter = defineSignalComponent('auto-counter', (host) => {
   // Create a "live" binding of the `<span>` element's text content, but
   // interpreted as a `number`. Automatically parses the value.
   const count = live(host.query('span').access(), host, Number);

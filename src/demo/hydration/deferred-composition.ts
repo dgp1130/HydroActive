@@ -1,21 +1,23 @@
-import { defineComponent } from 'hydroactive';
+import { defineSignalComponent } from 'hydroactive';
 import { DeferredCompositionChild } from './deferred-composition-child.js';
-import { bind } from 'hydroactive/signal-accessors.js';
 
 /** Demonstrates accessing and hydrating child components. */
-export const DeferredComposition = defineComponent('deferred-composition', (host) => {
-  // `.access` asserts the component is already hydrated.
-  const firstName = host.query('#first')
-      .access(DeferredCompositionChild)
-      .element.getSpeakerName();
-  bind(host.query('#first-speaker').access(), host, String, () => firstName);
+export const DeferredComposition = defineSignalComponent(
+  'deferred-composition',
+  (host) => {
+    // `.access` asserts the component is already hydrated.
+    const firstName = host.query('#first')
+        .access(DeferredCompositionChild)
+        .element.getSpeakerName();
+    host.query('#first-speaker').access().write(firstName, String);
 
-  // `.hydrate` hydrates the component immediately.
-  const secondName = host.query('#second')
-      .hydrate(DeferredCompositionChild)
-      .element.getSpeakerName();
-  bind(host.query('#second-speaker').access(), host, String, () => secondName);
-});
+    // `.hydrate` hydrates the component immediately.
+    const secondName = host.query('#second')
+        .hydrate(DeferredCompositionChild)
+        .element.getSpeakerName();
+    host.query('#second-speaker').access().write(secondName, String);
+  },
+);
 
 declare global {
   interface HTMLElementTagNameMap {

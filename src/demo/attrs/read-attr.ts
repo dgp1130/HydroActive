@@ -1,8 +1,8 @@
-import { AttrAccessor, defineComponent } from 'hydroactive';
+import { AttrAccessor, defineSignalComponent } from 'hydroactive';
 import { bind } from 'hydroactive/signal-accessors.js';
 
 /** Reads an attribute from the host element. */
-export const ReadAttr = defineComponent('read-attr', (host) => {
+export const ReadAttr = defineSignalComponent('read-attr', (host) => {
   // `host` is a `ComponentAccessor` of the host element (`read-attr`).
   // `ComponentAccessor` has an `attr` method which provides an `AttrAccessor`.
   const idAttr: AttrAccessor = host.attr('user-id');
