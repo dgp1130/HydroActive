@@ -3,7 +3,6 @@ import { ReactiveRoot } from '../signals.js';
 import { ReactiveRootImpl } from '../signals/reactive-root.js';
 import { HydroActiveComponent } from '../hydroactive-component.js';
 import { SignalComponentAccessor } from '../signal-component-accessor.js';
-import { UiScheduler } from '../signals/schedulers/ui-scheduler.js';
 
 /**
  * A component which does nothing on hydration. Useful for tests which need a
@@ -21,11 +20,10 @@ export class NoopComponent extends HydroActiveComponent {
   public constructor() {
     super();
 
-    const scheduler = UiScheduler.from();
-    this.root = ReactiveRootImpl.from(this._connectable, scheduler);
+    this.root = ReactiveRootImpl.from(this._connectable, this._scheduler);
     this.#accessor =
         SignalComponentAccessor.fromSignalComponent(this, this.root);
-    this.#ref = ComponentRef._from(scheduler);
+    this.#ref = ComponentRef._from(this._scheduler);
     this._registerComponentRef(this.#ref);
   }
 

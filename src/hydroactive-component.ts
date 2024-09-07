@@ -1,5 +1,6 @@
 import { ComponentRef } from './component-ref.js';
 import { Connectable, Connector } from './connectable.js';
+import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /**
  * A map of {@link HydroActiveComponent} elements to their associated
@@ -29,6 +30,8 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
   /** The associated {@link ComponentRef} for this component. */
   #ref?: ComponentRef;
+
+  protected _scheduler = UiScheduler.from();
 
   constructor() {
     super();
@@ -90,9 +93,6 @@ export abstract class HydroActiveComponent extends HTMLElement {
    * @returns A {@link Promise} which resolves when this component is stable.
    */
   public async stable(): Promise<void> {
-    if (!this.#ref) throw new Error('No registered `ComponentRef`.');
-
-    return await this.#ref._stable();
-
+    return await this._scheduler.stable();
   }
 }
