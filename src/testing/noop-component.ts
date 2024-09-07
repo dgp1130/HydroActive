@@ -1,4 +1,3 @@
-import { ComponentRef } from '../component-ref.js';
 import { ReactiveRoot } from '../signals.js';
 import { ReactiveRootImpl } from '../signals/reactive-root.js';
 import { HydroActiveComponent } from '../hydroactive-component.js';
@@ -10,7 +9,6 @@ import { SignalComponentAccessor } from '../signal-component-accessor.js';
  * defining its own components and potentially conflicting tag names.
  */
 export class NoopComponent extends HydroActiveComponent {
-  #ref!: ComponentRef;
   #accessor!: SignalComponentAccessor<this>;
 
   public readonly root: ReactiveRoot;
@@ -23,16 +21,10 @@ export class NoopComponent extends HydroActiveComponent {
     this.root = ReactiveRootImpl.from(this._connectable, this._scheduler);
     this.#accessor =
         SignalComponentAccessor.fromSignalComponent(this, this.root);
-    this.#ref = ComponentRef._from(this._scheduler);
-    this._registerComponentRef(this.#ref);
   }
 
   protected override hydrate(): void {
     this.hydrated = true;
-  }
-
-  public getComponentRef(): ComponentRef {
-    return this.#ref;
   }
 
   public getComponentAccessor(): SignalComponentAccessor<this> {

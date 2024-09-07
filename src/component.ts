@@ -1,6 +1,5 @@
 /** @fileoverview Defines symbols related to component definition. */
 
-import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRoot } from './signals.js';
@@ -22,8 +21,6 @@ export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
     public override hydrate(): void {
       const root = ReactiveRootImpl.from(this._connectable, this._scheduler);
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
-      const ref = ComponentRef._from(this._scheduler);
-      this._registerComponentRef(ref);
       hydrate(accessor, root);
     }
   };

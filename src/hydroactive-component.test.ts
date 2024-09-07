@@ -1,6 +1,5 @@
 import './testing/noop-component.js';
 
-import { ComponentRef } from './component-ref.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
@@ -18,11 +17,7 @@ describe('hydroactive-component', () => {
 
   describe('HydroActiveComponent', () => {
     it('hydrates on upgrade when already connected to the DOM', testCase('already-rendered', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
-          .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(TestScheduler.from());
-            this._registerComponentRef(ref);
-          });
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
 
       customElements.define(
         'already-rendered',
@@ -35,11 +30,7 @@ describe('hydroactive-component', () => {
     }));
 
     it('hydrates on connect', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
-          .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(TestScheduler.from());
-            this._registerComponentRef(ref);
-          });
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
 
       customElements.define(
         'new-component',
@@ -57,11 +48,7 @@ describe('hydroactive-component', () => {
     });
 
     it('does not hydrate a second time when moved around the DOM', () => {
-      const hydrate = jasmine.createSpy<Hydrate>('hydrate')
-          .and.callFake(function (this: HydroActiveComponent): void {
-            const ref = ComponentRef._from(TestScheduler.from());
-            this._registerComponentRef(ref);
-          });
+      const hydrate = jasmine.createSpy<Hydrate>('hydrate');
 
       customElements.define(
         'another-component',
@@ -82,11 +69,7 @@ describe('hydroactive-component', () => {
 
     describe('`defer-hydration`', () => {
       it('defers hydration', testCase('deferred', (el) => {
-        const hydrate = jasmine.createSpy<Hydrate>('hydrate')
-            .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(TestScheduler.from());
-              this._registerComponentRef(ref);
-            });
+        const hydrate = jasmine.createSpy<Hydrate>('hydrate');
 
         customElements.define(
           'deferred-component',
@@ -133,11 +116,7 @@ describe('hydroactive-component', () => {
       });
 
       it('hydrates when `defer-hydration` is removed while disconnected from the DOM', testCase('disconnected-hydration', (el) => {
-        const hydrate = jasmine.createSpy<Hydrate>('hydrate')
-            .and.callFake(function (this: HydroActiveComponent): void {
-              const ref = ComponentRef._from(TestScheduler.from());
-              this._registerComponentRef(ref);
-            });
+        const hydrate = jasmine.createSpy<Hydrate>('hydrate');
 
         customElements.define(
           'disconnected-hydration',

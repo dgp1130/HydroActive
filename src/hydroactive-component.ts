@@ -1,4 +1,3 @@
-import { ComponentRef } from './component-ref.js';
 import { Connectable, Connector } from './connectable.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
@@ -28,9 +27,6 @@ export abstract class HydroActiveComponent extends HTMLElement {
   /** Whether or not the component has been hydrated. */
   #hydrated = false;
 
-  /** The associated {@link ComponentRef} for this component. */
-  #ref?: ComponentRef;
-
   protected _scheduler = UiScheduler.from();
 
   constructor() {
@@ -46,12 +42,6 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
   /** User-defined lifecycle hook invoked on hydration. */
   protected abstract hydrate(): void;
-
-  public /* internal */ _registerComponentRef(ref: ComponentRef): void {
-    if (this.#ref) throw new Error('Already registered a `ComponentRef`.');
-
-    this.#ref = ref;
-  }
 
   connectedCallback(): void {
     this.#connector.connect();
@@ -82,8 +72,6 @@ export abstract class HydroActiveComponent extends HTMLElement {
 
     this.#hydrated = true;
     this.hydrate();
-
-    if (!this.#ref) throw new Error('No registered `ComponentRef` after hydration.');
   }
 
   /**
