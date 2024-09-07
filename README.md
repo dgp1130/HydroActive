@@ -149,8 +149,8 @@ Run tests with `npm test`. Debug tests with `npm run test-debug` and then openin
 1.  Then build and publish the package:
     ```shell
     npm run build
-    (cd dist/ && npm publish)
-    # Alternatively run `(cd dist/ && npm pack)` to inspect the tarball to be published.
+    (cd dist/lib/ && npm publish)
+    # Alternatively run `(cd dist/lib/ && npm pack)` to inspect the tarball to be published.
     ```
 1.  Commit, tag, and push the incremented version number.
     ```shell

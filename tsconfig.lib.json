@@ -8,4 +8,7 @@
     "src/testing/**/*.ts",
     "src/demo/**.ts",
   ],
+  "compilerOptions": {
+    "outDir": "dist/lib/src/",
+  }
 }

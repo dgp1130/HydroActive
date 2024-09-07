@@ -4,5 +4,6 @@
   "include": ["src/**/*.test.ts", "src/testing/**.ts"],
   "compilerOptions": {
     "types": ["jasmine"],
+    "outDir": "dist/test/src/",
   },
 }
