@@ -25,7 +25,7 @@ export class NoopComponent extends HydroActiveComponent {
     this.root = ReactiveRootImpl.from(this._connectable, scheduler);
     this.#accessor =
         SignalComponentAccessor.fromSignalComponent(this, this.root);
-    this.#ref = ComponentRef._from(this.root, scheduler);
+    this.#ref = ComponentRef._from(scheduler);
     this._registerComponentRef(this.#ref);
   }
 

@@ -24,7 +24,7 @@ export function defineComponent(tagName: string, hydrate: HydrateLifecycle):
       const scheduler = UiScheduler.from();
       const root = ReactiveRootImpl.from(this._connectable, scheduler);
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
-      const ref = ComponentRef._from(root, scheduler);
+      const ref = ComponentRef._from(scheduler);
       this._registerComponentRef(ref);
       hydrate(accessor, root);
     }
