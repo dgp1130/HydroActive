@@ -1,7 +1,7 @@
-import { defineSignalComponent } from 'hydroactive';
+import { defineBaseComponent } from 'hydroactive';
 
 /** Says hello to HydroActive on hydration. */
-export const DeferredComp = defineSignalComponent('deferred-comp', (host) => {
+export const DeferredComp = defineBaseComponent('deferred-comp', (host) => {
   host.query('span').access().write('HydroActive', String);
 });
 
