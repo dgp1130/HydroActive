@@ -9,6 +9,7 @@
     "./signals.js": "./src/signals.js",
     "./testing.js": "./src/testing.js"
   },
+  "sideEffects": false,
   "scripts": {
     "start": "npm run -s demo",
     "build": "npm run -s clean && npm run -s build-lib",
