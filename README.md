@@ -74,7 +74,7 @@ import { WriteableSignal } from 'hydroactive/signals.js';
 // parameters with additional functionality to provide interactivity to the
 // pre-rendered component. Automatically calls `customElements.define` under the
 // hood.
-const MyCounter = defineComponent('my-counter', (host, comp) => {
+const MyCounter = defineComponent('my-counter', (host) => {
     // Interacting with a site using HydroActive is a three-step process:
     // 1. Query it - `host.query` queries the DOM for the selector and asserts
     // it is found.
@@ -88,7 +88,7 @@ const MyCounter = defineComponent('my-counter', (host, comp) => {
     // of `countEl`. The text is interpreted as a `number` and implicitly
     // converted. Also whenever `count.set` is called, the `<span>` tag is
     // automatically updated.
-    const count: WriteableSignal<number> = live(countEl, comp, Number);
+    const count: WriteableSignal<number> = live(countEl, host, Number);
 
     // Prints `5`, hydrated from initial HTML content.
     console.log(count());
@@ -101,7 +101,7 @@ const MyCounter = defineComponent('my-counter', (host, comp) => {
     // HydroActive also provides ergonomic wrapper to bind event listeners.
     // This automatically removes and re-adds the listener when `<my-counter>`
     // is disconnected from and reconnected to the DOM.
-    incrementButton.listen(comp, 'click', () => {
+    incrementBtn.listen(host, 'click', () => {
         // `count.set` automatically updates the underlying DOM with the new
         // value.
         count.set(count() + 1);
