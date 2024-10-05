@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Forms Demo</title>
+        <meta charset="utf8">
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "hydroactive": "/hydroactive/index.js",
+                    "hydroactive/": "/hydroactive/"
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Forms Demo</h1>
+
+        <nav><a href="/">Home</a></nav>
+
+        <text-input>
+            <h2>Text Input</h2>
+
+            <div>
+                <label>Enter your name: <input type="text" id="name"></label>
+            </div>
+            <div>Your name is: <span></span>.</div>
+
+            <script src="./text-input.js" type="module"></script>
+        </text-input>
+    </body>
+</html>
