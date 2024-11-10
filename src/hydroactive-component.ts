@@ -41,7 +41,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
   }
 
   /** User-defined lifecycle hook invoked on hydration. */
-  protected abstract hydrate(): void;
+  protected abstract hydrate(): ComponentDefinition | void;
 
   connectedCallback(): void {
     this.#connector.connect();
@@ -82,5 +82,28 @@ export abstract class HydroActiveComponent extends HTMLElement {
    */
   public async stable(): Promise<void> {
     return await this._scheduler.stable();
+  }
+}
+
+/** The properties to apply to a component after hydration. */
+export type ComponentDefinition = Record<string | number | symbol, unknown>;
+
+/**
+ * Applies the given {@link ComponentDefinition} to the provided {@link comp} by
+ * assigning all its properties.
+ *
+ * @throws when the component has already defined a property specified in the
+ *     definition.
+ */
+export function applyDefinition<CompDef extends ComponentDefinition>(
+  comp: HydroActiveComponent,
+  compDef: CompDef,
+): asserts comp is HydroActiveComponent & CompDef {
+  for (const [key, value] of Object.entries(compDef)) {
+    if (key in comp) {
+      throw new Error(`Cannot redefine existing property \`${key}\`.`);
+    }
+
+    (comp as unknown as Record<string | number | symbol, unknown>)[key] = value;
   }
 }

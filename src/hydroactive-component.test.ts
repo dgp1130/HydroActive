@@ -1,8 +1,7 @@
 import './testing/noop-component.js';
 
-import { HydroActiveComponent } from './hydroactive-component.js';
+import { applyDefinition, HydroActiveComponent } from './hydroactive-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
-import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 
 type Hydrate = HydroActiveComponent['hydrate'];
 
@@ -176,6 +175,42 @@ describe('hydroactive-component', () => {
         await expectAsync(el.stable()).toBeResolved();
         expect(effect).toHaveBeenCalledOnceWith();
       });
+    });
+  });
+
+  describe('applyDefinition', () => {
+    const hydrate = jasmine.createSpy<Hydrate>('hydrate');
+    class CompDef extends HydroActiveComponent {
+      override hydrate = hydrate;
+
+      existing(): void {}
+    }
+    customElements.define('comp-def', CompDef);
+
+    it('applies the given component definition', () => {
+      const el = document.createElement('comp-def') as CompDef;
+      const def = { foo: 'bar', hello: 'world' };
+
+      applyDefinition(el, def);
+
+      expect(el.foo).toBe('bar');
+      expect(el.hello).toBe('world');
+    });
+
+    it('throws when overwriting an existing owned property', () => {
+      const el = document.createElement('comp-def') as CompDef;
+      const def = { existing: 'test' };
+
+      expect(() => applyDefinition(el, def))
+          .toThrowError(/Cannot redefine existing property/);
+    });
+
+    it('throws when overwriting an existing inherited property', () => {
+      const el = document.createElement('comp-def') as CompDef;
+      const def = { connectedCallback: 'test' };
+
+      expect(() => applyDefinition(el, def))
+          .toThrowError(/Cannot redefine existing property/);
     });
   });
 });

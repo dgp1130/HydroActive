@@ -11,14 +11,14 @@ describe('base-component', () => {
       const el = document.createElement('already-rendered');
       document.body.append(el);
 
-      const hydrate = jasmine.createSpy<BaseHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
       defineBaseComponent('already-rendered', hydrate);
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     });
 
     it('updates components rendered after definition', () => {
-      const hydrate = jasmine.createSpy<BaseHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
 
       defineBaseComponent('new-component', hydrate);
       expect(hydrate).not.toHaveBeenCalled();
@@ -47,7 +47,7 @@ describe('base-component', () => {
     });
 
     it('invokes hydrate callback with a `ComponentAccessor` of the component host', () => {
-      const hydrate = jasmine.createSpy<BaseHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
       const HostComponent = defineBaseComponent('host-component', hydrate);
 
       const el = parseHtml(HostComponent, `
@@ -62,6 +62,18 @@ describe('base-component', () => {
 
       // `ComponentAccessor` should be appropriately configured for the element.
       expect(accessor.query('span').access().read(String)).toBe('Hello!');
+    });
+
+    it('applies the component definition returned by the `hydrate` callback', () => {
+      const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate')
+          .and.returnValue({ foo: 'bar' });
+
+      const CompWithDef = defineBaseComponent('comp-with-def', hydrate);
+
+      const el = parseHtml(CompWithDef, `<comp-with-def></comp-with-def>`);
+      document.body.appendChild(el);
+
+      expect(el.foo).toBe('bar');
     });
 
     it('sets the class name', () => {

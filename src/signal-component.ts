@@ -1,14 +1,14 @@
 /** @fileoverview Defines symbols related to signal component definition. */
 
-import { HydroActiveComponent } from './hydroactive-component.js';
+import { applyDefinition, ComponentDefinition, HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { skewerCaseToPascalCase } from './utils/casing.js';
 import { Class } from './utils/types.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
-export type SignalHydrateLifecycle =
-    (host: SignalComponentAccessor<HydroActiveComponent>) => void;
+export type SignalHydrateLifecycle<CompDef extends ComponentDefinition> =
+    (host: SignalComponentAccessor<HydroActiveComponent>) => CompDef | void;
 
 /**
  * Defines a signal component of the given tag name with the provided hydration
@@ -18,15 +18,21 @@ export type SignalHydrateLifecycle =
  * @param hydrate The function to trigger when the component hydrates.
  * @returns The defined custom element class.
  */
-export function defineSignalComponent(
+export function defineSignalComponent<CompDef extends ComponentDefinition>(
   tagName: string,
-  hydrate: SignalHydrateLifecycle,
-): Class<HydroActiveComponent> {
+  hydrate: SignalHydrateLifecycle<CompDef>,
+): Class<HydroActiveComponent & CompDef> {
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
+      // Create an accessor for this element.
       const root = ReactiveRootImpl.from(this._connectable, this._scheduler);
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
-      hydrate(accessor);
+
+      // Hydrate this element.
+      const compDef = hydrate(accessor);
+
+      // Apply the component definition to this element.
+      if (compDef) applyDefinition(this, compDef);
     }
   };
 
@@ -37,5 +43,5 @@ export function defineSignalComponent(
 
   customElements.define(tagName, Component);
 
-  return Component;
+  return Component as unknown as Class<HydroActiveComponent & CompDef>;
 }

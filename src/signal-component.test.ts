@@ -4,6 +4,7 @@ import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
+import { parseHtml } from './testing.js';
 
 describe('signal-component', () => {
   useTestCases();
@@ -16,14 +17,14 @@ describe('signal-component', () => {
 
   describe('defineSignalComponent', () => {
     it('upgrades already rendered components', testCase('already-rendered', () => {
-      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
       defineSignalComponent('already-rendered', hydrate);
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     }));
 
     it('upgrades components rendered after definition', () => {
-      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
 
       defineSignalComponent('new-component', hydrate);
       expect(hydrate).not.toHaveBeenCalled();
@@ -52,7 +53,7 @@ describe('signal-component', () => {
     });
 
     it('invokes hydrate callback with a `SignalComponentAccessor` of the component host', () => {
-      const hydrate = jasmine.createSpy<SignalHydrateLifecycle>('hydrate');
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
       defineSignalComponent('host-component', hydrate);
 
       const comp =
@@ -63,6 +64,21 @@ describe('signal-component', () => {
           comp._connectable, TestScheduler.from());
       const accessor = SignalComponentAccessor.fromSignalComponent(comp, root);
       expect(hydrate).toHaveBeenCalledOnceWith(accessor);
+    });
+
+    it('applies the component definition returned by the `hydrate` callback', () => {
+      const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate')
+          .and.returnValue({ foo: 'bar' });
+
+      const CompWithDef = defineSignalComponent(
+          'signal-comp-with-def', hydrate);
+
+      const el = parseHtml(CompWithDef, `
+        <signal-comp-with-def></signal-comp-with-def>
+      `);
+      document.body.appendChild(el);
+
+      expect(el.foo).toBe('bar');
     });
 
     it('sets the class name', () => {
