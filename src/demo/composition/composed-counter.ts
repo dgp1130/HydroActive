@@ -1,57 +1,60 @@
-import { defineSignalComponent } from 'hydroactive';
+import { Component } from 'hydroactive';
 import { live } from 'hydroactive/signal-accessors.js';
+import { WriteableSignal } from 'hydroactive/signals.js';
 
 /**
  * Displays the current count and provides `decrement` and `increment` methods
  * for modifying the count.
  */
-export const CounterDisplay = defineSignalComponent(
-  'counter-display',
-  (host) => {
-    // The `count` state lives within `counter-display`.
-    const count = live(host.query('span').access(), host, Number);
 
-    // These functions are exposed on the `counter-display` custom element.
-    return {
-      decrement(): void {
-        count.set(count() - 1);
-      },
+export class CounterDisplay extends Component {
+  #count!: WriteableSignal<number>;
+  public get count(): number {
+    return this.#count();
+  }
 
-      increment(): void {
-        count.set(count() + 1);
-      },
-    };
-  },
-);
+  protected override onHydrate(): void {
+    this.#count = live(this.host.query('span').access(), this.host, Number);
+  }
 
-declare global {
-  interface HTMLElementTagNameMap {
-    'counter-display': InstanceType<typeof CounterDisplay>;
+  public decrement(): void {
+    this.#count.set(this.#count() - 1);
+  }
+
+  public increment(): void {
+    this.#count.set(this.#count() + 1);
   }
 }
 
-/**
- * Controls an underlying `counter-display` by incrementing and decrementing it
- * based on button clicks.
- */
-export const CounterController = defineSignalComponent(
-  'counter-controller',
-  (host) => {
-    // Get a reference to the underlying `counter-display` element.
-    const inner = host.query('counter-display').access(CounterDisplay).element;
-
-    // Bind the button clicks to modifying the counter.
-    host.query('button#decrement').access().listen(host, 'click', () => {
-      inner.decrement();
-    });
-    host.query('button#increment').access().listen(host, 'click', () => {
-      inner.increment();
-    });
-  },
-);
+customElements.define('counter-display', CounterDisplay);
 
 declare global {
   interface HTMLElementTagNameMap {
-    'counter-controller': InstanceType<typeof CounterController>;
+    'counter-display': CounterDisplay;
+  }
+}
+
+export class CounterController extends Component {
+  protected override onHydrate(): void {
+    // Get a reference to the underlying `counter-display` element.
+    const inner = this.host.query('counter-display').access(CounterDisplay).element;
+
+    // Bind the button clicks to modifying the counter.
+    this.host.query('button#decrement').access().listen(this.host, 'click', () => {
+      inner.decrement();
+    });
+    this.host.query('button#increment').access().listen(this.host, 'click', () => {
+      inner.increment();
+    });
+
+    this.host.query('span#initial').access().write(inner.count, Number);
+  }
+}
+
+customElements.define('counter-controller', CounterController);
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'counter-controller': CounterController;
   }
 }

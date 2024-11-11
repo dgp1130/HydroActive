@@ -8,8 +8,24 @@ import { Class } from './utils/types.js';
 /** TODO */
 const propertyMap = new WeakMap<Component, ReadonlyMap<string | symbol, Descriptor<unknown>>>();
 
+export function define<
+  TagName extends string,
+  Clazz extends Class<Component>,
+>(tagName: TagName, clazz: Clazz): Clazz & {
+  new(): InstanceType<Clazz> & { tagName: Uppercase<TagName> },
+} {
+  customElements.define(tagName, clazz);
+
+  // TODO: Set class name?
+
+  return clazz as any;
+}
+
 /** TODO */
-export abstract class Component extends HydroActiveComponent {
+export abstract class Component<TagName extends string = string>
+    extends HydroActiveComponent {
+  declare tagName: Uppercase<TagName>;
+
   readonly #host = SignalComponentAccessor.fromSignalComponent(
     this,
     ReactiveRootImpl.from(
@@ -94,6 +110,27 @@ type PropertyDecorator<Comp extends Component, Value> = (
   context: ClassAccessorDecoratorContext<Comp, Value>,
 ) => ClassAccessorDecoratorResult<Comp, Value> | void;
 
+type ClassDecorator<
+  Input extends Class<unknown>,
+  Output extends Class<unknown>,
+> = (
+  clazz: Input,
+  context: ClassDecoratorContext<Input>,
+) => Output;
+
+export function customElement<
+  Clazz extends Class<HTMLElement>,
+  TagName extends string,
+>(tagName: TagName): ClassDecorator<
+  Clazz,
+  Clazz & { new (): InstanceType<Clazz> & { tagName: Uppercase<TagName> } }
+> {
+  return (clazz) => {
+    customElements.define(tagName, clazz);
+    return clazz as any;
+  };
+}
+
 // TODO: Is this too smart for its own good? Not possible at runtime to
 // distinguish a `ProxyDescriptor` from a `Value` which happens to be
 // `{ get: () => {}, set: () => {} }`.
@@ -114,9 +151,14 @@ function normalizeDescriptor<Value>(descriptor: Descriptor<Value>):
 }
 
 export function required(): PropertyDecorator<Component, any> {
-  return (_target, ctx) => {
+  return (target, ctx) => {
     let hasBeenSet = false;
     ctx.addInitializer(function () {
+      // TODO: Is this a good idea?
+      if (!this.hasAttribute('defer-hydration')) {
+        throw new Error('Cannot use `@required()` without `defer-hydration`.');
+      }
+
       this._registerHydrationCallback(() => {
         // We use an independent boolean rather than `value === undefined`
         // because the property could be directly assigned to `undefined`, which
@@ -127,7 +169,6 @@ export function required(): PropertyDecorator<Component, any> {
       });
     });
 
-    let value: unknown;
     return {
       init(v: unknown) {
         if (v !== undefined) {
@@ -135,13 +176,9 @@ export function required(): PropertyDecorator<Component, any> {
         }
       },
 
-      get(): unknown {
-        return value;
-      },
-
       set(v: unknown) {
         hasBeenSet = true;
-        value = v;
+        target.set.call(this, v);
       },
     };
   };
@@ -169,7 +206,7 @@ export function hydrate<Comp extends Component, El extends Element>(
   selector: string,
   clazz: Class<El>,
 ): PropertyDecorator<Comp, El> {
-  return use((host) => ({ value: host.ref.query(selector).hydrate(clazz).element }));
+  return use((host) => ({ value: host.ref.query(selector).hydrate(clazz, {}).element }));
 }
 
 export type Descriptor<Value> = ProxyDescriptor<Value> | ValueDescriptor<Value>;

@@ -27,8 +27,23 @@
 
             <button id="decrement">-</button>
             <button id="increment">+</button>
+            <div>The initial count was: <span id="initial">-</span>.</div>
 
             <script src="./composed-counter.js" type="module"></script>
         </counter-controller>
+
+        <counter-host>
+            <h2>Composed Counter 2</h2>
+
+            <counter-derived defer-hydration>
+                <div>The current count is: <span>-</span>.</div>
+            </counter-derived>
+
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+            <div>The initial count was: <span id="initial">10</span>.</div>
+
+            <script src="./hoisted-counter.js" type="module"></script>
+        </counter-host>
     </body>
 </html>
