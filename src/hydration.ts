@@ -52,6 +52,7 @@ export function isHydrated(el: Element): boolean {
 export function hydrate<ElClass extends typeof Element>(
   el: Element,
   elementClass: ElClass,
+  props: PropsOf<InstanceType<ElClass>['tagName']>,
 ): asserts el is InstanceType<ElClass> {
   // Validate that we were given the right class. If it is a custom element and
   // has not yet been defined or upgraded, this check will likely fail and
@@ -83,4 +84,34 @@ export function hydrate<ElClass extends typeof Element>(
   // in `attributeChangedCallback`, though some code may observe asynchronously
   // through `MutationObserver` or polling.
   el.removeAttribute('defer-hydration');
+}
+
+export type PropsOf<TagName extends string> =
+  Lowercase<TagName> extends keyof HTMLElementPropertyMap
+    ? HTMLElementPropertyMap[Lowercase<TagName>]
+    : {}
+;
+
+export type Properties<
+  El extends Element,
+  Props extends {
+    required?: keyof El,
+    optional?: keyof El,
+  },
+> = (
+  'required' extends keyof Props
+    ? Props['required'] extends keyof El
+      ? {[Prop in Props['required']]: El[Prop]}
+      : never
+    : {}
+) & (
+  'optional' extends keyof Props
+    ? Props['optional'] extends keyof El
+      ? {[Prop in Props['optional']]?: El[Prop]}
+      : never
+    : {}
+);
+
+declare global {
+  interface HTMLElementPropertyMap {}
 }

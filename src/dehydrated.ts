@@ -1,6 +1,6 @@
 import { Queryable } from './queryable.js';
 import { ElementAccessor } from './element-accessor.js';
-import { hydrate, isHydrated } from './hydration.js';
+import { PropsOf, hydrate, isHydrated } from './hydration.js';
 import { isCustomElement, isUpgraded } from './custom-elements.js';
 import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
 
@@ -122,9 +122,11 @@ export class Dehydrated<out El extends Element> implements Queryable<El> {
    * @throws If the element is a custom element, but not upgraded.
    * @throws If the element is already hydrated.
    */
-  public hydrate<HydrateEl extends El>(elementClass: { new(): HydrateEl }):
-      ElementAccessor<HydrateEl> {
-    hydrate(this.#native, elementClass);
+  public hydrate<HydrateEl extends El>(
+    elementClass: { new(): HydrateEl },
+    props: PropsOf<El['tagName']>,
+  ): ElementAccessor<HydrateEl> {
+    hydrate(this.#native, elementClass, props);
     return ElementAccessor.from(this.#native);
   }
 
