@@ -1,5 +1,6 @@
 export { cached } from './cached.js';
 export { effect } from './effect.js';
+export { untracked } from './graph.js';
 export { type ReactiveRoot } from './reactive-root.js';
 export { type Equals, signal } from './signal.js';
 export { MacrotaskScheduler } from './schedulers/macrotask-scheduler.js';

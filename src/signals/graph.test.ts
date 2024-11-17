@@ -1,4 +1,4 @@
-import { bindProducer, Consumer, observe, Producer } from './graph.js';
+import { bindProducer, Consumer, observe, Producer, untracked } from './graph.js';
 import { signal } from './signal.js';
 
 describe('graph', () => {
@@ -70,6 +70,62 @@ describe('graph', () => {
       const observed = observe(Consumer.from(), () => 'test');
 
       expect(observed).toBe('test');
+    });
+  });
+
+  describe('untracked', () => {
+    it('ignores producer reads inside the callback', () => {
+      const consumer = Consumer.from();
+
+      const listener = jasmine.createSpy<() => void>('listener');
+      consumer.listen(listener);
+
+      const foo = signal('foo');
+      const bar = signal('bar');
+      consumer.record(() => `${untracked(() => foo())} - ${bar()}`);
+
+      expect(listener).not.toHaveBeenCalled();
+      foo.set('foo2');
+      expect(listener).not.toHaveBeenCalled();
+      bar.set('bar2');
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      consumer.destroy();
+    });
+
+    it('propagates errors', () => {
+      const err = new Error('Untrack this!');
+
+      expect(() => untracked(() => { throw err; })).toThrow(err);
+    });
+
+    it('resets the consumer on error', () => {
+      const consumer = Consumer.from();
+
+      const listener = jasmine.createSpy<() => void>('listener');
+      consumer.listen(listener);
+
+      const foo = signal('foo');
+      const bar = signal('bar');
+      consumer.record(() => {
+        try {
+          untracked(() => {
+            foo(); // `foo` still untracked.
+            throw new Error('Untrack this!');
+          });
+        } catch {}
+
+        // `bar` should not be affected by above error.
+        return bar();
+      });
+
+      expect(listener).not.toHaveBeenCalled();
+      foo.set('foo2');
+      expect(listener).not.toHaveBeenCalled();
+      bar.set('bar2');
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      consumer.destroy();
     });
   });
 

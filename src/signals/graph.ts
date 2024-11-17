@@ -45,6 +45,36 @@ export function observe<Value>(consumer: Consumer, cb: () => Value): Value {
 }
 
 /**
+ * Immediately invokes the given callback in an "untracked" state, meaning any
+ * currently active {@link Consumer} objects will *not* observe signal reads.
+ *
+ * For example, the following effect will rerun whenever `foo` changes, but will
+ * *not* rerun when `bar` changes because it is untracked.
+ *
+ * ```typescript
+ * const foo = signal('foo');
+ * const bar = signal('bar');
+ *
+ * host.effect(() => {
+ *   const f = foo();
+ *   const b = untracked(() => bar());
+ *   console.log(`${f} - ${b}`);
+ * });
+ * ```
+ *
+ * @param cb The callback to invoke in an untracked state.
+ * @returns The result of the callback.
+ */
+export function untracked<Value>(cb: () => Value): Value {
+  const stack = consumerStack.splice(0, consumerStack.length);
+  try {
+    return cb();
+  } finally {
+    consumerStack.push(...stack);
+  }
+}
+
+/**
  * Binds the provided {@link Producer} to the currently observing
  * {@link Consumer}, if present. This will configure the {@link Producer} to
  * notify the currently observing {@link Consumer} whenever its produced value
