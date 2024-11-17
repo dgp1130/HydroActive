@@ -1,8 +1,11 @@
+import { Connectable } from './connectable.js';
 import { Dehydrated } from './dehydrated.js';
 import { ElementAccessor } from './element-accessor.js';
 import { PropsOf } from './hydration.js';
+import { HydroActiveComponent } from './hydroactive-component.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
+import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRoot, Signal, WriteableSignal, signal } from './signals.js';
 import { syncScheduler } from './signals/schedulers/sync-scheduler.js';
 
@@ -140,3 +143,40 @@ export function hydrateAndBindProps<ElClass extends typeof Element>(
 type Bindings<Props extends {}> = {
   [Key in keyof Props]: () => Props[Key];
 };
+
+/** TODO */
+// TODO: Type check events.
+export function bindEmit<Value>(
+  host: SignalComponentAccessor<HydroActiveComponent>,
+  event: string,
+  binding: () => Value,
+): void {
+  host.effect(() => {
+    host.element.dispatchEvent(new CustomEvent(event, { detail: binding() }));
+  }, syncScheduler);
+}
+
+/** TODO */
+export function signalFromEvent<Value>(
+  connectable: Connectable,
+  el: Element,
+  event: string,
+  initial: Value,
+): () => Value {
+  const sig = signal(initial);
+  function handler(evt: Event): void {
+    if (!(evt instanceof CustomEvent)) throw new Error('Expected a `CustomEvent`.');
+
+    sig.set(evt.detail);
+  }
+
+  connectable.connected(() => {
+    el.addEventListener(event, handler);
+
+    return () => {
+      el.removeEventListener(event, handler);
+    };
+  });
+
+  return () => sig();
+}
