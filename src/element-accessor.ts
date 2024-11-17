@@ -141,7 +141,7 @@ export class ElementAccessor<out El extends Element> implements Queryable<El> {
       this.element.addEventListener(event, handler, { capture, passive });
 
       return () => {
-        this.element.removeEventListener(event, handler, { capture })
+        this.element.removeEventListener(event, handler, { capture });
       };
     });
   }
