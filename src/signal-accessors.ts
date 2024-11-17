@@ -1,4 +1,6 @@
+import { Dehydrated } from './dehydrated.js';
 import { ElementAccessor } from './element-accessor.js';
+import { PropsOf } from './hydration.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
 import { ReactiveRoot, Signal, WriteableSignal, signal } from './signals.js';
@@ -109,3 +111,32 @@ export function bindProp<El extends Element>(
     applyProp(el.element);
   }, syncScheduler);
 }
+
+/** TODO */
+export function hydrateAndBindProps<ElClass extends typeof Element>(
+  el: Dehydrated<InstanceType<ElClass>>,
+  root: ReactiveRoot,
+  elClass: ElClass,
+  propBindings: Bindings<PropsOf<InstanceType<ElClass>>>,
+): ElementAccessor<InstanceType<ElClass>> {
+  const props = Object.fromEntries(Object.entries(propBindings)
+      .map(([ key, binding ]) => [ key, (binding as any)() ])
+  );
+  const accessor = el.hydrate(elClass as any, props as any);
+
+  // We need to invoke the bindings a second time because of timing differences.
+  // Hydration requires the element to have its parameters provided
+  // synchronously, but bindings won't execute until the next rAF and we need
+  // any signal dependencies to be watched.
+  for (const [ key, binding ] of Object.entries(propBindings)) {
+    bindProp(accessor, root, (el) => {
+      (el as any)[key] = (binding as any)();
+    });
+  }
+
+  return accessor;
+}
+
+type Bindings<Props extends {}> = {
+  [Key in keyof Props]: () => Props[Key];
+};
