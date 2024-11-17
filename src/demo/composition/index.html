@@ -45,5 +45,22 @@
 
             <script src="./hoisted-counter.js" type="module"></script>
         </counter-host>
+
+        <orchestration-host>
+            <h2>Orchestrated Counter</h2>
+
+            <orchestration-display defer-hydration>
+                <div>The current count is: <span>-</span>.</div>
+            </orchestration-display>
+
+            <orchestration-initial defer-hydration>
+                <div>The initial count was: <span>15</span>.</div>
+            </orchestration-initial>
+
+            <button id="decrement">-</button>
+            <button id="increment">+</button>
+
+            <script src="./orchestrated-counter.js" type="module"></script>
+        </orchestration-host>
     </body>
 </html>
