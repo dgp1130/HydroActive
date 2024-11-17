@@ -2,6 +2,7 @@ import { ElementAccessor } from './element-accessor.js';
 import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './serializer-tokens.js';
 import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
 import { ReactiveRoot, Signal, WriteableSignal, signal } from './signals.js';
+import { syncScheduler } from './signals/schedulers/sync-scheduler.js';
 
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
@@ -96,4 +97,15 @@ export function bind<
     // Update the DOM with the new value.
     serializer.serializeTo(value, el.element);
   });
+}
+
+/** TODO */
+export function bindProp<El extends Element>(
+  el: ElementAccessor<El>,
+  root: ReactiveRoot,
+  applyProp: (el: El) => void,
+): void {
+  root.effect(() => {
+    applyProp(el.element);
+  }, syncScheduler);
 }
