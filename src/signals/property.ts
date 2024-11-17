@@ -1,5 +1,6 @@
 import { Component } from 'hydroactive';
-import { WriteableSignal } from './types.js';
+import { untracked } from './graph.js';
+import { SIGNAL, SignalKind, WriteableSignal } from './types.js';
 import { signal } from './signal.js';
 import { HydroActiveComponent } from 'hydroactive/hydroactive-component.js';
 
@@ -12,6 +13,68 @@ const componentPropertyMap = new WeakMap<
   HydroActiveComponent,
   Map<string | number | symbol, WriteableSignal<unknown>>
 >();
+
+/** TODO */
+export function deferredSignal<Value>(): WriteableSignal<Value> {
+  // Unsound: Sneak an `undefined` into the signal.
+  const sig = signal(undefined as Value);
+
+  let hasBeenSet = false;
+  const wrapper: WriteableSignal<Value> = () => {
+    if (!hasBeenSet) throw new Error('`deferredSignal` must be set before it is read. Was it properly initialized?');
+    return sig();
+  };
+  wrapper.set = (val: Value) => {
+    hasBeenSet = true;
+    return sig.set(val);
+  };
+  wrapper.readonly = sig.readonly;
+  wrapper[SIGNAL] = SignalKind.Deferred;
+
+  return wrapper;
+}
+
+/** TODO */
+export function propFromSignal<Value>(sig: WriteableSignal<Value>): Value {
+  const result: WriteableSignal<Value> = () => sig();
+  result.set = sig.set;
+  result.readonly = sig.readonly;
+  result[SIGNAL] = SignalKind.Property;
+  return result as Value;
+}
+
+/** TODO */
+export function isPropertySignal(value: unknown): value is WriteableSignal<unknown> {
+  return typeof value === 'function'
+      && SIGNAL in value
+      && value[SIGNAL] === SignalKind.Property
+  ;
+}
+
+/** TODO */
+export function property<Comp extends Component>(): SignalPropertyDecorator<Comp, any> {
+  return () => {
+    let sig: WriteableSignal<unknown>;
+    return {
+      init(value: unknown): WriteableSignal<unknown> {
+        if (!isPropertySignal(value)) {
+          throw new Error('Expected a `propFromSignal` value.');
+        }
+
+        sig = value;
+        return value;
+      },
+
+      get(): unknown {
+        return untracked(sig);
+      },
+
+      set(value: unknown): void {
+        sig.set(value);
+      },
+    };
+  };
+}
 
 export function reactiveProp<Comp extends Component>(): SignalPropertyDecorator<Comp, any> {
   return (target, ctx) => {
@@ -32,7 +95,9 @@ export function reactiveProp<Comp extends Component>(): SignalPropertyDecorator<
         // is inside the signal, not the class property value.
         target.get.call(this);
 
-        return componentPropertyMap.get(instance)!.get(propName)!();
+        return untracked(() => {
+          return componentPropertyMap.get(instance)!.get(propName)!();
+        });
       },
 
       set(value: unknown): void {

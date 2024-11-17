@@ -2,6 +2,7 @@ import { Connector, OnConnect } from './connectable.js';
 import { ElementAccessor } from './element-accessor.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
+import { isPropertySignal } from './signals/property.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { Class } from './utils/types.js';
 
@@ -170,10 +171,19 @@ export function required(): PropertyDecorator<Component, any> {
     });
 
     return {
-      init(v: unknown) {
-        if (v !== undefined) {
+      init(v: unknown): unknown {
+        // Throw an error when `@required()` is given an initial value:
+        // `@required() foo = 'test';`
+        // As this indicates a logical error, there is no need for `@required()`.
+        //
+        // Exception: Signal properties are proxies of signals and do not
+        // actually provide a default value, therefore they are exempted.
+        // `@required() foo = propFromSignal(this.#foo);`
+        if (v !== undefined && !isPropertySignal(v)) {
           throw new Error(`\`@required()\` was attached to a property (\`${ctx.name.toString()}\`) with an initializer, implying it is not required. Either remove the initializer or remove the \`@required()\`.`);
         }
+
+        return v;
       },
 
       set(v: unknown) {

@@ -1,7 +1,7 @@
 /** @fileoverview Defines the creation of the core signal primitive. */
 
 import { Producer, bindProducer } from './graph.js';
-import { WriteableSignal } from './types.js';
+import { SIGNAL, SignalKind, WriteableSignal } from './types.js';
 
 /**
  * Creates a new {@link WriteableSignal} with the given initial value.
@@ -36,6 +36,7 @@ export function signal<Value>(initial: Value, { equals = Object.is }: {
     if (dirty) producer.notifyConsumers();
   };
   sig.readonly = () => () => sig();
+  sig[SIGNAL] = SignalKind.Signal;
 
   return sig as WriteableSignal<Value>;
 }

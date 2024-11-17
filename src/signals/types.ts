@@ -1,5 +1,13 @@
 /** @fileoverview Defines core signal types. */
 
+/** TODO */
+export const SIGNAL = Symbol('Signal');
+
+/** TODO */
+export function isSignal(value: unknown): value is WriteableSignal<unknown> {
+  return typeof value === 'function' && value !== null && SIGNAL in value;
+}
+
 /**
  * A readonly signal which returns type `Value` and can be observed to trigger
  * events when the underlying value changes.
@@ -25,4 +33,14 @@ export interface WriteableSignal<Value> extends Signal<Value> {
    * @returns A readonly accessor of this signal.
    */
   readonly(): Signal<Value>;
+
+  /** TODO */
+  [SIGNAL]: SignalKind;
+}
+
+/** TODO */
+export enum SignalKind {
+  Signal = 'signal',
+  Deferred = 'deferred',
+  Property = 'property',
 }
