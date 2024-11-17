@@ -123,6 +123,13 @@ export class Producer<Value> {
    */
   public addConsumer(consumer: Consumer): void {
     this.#consumers.add(consumer);
+
+    if (this.#consumers.size === 1) {
+      for (const callback of this.#observedCallbacks) {
+        const unobserve = callback();
+        if (unobserve) this.#unobservedCallbacks.add(unobserve);
+      }
+    }
   }
 
   /**
@@ -133,6 +140,11 @@ export class Producer<Value> {
    */
   public removeConsumer(consumer: Consumer): void {
     this.#consumers.delete(consumer);
+
+    if (this.#consumers.size === 0) {
+      for (const callback of this.#unobservedCallbacks) callback();
+      this.#unobservedCallbacks.clear();
+    }
   }
 
   /**
@@ -145,6 +157,14 @@ export class Producer<Value> {
     for (const consumer of Array.from(this.#consumers)) {
       consumer.notifyListeners();
     }
+  }
+
+  readonly #observedCallbacks = new Set<() => void | (() => void)>();
+  readonly #unobservedCallbacks = new Set<() => void>();
+
+  /** TODO */
+  public observed(callback: () => void | (() => void)): void {
+    this.#observedCallbacks.add(callback);
   }
 }
 

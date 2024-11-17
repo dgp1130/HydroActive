@@ -3,7 +3,7 @@
  *     whenever a dependency signal changes.
  */
 
-import { Consumer } from './graph.js';
+import { Consumer, untracked } from './graph.js';
 import { MacrotaskScheduler } from './schedulers/macrotask-scheduler.js';
 import { CancelAction, Scheduler } from './schedulers/scheduler.js';
 
@@ -54,3 +54,25 @@ export function effect(
 
 /** Stops and disposes the associated effect. */
 export type EffectDisposer = () => void;
+
+/**
+ * TODO: An effect which only runs on subsequent mutations, not the initial one.
+ */
+export function deferredEffect(
+  action: () => void,
+  reaction: () => void,
+  scheduler?: Scheduler,
+): EffectDisposer {
+  let firstExecution = true;
+  return effect(() => {
+    action();
+    if (firstExecution) {
+      firstExecution = false;
+    } else {
+      // Don't want to find new signals in the reaction.
+      untracked(() => {
+        reaction();
+      });
+    }
+  }, scheduler);
+}
