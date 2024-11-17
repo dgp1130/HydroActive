@@ -7,7 +7,9 @@ import { ElementSerializerToken, ResolveSerializer, resolveSerializer } from './
 import { ElementSerializable, ElementSerializer, Serialized } from './serializers.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRoot, Signal, WriteableSignal, signal } from './signals.js';
+import { bindProducer, Producer } from './signals/graph.js';
 import { syncScheduler } from './signals/schedulers/sync-scheduler.js';
+import { SIGNAL, SignalKind } from './signals/types.js';
 
 /** Elements whose text content is currently bound to a reactive signal. */
 const boundElements = new WeakSet<Element>();
@@ -179,4 +181,55 @@ export function signalFromEvent<Value>(
   });
 
   return () => sig();
+}
+
+interface ProxySignal<Value> extends WriteableSignal<Value> {
+  markDirty(): void;
+}
+
+/** Probably a better implementation is possible? */
+function proxySignal<Value>({ get, set }: {
+  get: () => Value,
+  set: (value: Value) => void,
+}): ProxySignal<Value> {
+  const producer = Producer.from(get);
+
+  const sig: ProxySignal<Value> = () => {
+    bindProducer(producer);
+
+    return producer.poll();
+  };
+  sig.set = set;
+  sig.readonly = () => get;
+  sig[SIGNAL] = SignalKind.Signal;
+  sig.markDirty = () => {
+    producer.notifyConsumers();
+  };
+  return sig;
+}
+
+/** TODO */
+export function signalFromProp<
+  El extends Element,
+  PropName extends keyof El & string,
+>(connectable: Connectable, el: El, propName: PropName):
+    WriteableSignal<El[PropName]> {
+  const sig = proxySignal({
+    get: () => el[propName],
+    set: (value: El[PropName]) => el[propName] = value,
+  });
+
+  const eventName = `${propName}Changed`;
+  function handler(): void {
+    sig.markDirty();
+  }
+  connectable.connected(() => {
+    el.addEventListener(eventName, handler);
+
+    return () => {
+      el.removeEventListener(eventName, handler);
+    };
+  });
+
+  return sig;
 }
