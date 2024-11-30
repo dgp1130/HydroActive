@@ -1,6 +1,6 @@
 import { Component, customElement, required } from 'hydroactive/component-class.js';
 import { Properties } from 'hydroactive/hydration.js';
-import { bind, bindEmit, signalFromEvent } from 'hydroactive/signal-accessors.js';
+import { bind, bindEmit, signalFromProp } from 'hydroactive/signal-accessors.js';
 import { deferredSignal, property, propFromSignal } from 'hydroactive/signals.js';
 
 @customElement('orchestration-initial')
@@ -75,13 +75,13 @@ export class OrchestrationHost extends Component<'orchestration-host'> {
         .element;
     display.log();
 
-    const count = signalFromEvent(this.host, display, 'countChanged', display.count);
+    const count = signalFromProp(this.host, display, 'count');
 
     this.host.query('button#decrement').access().listen(this.host, 'click', () => {
-      display.count--;
+      count.set(count() - 1);
     });
     this.host.query('button#increment').access().listen(this.host, 'click', () => {
-      display.count++;
+      count.set(count() + 1);
     });
 
     bind(
