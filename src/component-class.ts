@@ -1,6 +1,7 @@
 import { Connector, OnConnect } from './connectable.js';
 import { ElementAccessor } from './element-accessor.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
+import { ReactiveValue } from './reactive-value.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { isPropertySignal } from './signals/property.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
@@ -22,6 +23,7 @@ export function define<
   return clazz as any;
 }
 
+// TODO: Memory leak?
 /** TODO */
 export abstract class Component<TagName extends string = string>
     extends HydroActiveComponent {
@@ -176,10 +178,11 @@ export function required(): PropertyDecorator<Component, any> {
         // `@required() foo = 'test';`
         // As this indicates a logical error, there is no need for `@required()`.
         //
-        // Exception: Signal properties are proxies of signals and do not
-        // actually provide a default value, therefore they are exempted.
+        // Exception: Signal properties / reactive values are proxies of signals
+        // and do not actually provide a default value, therefore they are
+        // exempted.
         // `@required() foo = propFromSignal(this.#foo);`
-        if (v !== undefined && !isPropertySignal(v)) {
+        if (v !== undefined && !isPropertySignal(v) && !(v instanceof ReactiveValue)) {
           throw new Error(`\`@required()\` was attached to a property (\`${ctx.name.toString()}\`) with an initializer, implying it is not required. Either remove the initializer or remove the \`@required()\`.`);
         }
 
