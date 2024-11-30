@@ -1,7 +1,7 @@
 import { Component, customElement, required } from 'hydroactive/component-class.js';
 import { Properties } from 'hydroactive/hydration.js';
-import { bind, hydrateAndBindProps } from 'hydroactive/signal-accessors.js';
-import { reactiveProp, signal } from 'hydroactive/signals.js';
+import { bind, bindEmit, signalFromEvent } from 'hydroactive/signal-accessors.js';
+import { deferredSignal, property, propFromSignal } from 'hydroactive/signals.js';
 
 @customElement('orchestration-initial')
 export class OrchestrationInitial extends Component<'orchestration-initial'> {
@@ -24,16 +24,30 @@ declare global {
 
 @customElement('orchestration-display')
 export class OrchestrationDisplay extends Component<'orchestration-display'> {
+  readonly #count = deferredSignal<number>();
+
   @required()
-  @reactiveProp()
-  public accessor count!: number;
+  @property()
+  public accessor count = propFromSignal(this.#count);
 
   protected override onHydrate(): void {
-    bind(this.host.query('span').access(), this.host, Number, () => this.count);
+    bindEmit(this.host, 'countChanged', this.#count);
+
+    bind(this.host.query('span').access(), this.host, Number, this.#count);
+
+    this.host.connected(() => {
+      const handle = setInterval(() => {
+        this.#count.set(this.#count() + 1);
+      }, 1_000);
+
+      return () => {
+        clearInterval(handle);
+      };
+    });
   }
 
   public log(): void {
-    console.log(this.count);
+    console.log(this.#count());
   }
 }
 
@@ -56,23 +70,26 @@ export class OrchestrationHost extends Component<'orchestration-host'> {
         .hydrate(OrchestrationInitial)
         .element;
 
-    const count = signal(initialCount);
-    count.set(count() + 1); // Increment for fun.
-
-    const display = hydrateAndBindProps(
-      this.host.query('orchestration-display'),
-      this.host,
-      OrchestrationDisplay,
-      { count },
-    ).element;
+    const display = this.host.query('orchestration-display')
+        .hydrate(OrchestrationDisplay, { count: initialCount })
+        .element;
     display.log();
 
+    const count = signalFromEvent(this.host, display, 'countChanged', display.count);
+
     this.host.query('button#decrement').access().listen(this.host, 'click', () => {
-      count.set(count() - 1);
+      display.count--;
     });
     this.host.query('button#increment').access().listen(this.host, 'click', () => {
-      count.set(count() + 1);
+      display.count++;
     });
+
+    bind(
+      this.host.query('span#derived').access(),
+      this.host,
+      Number,
+      () => count() - 1,
+    );
   }
 }
 
