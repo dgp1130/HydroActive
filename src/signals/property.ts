@@ -3,6 +3,7 @@ import { untracked } from './graph.js';
 import { SIGNAL, SignalKind, WriteableSignal } from './types.js';
 import { signal } from './signal.js';
 import { HydroActiveComponent } from 'hydroactive/hydroactive-component.js';
+import { fromSignal } from './reactive-value.js';
 
 type SignalPropertyDecorator<Comp extends Component, Value> = (
   target: ClassAccessorDecoratorTarget<Comp, Value>,
@@ -14,6 +15,10 @@ const componentPropertyMap = new WeakMap<
   Map<string | number | symbol, WriteableSignal<unknown>>
 >();
 
+declare global {
+  var throwOnUnsetDeferRead: boolean | undefined;
+}
+
 /** TODO */
 export function deferredSignal<Value>(): WriteableSignal<Value> {
   // Unsound: Sneak an `undefined` into the signal.
@@ -21,7 +26,9 @@ export function deferredSignal<Value>(): WriteableSignal<Value> {
 
   let hasBeenSet = false;
   const wrapper: WriteableSignal<Value> = () => {
-    if (!hasBeenSet) throw new Error('`deferredSignal` must be set before it is read. Was it properly initialized?');
+    // TODO: Remove global.
+    const throwOnUnsetDeferRead = globalThis.throwOnUnsetDeferRead ?? true;
+    if (throwOnUnsetDeferRead && !hasBeenSet) throw new Error('`deferredSignal` must be set before it is read. Was it properly initialized?');
     return sig();
   };
   wrapper.set = (val: Value) => {
@@ -36,11 +43,7 @@ export function deferredSignal<Value>(): WriteableSignal<Value> {
 
 /** TODO */
 export function propFromSignal<Value>(sig: WriteableSignal<Value>): Value {
-  const result: WriteableSignal<Value> = () => sig();
-  result.set = sig.set;
-  result.readonly = sig.readonly;
-  result[SIGNAL] = SignalKind.Property;
-  return result as Value;
+  return fromSignal(sig) as Value;
 }
 
 /** TODO */
