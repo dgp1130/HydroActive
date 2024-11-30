@@ -1,8 +1,9 @@
 import { Queryable } from './queryable.js';
 import { ElementAccessor } from './element-accessor.js';
-import { hydrate, isHydrated } from './hydration.js';
+import { PropsOf, hydrate, isHydrated } from './hydration.js';
 import { isCustomElement, isUpgraded } from './custom-elements.js';
 import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
+import { Class } from './utils/types.js';
 
 /**
  * Represents a "dehydrated" reference to an element. The element is *not*
@@ -116,15 +117,20 @@ export class Dehydrated<out El extends Element> implements Queryable<El> {
    *
    * @param elementClass The class of the element to hydrate. This helps ensure
    *     that the custom element has been evaluated and defined.
+   * @param props Properties to assign to the element during hydration.
    * @returns The underlying element, hydrated and wrapped in an
    *     {@link ElementAccessor} object.
    * @throws If the element does not extend the provided class.
    * @throws If the element is a custom element, but not upgraded.
    * @throws If the element is already hydrated.
    */
-  public hydrate<HydrateEl extends El>(elementClass: { new(): HydrateEl }):
-      ElementAccessor<HydrateEl> {
-    hydrate(this.#native, elementClass);
+  public hydrate<Clazz extends Class<El>>(
+    elementClass: Clazz,
+    ...[ props ]: {} extends PropsOf<InstanceType<Clazz>>
+      ? [ props?: PropsOf<InstanceType<Clazz>> ]
+      : [ props: PropsOf<InstanceType<Clazz>> ]
+  ): ElementAccessor<InstanceType<Clazz>> {
+    hydrate(this.#native, elementClass, props);
     return ElementAccessor.from(this.#native);
   }
 

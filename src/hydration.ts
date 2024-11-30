@@ -45,6 +45,7 @@ export function isHydrated(el: Element): boolean {
  * @param el The {@link Element} to hydrate.
  * @param elementClass The class of the element to hydrate. This helps ensure
  *     that the custom element has been evaluated and defined.
+ * @param props Properties to assign to the element during hydration.
  * @throws If the element does not extend the provided class.
  * @throws If the element is a custom element, but not upgraded.
  * @throws If the element is already hydrated.
@@ -52,6 +53,9 @@ export function isHydrated(el: Element): boolean {
 export function hydrate<ElClass extends typeof Element>(
   el: Element,
   elementClass: ElClass,
+  ...[ props ]: {} extends PropsOf<InstanceType<ElClass>>
+    ? [ props?: PropsOf<InstanceType<ElClass>> ]
+    : [ props: PropsOf<InstanceType<ElClass>> ]
 ): asserts el is InstanceType<ElClass> {
   // Validate that we were given the right class. If it is a custom element and
   // has not yet been defined or upgraded, this check will likely fail and
@@ -79,8 +83,89 @@ export function hydrate<ElClass extends typeof Element>(
         (el.tagName.toLowerCase())}>\` was already hydrated and cannot be hydrated again.`);
   }
 
+  // Assign any properties prior to triggering hydration.
+  if (props) {
+    for (const [ prop, value ] of Object.entries(props)) {
+      (el as any)[prop] = value;
+    }
+  }
+
   // Trigger hydration. Most components will observe this removal synchronously
   // in `attributeChangedCallback`, though some code may observe asynchronously
   // through `MutationObserver` or polling.
   el.removeAttribute('defer-hydration');
+}
+
+/**
+ * Returns the hydration properties of the given element based on a lookup of
+ * the tag name in {@link HTMLElementHydrationParamsMap}. If the given element
+ * is not in the map, then *all* of its properties are considered optional
+ * hydration parameters.
+ *
+ * NOTE: The provided element must have a `tagName` property of a specific
+ * string literal. By default, custom elements have `tagName: string` which is
+ * not sufficient to perform this lookup in the global map. Elements should
+ * have:
+ *
+ * ```typescript
+ * class MyElement extends HTMLElement {
+ *   declare tagName: 'MY-ELEMENT'; // Necessary for `PropsOf`.
+ * }
+ *
+ * customElements.define('my-element', MyElement);
+ * ```
+ */
+export type PropsOf<El extends Element> =
+  Lowercase<El['tagName']> extends keyof HTMLElementHydrationParamsMap
+    ? HTMLElementHydrationParamsMap[Lowercase<El['tagName']>]
+    : { [Key in keyof El]?: El[Key] }
+;
+
+/**
+ * Extracts the listed required and optional properties to be set during
+ * hydration. Optional properties may be omitted while required properties
+ * *must* be provided during hydration.
+ *
+ * @param El The {@link Element} which contains the following properties.
+ * @param Props The required and optional properties which exist on {@link El}
+ *     to provide during hydration.
+ * @returns A {@link HydrationParams} type listing out the allowed properties
+ *     and their specific types.
+ */
+export type Properties<
+  El extends Element,
+  Props extends {
+    required?: keyof El,
+    optional?: keyof El,
+  },
+> = (
+  'required' extends keyof Props
+    ? Props['required'] extends keyof El
+      ? {[Prop in Props['required']]: El[Prop]}
+      : never
+    : {}
+) & (
+  'optional' extends keyof Props
+    ? Props['optional'] extends keyof El
+      ? {[Prop in Props['optional']]?: El[Prop]}
+      : never
+    : {}
+);
+
+/**
+ * Specifies parameters which can be set on an element during hydration. This
+ * object is typically created via {@link Properties} and selecting specific
+ * properties of an existing element type.
+ */
+export type HydrationParams = Record<string | number | symbol, unknown>;
+
+declare global {
+  /**
+   * A map of HTML element tag names to a {@link HydrationParams} object
+   * listing properties which can be provided at hydration time for the
+   * associated element.
+   *
+   * Similar in structure and usage as {@link HTMLElementTagNameMap}.
+   */
+  interface HTMLElementHydrationParamsMap {}
 }

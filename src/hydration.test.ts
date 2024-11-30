@@ -1,6 +1,52 @@
-import { hydrate, isHydrated } from './hydration.js';
+import { hydrate, isHydrated, Properties } from './hydration.js';
 import { NoopComponent } from './testing/noop-component.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
+
+class ParamsElForTyping extends HTMLElement {
+  declare tagName: 'HYDRATION-PARAMS-CE';
+
+  foo!: string;
+  bar!: number;
+  baz!: boolean;
+}
+
+declare global {
+  interface HTMLElementHydrationParamsMap {
+    'hydration-params-ce': Properties<ParamsElForTyping, {
+      required: 'foo',
+      optional: 'bar' | 'baz',
+    }>;
+  }
+}
+
+class UntaggedElForTyping extends HTMLElement {
+  // Element *without* a tightly-defined `tagName` property.
+  // declare tagName: 'HYDRATION-UNTAGGED-CE';
+
+  foo!: string;
+}
+
+declare global {
+  // Unused due to lack of known tag name.
+  interface HTMLElementHydrationParamsMap {
+    'hydration-untagged-ce': Properties<UntaggedElForTyping, {
+      optional: 'foo',
+    }>;
+  }
+}
+
+class UndeclaredParamsElForTyping extends HTMLElement {
+  declare tagName: 'HYDRATION-UNDECLARED-CE';
+
+  foo!: string;
+}
+
+declare global {
+  interface HTMLElementHydrationParamsMap {
+    // Element *without* an entry in the property map.
+    // 'hydration-undeclared-ce': Properties<UndeclaredParamsElForTyping, {}>;
+  }
+}
 
 describe('hydrate', () => {
   describe('isHydrated', () => {
@@ -73,6 +119,38 @@ describe('hydrate', () => {
       expect((el as NoopComponent).hydrated).toBeTrue();
     }));
 
+    it('applies the given parameters prior to hydration', () => {
+      let fooAtHydration: string | undefined = undefined;
+
+      class ParamsCE extends HTMLElement {
+        public foo!: string;
+
+        static readonly observedAttributes = [ 'defer-hydration' ];
+        attributeChangedCallback(
+          name: string,
+          _oldValue: string | null,
+          newValue: string | null,
+        ): void {
+          if (name === 'defer-hydration' && newValue === null) this.hydrate();
+        }
+
+        private hydrate(): void {
+          fooAtHydration = this.foo;
+        }
+      }
+      customElements.define('params-ce', ParamsCE);
+
+      const el = document.createElement('params-ce') as ParamsCE;
+      el.setAttribute('defer-hydration', '');
+      document.body.append(el);
+
+      hydrate(el, ParamsCE, {
+        foo: 'test',
+      });
+
+      expect(fooAtHydration!).toBe('test');
+    });
+
     it('throws an error when given the wrong class', testCase('deferred', (el) => {
       class WrongComponent extends HTMLElement {}
 
@@ -113,6 +191,117 @@ describe('hydrate', () => {
         hydrate(el, NoopComponent);
 
         el satisfies NoopComponent;
+      };
+    });
+
+    it('narrows the props type to hydration params', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+        hydrate(el, ParamsElForTyping, {
+          foo: 'test',
+          bar: 1234,
+          baz: true,
+
+          // @ts-expect-error Extra properties not allowed.
+          hello: 'world',
+        });
+      };
+    });
+
+    it('requires required params', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+
+        // @ts-expect-error Params object required.
+        hydrate(el, ParamsElForTyping);
+
+        // @ts-expect-error Required `foo` missing.
+        hydrate(el, ParamsElForTyping, {
+          bar: 1234,
+          baz: true,
+        });
+      };
+    });
+
+    it('does not require optional params', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+
+        hydrate(el, ParamsElForTyping, {
+          foo: 'test',
+          // Missing `bar` and `baz` are allowed.
+        });
+      };
+    });
+
+    it('type checks individual params', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+
+        hydrate(el, ParamsElForTyping, {
+          // @ts-expect-error Should be string.
+          foo: 1234,
+
+          // @ts-expect-error Should be number.
+          bar: 'test',
+
+          // @ts-expect-error Should be boolean.
+          baz: 'test',
+        });
+      };
+    });
+
+    it('considers all properties optional for untagged elements', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+
+        // No properties required.
+        hydrate(el, UntaggedElForTyping);
+        hydrate(el, UntaggedElForTyping, {});
+
+        hydrate(el, UntaggedElForTyping, {
+          // Can set any arbitrary properties.
+          foo: 'test',
+
+          // Even properties from the super class.
+          hidden: true,
+
+          // @ts-expect-error Unknown properties disallowed.
+          bar: 'test',
+        });
+      };
+    });
+
+    it('considers all properties optional for elements not in the map', () => {
+      // Type-only test, only needs to compile, not execute.
+      expect().nothing();
+      () => {
+        const el = {} as Element;
+
+        // No properties required.
+        hydrate(el, UndeclaredParamsElForTyping);
+        hydrate(el, UndeclaredParamsElForTyping, {});
+
+        hydrate(el, UndeclaredParamsElForTyping, {
+          // Can set any arbitrary properties.
+          foo: 'test',
+
+          // Even properties from the super class.
+          hidden: true,
+
+          // @ts-expect-error Unknown properties disallowed.
+          bar: 'test',
+        });
       };
     });
   });

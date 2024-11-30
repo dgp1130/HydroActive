@@ -1,7 +1,24 @@
 import { Dehydrated } from './dehydrated.js';
 import { ElementAccessor } from './element-accessor.js';
-import { isHydrated } from './hydration.js';
+import { isHydrated, Properties } from './hydration.js';
 import { parseHtml } from './testing.js';
+
+class ParamsElForTyping extends HTMLElement {
+  declare tagName: 'DEHYDRATED-PARAMS-CE';
+
+  foo!: string;
+  bar!: number;
+  baz!: boolean;
+}
+
+declare global {
+  interface HTMLElementHydrationParamsMap {
+    'dehydrated-params-ce': Properties<ParamsElForTyping, {
+      required: 'foo',
+      optional: 'bar' | 'baz',
+    }>;
+  }
+}
 
 describe('dehydrated', () => {
   describe('Dehydrated', () => {
@@ -138,6 +155,23 @@ describe('dehydrated', () => {
 
           dehydrated.hydrate(HTMLDivElement) satisfies
               ElementAccessor<HTMLDivElement>;
+        };
+      });
+
+      it('narrows the props type to hydration params', () => {
+        // Type-only test, only needs to compile, not execute.
+        expect().nothing();
+        () => {
+          const dehydrated = {} as Dehydrated<Element>;
+
+          dehydrated.hydrate(ParamsElForTyping, {
+            foo: 'test',
+            bar: 1234,
+            baz: true,
+
+            // @ts-expect-error Extra properties not allowed.
+            hello: 'world',
+          });
         };
       });
     });
