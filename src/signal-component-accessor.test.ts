@@ -35,7 +35,7 @@ describe('signal-component-accessor', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         root.effect(effect);
-        expect(scheduler.isStable()).toBeFalse();
+        expect(tracker.isStable()).toBeFalse();
         expect(effect).not.toHaveBeenCalled();
 
         scheduler.flush();

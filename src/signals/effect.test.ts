@@ -1,4 +1,5 @@
 import { effect } from './effect.js';
+import { StabilityTracker } from './schedulers/stability-tracker.js';
 import { TestScheduler } from './schedulers/test-scheduler.js';
 import { signal } from './signal.js';
 
@@ -39,7 +40,9 @@ describe('effect', () => {
     });
 
     it('rerecords new dependency when a dependency signal changes', () => {
-      const scheduler = TestScheduler.from();
+      const tracker = StabilityTracker.from();
+      const testScheduler = TestScheduler.from();
+      const trackedScheduler = tracker.wrap(testScheduler);
       const value1 = signal(1);
       const value2 = signal(2);
 
@@ -63,35 +66,35 @@ describe('effect', () => {
             }
           });
 
-      const dispose = effect(action, scheduler);
+      const dispose = effect(action, trackedScheduler);
       expect(action).not.toHaveBeenCalled();
-      scheduler.flush();
+      testScheduler.flush();
       expect(action).toHaveBeenCalledOnceWith();
       action.calls.reset();
 
       // Unrelated signals don't trigger the effect.
       value2.set(3);
-      expect(scheduler.isStable()).toBeTrue();
+      expect(tracker.isStable()).toBeTrue();
       expect(action).not.toHaveBeenCalled();
 
       // Dependency signal *does* trigger the effect.
       value1.set(4);
       expect(action).not.toHaveBeenCalled();
-      expect(scheduler.isStable()).toBeFalse();
+      expect(tracker.isStable()).toBeFalse();
 
-      scheduler.flush();
+      testScheduler.flush();
       expect(action).toHaveBeenCalledOnceWith();
       action.calls.reset();
 
       // Old dependencies don't trigger the effect.
       value1.set(5);
       expect(action).not.toHaveBeenCalled();
-      expect(scheduler.isStable()).toBeTrue();
+      expect(tracker.isStable()).toBeTrue();
 
       // New dependencies do trigger the effect.
       value2.set(6);
       expect(action).not.toHaveBeenCalled();
-      scheduler.flush();
+      testScheduler.flush();
       expect(action).toHaveBeenCalledOnceWith();
 
       dispose();
@@ -138,15 +141,17 @@ describe('effect', () => {
 
     describe('dispose', () => {
       it('cleans up the effect', () => {
-        const scheduler = TestScheduler.from();
+        const tracker = StabilityTracker.from();
+        const testScheduler = TestScheduler.from();
+        const trackedScheduler = tracker.wrap(testScheduler);
         const value = signal(1);
         const action = jasmine.createSpy<() => void>('action')
             .and.callFake(() => { value(); });
 
-        const dispose = effect(action, scheduler);
+        const dispose = effect(action, trackedScheduler);
 
         // Initial record.
-        scheduler.flush();
+        testScheduler.flush();
         expect(action).toHaveBeenCalledOnceWith();
         action.calls.reset();
 
@@ -154,37 +159,40 @@ describe('effect', () => {
 
         // Should not react to signal change.
         value.set(2);
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
       });
 
       it('cancels a pending initial call', () => {
-        const scheduler = TestScheduler.from();
+        const tracker = StabilityTracker.from();
+        const scheduler = tracker.wrap(TestScheduler.from());
         const action = jasmine.createSpy<() => void>('action');
 
         const dispose = effect(action, scheduler);
-        expect(scheduler.isStable()).toBeFalse();
+        expect(tracker.isStable()).toBeFalse();
 
         dispose();
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
       });
 
       it('cancels a pending re-record call', () => {
-        const scheduler = TestScheduler.from();
+        const tracker = StabilityTracker.from();
+        const testScheduler = TestScheduler.from();
+        const trackedScheduler = tracker.wrap(testScheduler);
         const value = signal(1);
         const action = jasmine.createSpy<() => void>('action')
             .and.callFake(() => { value(); });
 
-        const dispose = effect(action, scheduler);
-        scheduler.flush();
+        const dispose = effect(action, trackedScheduler);
+        testScheduler.flush();
         expect(action).toHaveBeenCalledOnceWith();
         action.calls.reset();
 
         // Schedule another invocation.
         value.set(2);
-        expect(scheduler.isStable()).toBeFalse();
+        expect(tracker.isStable()).toBeFalse();
 
         dispose();
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
       });
     });
   });

@@ -8,11 +8,9 @@ describe('test-scheduler', () => {
 
       scheduler.schedule(action);
       expect(action).not.toHaveBeenCalled();
-      expect(scheduler.isStable()).toBeFalse();
 
       scheduler.flush();
       expect(action).toHaveBeenCalledOnceWith();
-      expect(scheduler.isStable()).toBeTrue();
     });
 
     it('throws an aggregate of all errors thrown from a flush', () => {
@@ -34,7 +32,6 @@ describe('test-scheduler', () => {
             && err.errors.includes(err2);
       });
       expect(action2).toHaveBeenCalled();
-      expect(scheduler.isStable()).toBeTrue();
     });
 
     it('cancels a scheduled action when the cancel callback is invoked', () => {
@@ -65,7 +62,6 @@ describe('test-scheduler', () => {
 
       scheduler.flush();
       expect(action).toHaveBeenCalled();
-      expect(scheduler.isStable()).toBeTrue();
 
       expect(() => cancel()).not.toThrow();
     });

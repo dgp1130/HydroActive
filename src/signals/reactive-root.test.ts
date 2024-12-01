@@ -27,11 +27,11 @@ describe('reactive-root', () => {
         const effect = jasmine.createSpy<() => void>('effect');
 
         root.effect(effect);
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
         expect(effect).not.toHaveBeenCalled();
 
         connector.connect();
-        expect(scheduler.isStable()).toBeFalse();
+        expect(tracker.isStable()).toBeFalse();
         expect(effect).not.toHaveBeenCalled();
 
         scheduler.flush();
@@ -53,10 +53,10 @@ describe('reactive-root', () => {
         expect(effect).toHaveBeenCalled();
         effect.calls.reset();
 
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
 
         value.set(2);
-        expect(scheduler.isStable()).toBeFalse();
+        expect(tracker.isStable()).toBeFalse();
         expect(effect).not.toHaveBeenCalled(); // Scheduled but not invoked yet.
 
         scheduler.flush();
@@ -105,11 +105,11 @@ describe('reactive-root', () => {
         effect.calls.reset();
 
         connector.disconnect();
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
         expect(effect).not.toHaveBeenCalled();
 
         value.set(3);
-        expect(scheduler.isStable()).toBeTrue();
+        expect(tracker.isStable()).toBeTrue();
         expect(effect).not.toHaveBeenCalled();
       });
 

@@ -86,7 +86,7 @@ export abstract class Scheduler {
    *
    * @returns Whether or not the scheduler is stable.
    */
-  public isStable(): boolean {
+  private isStable(): boolean {
     return this.#pendingActions === 0;
   }
 
