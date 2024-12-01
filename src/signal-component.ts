@@ -25,7 +25,11 @@ export function defineSignalComponent<CompDef extends ComponentDefinition>(
   const Component = class extends HydroActiveComponent {
     public override hydrate(): void {
       // Create an accessor for this element.
-      const root = ReactiveRootImpl.from(this._connectable, this._scheduler);
+      const root = ReactiveRootImpl.from(
+        this._connectable,
+        this._tracker,
+        this._scheduler,
+      );
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
 
       // Hydrate this element.

@@ -1,5 +1,6 @@
 import { Connector } from '../connectable.js';
 import { ReactiveRootImpl } from './reactive-root.js';
+import { StabilityTracker } from './schedulers/stability-tracker.js';
 import { TestScheduler } from './schedulers/test-scheduler.js';
 import { signal } from './signal.js';
 
@@ -8,9 +9,10 @@ describe('reactive-root', () => {
     describe('from', () => {
       it('provides a `ReactiveRootImpl`', () => {
         const connectable = Connector.from(() => false);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
 
-        expect(ReactiveRootImpl.from(connectable, scheduler))
+        expect(ReactiveRootImpl.from(connectable, tracker, scheduler))
             .toBeInstanceOf(ReactiveRootImpl);
       });
     });
@@ -18,8 +20,9 @@ describe('reactive-root', () => {
     describe('effect', () => {
       it('schedules the effect', () => {
         const connector = Connector.from(() => false);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, scheduler);
+        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -37,8 +40,9 @@ describe('reactive-root', () => {
 
       it('reruns the effect when a signal changes', () => {
         const connector = Connector.from(() => true);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, scheduler);
+        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
 
         const value = signal(1);
         const effect = jasmine.createSpy<() => void>('effect')
@@ -61,8 +65,9 @@ describe('reactive-root', () => {
 
       it('does not initialize the effect until connected', () => {
         const connector = Connector.from(() => false);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, scheduler);
+        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -79,8 +84,9 @@ describe('reactive-root', () => {
 
       it('pauses the effect while disconnected', () => {
         const connector = Connector.from(() => true);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, scheduler);
+        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
 
         const value = signal(1);
         const effect = jasmine.createSpy<() => void>('effect')
@@ -114,8 +120,9 @@ describe('reactive-root', () => {
       // collected.
       it('resumes the effect when reconnected', () => {
         const connector = Connector.from(() => true);
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, scheduler);
+        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
 
         const effect = jasmine.createSpy<() => void>('effect');
 

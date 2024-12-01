@@ -1,4 +1,5 @@
 import { Connectable, Connector } from './connectable.js';
+import { StabilityTracker } from './signals/schedulers/stability-tracker.js';
 import { UiScheduler } from './signals/schedulers/ui-scheduler.js';
 
 /**
@@ -27,6 +28,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
   /** Whether or not the component has been hydrated. */
   #hydrated = false;
 
+  protected _tracker = StabilityTracker.from();
   protected _scheduler = UiScheduler.from();
 
   constructor() {

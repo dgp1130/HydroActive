@@ -3,6 +3,7 @@ import './testing/noop-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
+import { StabilityTracker } from './signals/schedulers/stability-tracker.js';
 
 describe('signal-component-accessor', () => {
   describe('SignalComponentAccessor', () => {
@@ -14,7 +15,7 @@ describe('signal-component-accessor', () => {
       it('provides a `SignalComponentAccessor`', () => {
         const el = document.createElement('noop-component');
         const root = ReactiveRootImpl.from(
-            el._connectable, TestScheduler.from());
+            el._connectable, StabilityTracker.from(), TestScheduler.from());
 
         expect(SignalComponentAccessor.fromSignalComponent(el, root))
             .toBeInstanceOf(SignalComponentAccessor);
@@ -26,8 +27,10 @@ describe('signal-component-accessor', () => {
         const el = document.createElement('noop-component');
         document.body.append(el);
 
+        const tracker = StabilityTracker.from();
         const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(el._connectable, scheduler);
+        const root = ReactiveRootImpl.from(
+            el._connectable, tracker, scheduler);
 
         const effect = jasmine.createSpy<() => void>('effect');
 

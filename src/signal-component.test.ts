@@ -5,6 +5,7 @@ import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { TestScheduler } from './signals/schedulers/test-scheduler.js';
 import { testCase, useTestCases } from './testing/test-cases.js';
 import { parseHtml } from './testing.js';
+import { StabilityTracker } from './signals/schedulers/stability-tracker.js';
 
 describe('signal-component', () => {
   useTestCases();
@@ -61,7 +62,7 @@ describe('signal-component', () => {
       document.body.appendChild(comp);
 
       const root = ReactiveRootImpl.from(
-          comp._connectable, TestScheduler.from());
+          comp._connectable, StabilityTracker.from(), TestScheduler.from());
       const accessor = SignalComponentAccessor.fromSignalComponent(comp, root);
       expect(hydrate).toHaveBeenCalledOnceWith(accessor);
     });
