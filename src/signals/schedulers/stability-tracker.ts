@@ -41,6 +41,9 @@ export class StabilityTracker {
     return new StabilityTracker();
   }
 
+  /** A cache of {@link Scheduler} objects which have already been wrapped. */
+  readonly #wrapperCache = new WeakMap<Scheduler, WrappedScheduler>();
+
   /**
    * Wraps the given {@link Scheduler} by creating a new {@link Scheduler} tied
    * to this {@link StabilityTracker}. When the resulting {@link Scheduler}
@@ -66,6 +69,16 @@ export class StabilityTracker {
    * ```
    */
   public wrap(scheduler: Scheduler): Scheduler {
+    const cached = this.#wrapperCache.get(scheduler);
+    if (cached) return cached;
+
+    const wrapped = this.#createWrappedScheduler(scheduler);
+    this.#wrapperCache.set(scheduler, wrapped);
+    return wrapped;
+  }
+
+  /** Creates a {@link WrappedScheduler} from the given {@link Scheduler}. */
+  #createWrappedScheduler(scheduler: Scheduler): WrappedScheduler {
     return WrappedScheduler.from(scheduler, (schedule) => {
       return (action) => {
         let finalized = false;

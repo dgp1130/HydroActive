@@ -241,6 +241,24 @@ describe('stability-tracker', () => {
 
         jasmine.clock().tick(0);
       });
+
+      it('caches wrapped schedulers', () => {
+        const tracker = StabilityTracker.from();
+        const scheduler = new SetTimeoutScheduler();
+        const wrapped1 = tracker.wrap(scheduler);
+        const wrapped2 = tracker.wrap(scheduler);
+
+        // Should reuse first wrapped scheduler.
+        expect(wrapped1).toBe(wrapped2);
+      });
+
+      it('does not cache different schedulers', () => {
+        const tracker = StabilityTracker.from();
+        const scheduler1 = tracker.wrap(new SetTimeoutScheduler());
+        const scheduler2 = tracker.wrap(new SetTimeoutScheduler());
+
+        expect(scheduler1).not.toBe(scheduler2);
+      });
     });
 
     describe('isStable', () => {
