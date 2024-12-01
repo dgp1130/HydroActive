@@ -98,7 +98,7 @@ export abstract class Scheduler {
    * @returns A {@link Promise} which resolves when the scheduler becomes
    *     stable.
    */
-  public async stable(): Promise<void> {
+  private async stable(): Promise<void> {
     // Check if the scheduler is already stable.
     if (this.isStable()) return;
 

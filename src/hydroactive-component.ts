@@ -83,7 +83,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
    * @returns A {@link Promise} which resolves when this component is stable.
    */
   public async stable(): Promise<void> {
-    return await this._scheduler.stable();
+    return await this._tracker.stable();
   }
 }
 
