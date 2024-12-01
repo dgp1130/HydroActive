@@ -16,7 +16,7 @@ export class UiScheduler extends Scheduler {
     return new UiScheduler();
   }
 
-  protected scheduleAction(action: Action): CancelAction {
+  public override schedule(action: Action): CancelAction {
     const handle = requestAnimationFrame(() => { action(); });
 
     return () => { cancelAnimationFrame(handle); };

@@ -8,28 +8,18 @@
  */
 export abstract class Scheduler {
   /**
-   * Implements the scheduler by scheduling the given action to be invoked.
-   * Returns a `cancel` function which cancels the scheduled action.
+   * Schedules the given action to be invoked. Returns a {@link CancelAction}
+   * function which cancels the scheduled action.
+   *
+   * Multiple calls to the returned {@link CancelAction} function have no
+   * effect. Calling the returned {@link CancelAction} function after
+   * {@link action} was executed has no effect.
    *
    * @param action The {@link Action} to schedule.
-   * @returns A callback which, when invoked, cancels `action` from ever being
-   *     executed.
+   * @returns A callback which, when invoked, cancels {@link action} from ever
+   *     being executed.
    */
-  protected abstract scheduleAction(action: Action): CancelAction;
-
-  /**
-   * Schedules the given `action` to be invoked.
-   *
-   * When invoked, the action's return value is ignored and any errors are
-   * dropped.
-   *
-   * @returns A {@link CancelAction} function which, when called, will cancel
-   *     the scheduled action and prevent it from being invoked. If the action
-   *     has already been invoked, canceling it has no effect.
-   */
-  public schedule(action: Action): CancelAction {
-    return this.scheduleAction(action);
-  }
+  public abstract schedule(action: Action): CancelAction;
 }
 
 /** A side-effectful action to be scheduled and invoked. */

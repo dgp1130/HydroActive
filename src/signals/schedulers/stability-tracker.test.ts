@@ -14,7 +14,7 @@ class SetTimeoutScheduler extends Scheduler {
     this.#timeout = timeout;
   }
 
-  protected override scheduleAction(action: Action): CancelAction {
+  public override schedule(action: Action): CancelAction {
     const handle = setTimeout(action, this.#timeout);
     return () => { clearTimeout(handle); };
   }
@@ -220,7 +220,7 @@ describe('stability-tracker', () => {
       it('returns a scheduler which throws if the underlying `scheduleAction` throws', () => {
         const err = new Error('Oh noes!');
         class BadScheduler extends Scheduler {
-          protected override scheduleAction(): never {
+          public override schedule(): never {
             throw err;
           }
         }

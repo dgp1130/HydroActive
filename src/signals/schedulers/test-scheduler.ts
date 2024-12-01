@@ -18,7 +18,7 @@ export class TestScheduler extends Scheduler {
     return new TestScheduler();
   }
 
-  protected scheduleAction(action: Action): CancelAction {
+  public override schedule(action: Action): CancelAction {
     this.#queue.push(action);
 
     return () => {

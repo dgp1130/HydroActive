@@ -18,7 +18,7 @@ export class MacrotaskScheduler extends Scheduler {
     return singletonScheduler;
   }
 
-  protected scheduleAction(callback: Action): CancelAction {
+  public override schedule(callback: Action): CancelAction {
     const handle = setTimeout(() => { callback(); });
 
     return () => { clearInterval(handle); };

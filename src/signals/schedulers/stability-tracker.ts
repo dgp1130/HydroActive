@@ -196,7 +196,7 @@ class WrappedScheduler extends Scheduler {
     return new WrappedScheduler(schedule);
   }
 
-  public override scheduleAction(action: Action): CancelAction {
+  public override schedule(action: Action): CancelAction {
     return this.#schedule(action);
   }
 }
