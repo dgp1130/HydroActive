@@ -29,7 +29,7 @@ export abstract class HydroActiveComponent extends HTMLElement {
   #hydrated = false;
 
   protected _tracker = StabilityTracker.from();
-  protected _scheduler = UiScheduler.from();
+  protected _defaultScheduler = UiScheduler.from();
 
   constructor() {
     super();

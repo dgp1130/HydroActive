@@ -28,7 +28,7 @@ export function defineSignalComponent<CompDef extends ComponentDefinition>(
       const root = ReactiveRootImpl.from(
         this._connectable,
         this._tracker,
-        this._scheduler,
+        this._defaultScheduler,
       );
       const accessor = SignalComponentAccessor.fromSignalComponent(this, root);
 
