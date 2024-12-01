@@ -167,12 +167,10 @@ type ScheduleTransform = (schedule: Schedule) => Schedule;
  * A {@link Scheduler} which wraps another {@link Scheduler} by proxying the
  * {@link Scheduler.prototype.schedule} function.
  */
-class WrappedScheduler extends Scheduler {
+class WrappedScheduler implements Scheduler {
   readonly #schedule: Schedule;
 
   private constructor(schedule: Schedule) {
-    super();
-
     this.#schedule = schedule;
   }
 
@@ -196,7 +194,7 @@ class WrappedScheduler extends Scheduler {
     return new WrappedScheduler(schedule);
   }
 
-  public override schedule(action: Action): CancelAction {
+  public schedule(action: Action): CancelAction {
     return this.#schedule(action);
   }
 }

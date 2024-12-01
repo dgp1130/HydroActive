@@ -5,16 +5,14 @@ import { Action, CancelAction, Scheduler } from './scheduler.js';
  * Basic {@link Scheduler} implementation using `setTimeout` for testing. We can
  * use Jasmine's mocked clock to trigger actions for testing purposes.
  */
-class SetTimeoutScheduler extends Scheduler {
+class SetTimeoutScheduler implements Scheduler {
   readonly #timeout: number;
 
   public constructor(timeout: number = 0) {
-    super();
-
     this.#timeout = timeout;
   }
 
-  public override schedule(action: Action): CancelAction {
+  public schedule(action: Action): CancelAction {
     const handle = setTimeout(action, this.#timeout);
     return () => { clearTimeout(handle); };
   }
@@ -219,8 +217,8 @@ describe('stability-tracker', () => {
 
       it('returns a scheduler which throws if the underlying `scheduleAction` throws', () => {
         const err = new Error('Oh noes!');
-        class BadScheduler extends Scheduler {
-          public override schedule(): never {
+        class BadScheduler implements Scheduler {
+          public schedule(): never {
             throw err;
           }
         }

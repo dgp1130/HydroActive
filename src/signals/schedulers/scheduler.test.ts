@@ -4,8 +4,8 @@ import { Action, CancelAction, Scheduler } from './scheduler.js';
  * Basic {@link Scheduler} implementation using `setTimeout` for testing. We can
  * use Jasmine's mocked clock to trigger actions for testing purposes.
  */
-class SetTimeoutScheduler extends Scheduler {
-  public override schedule(action: Action): CancelAction {
+class SetTimeoutScheduler implements Scheduler {
+  public schedule(action: Action): CancelAction {
     const handle = setTimeout(action);
     return () => { clearTimeout(handle); };
   }
@@ -201,8 +201,8 @@ describe('scheduler', () => {
 
       it('throws if the underlying `scheduleAction` throws', () => {
         const err = new Error('Oh noes!');
-        class BadScheduler extends Scheduler {
-          public override schedule(_action: Action): never {
+        class BadScheduler implements Scheduler {
+          public schedule(_action: Action): never {
             throw err;
           }
         }

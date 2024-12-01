@@ -5,20 +5,16 @@ import { Action, CancelAction, Scheduler } from './scheduler.js';
  * automatically invoke a scheduled task, but instead waits to be manually
  * flushed during a test.
  */
-export class TestScheduler extends Scheduler {
+export class TestScheduler implements Scheduler {
   /** Queue of actions to be invoked. */
   readonly #queue: Array<Action> = [];
-
-  private constructor() {
-    super();
-  }
 
   /** Constructs a new {@link TestScheduler}. */
   public static from(): TestScheduler {
     return new TestScheduler();
   }
 
-  public override schedule(action: Action): CancelAction {
+  public schedule(action: Action): CancelAction {
     this.#queue.push(action);
 
     return () => {

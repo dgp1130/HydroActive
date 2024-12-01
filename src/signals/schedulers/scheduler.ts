@@ -6,7 +6,7 @@
  * implementation may define its own algorithm for determining when an action
  * should be executed.
  */
-export abstract class Scheduler {
+export interface Scheduler {
   /**
    * Schedules the given action to be invoked. Returns a {@link CancelAction}
    * function which cancels the scheduled action.
@@ -19,7 +19,7 @@ export abstract class Scheduler {
    * @returns A callback which, when invoked, cancels {@link action} from ever
    *     being executed.
    */
-  public abstract schedule(action: Action): CancelAction;
+  schedule(action: Action): CancelAction;
 }
 
 /** A side-effectful action to be scheduled and invoked. */

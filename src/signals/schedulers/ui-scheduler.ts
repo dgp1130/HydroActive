@@ -6,17 +6,13 @@ import { Action, CancelAction, Scheduler } from './scheduler.js';
  * single {@link requestAnimationFrame} call. This scheduler is ideal for
  * scheduling UI operations which affect the DOM.
  */
-export class UiScheduler extends Scheduler {
-  private constructor() {
-    super();
-  }
-
+export class UiScheduler implements Scheduler {
   /** Provides a {@link UiScheduler}. */
   public static from(): UiScheduler {
     return new UiScheduler();
   }
 
-  public override schedule(action: Action): CancelAction {
+  public schedule(action: Action): CancelAction {
     const handle = requestAnimationFrame(() => { action(); });
 
     return () => { cancelAnimationFrame(handle); };
