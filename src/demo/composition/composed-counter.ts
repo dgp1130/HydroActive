@@ -24,6 +24,10 @@ export const CounterDisplay = defineSignalComponent(
   },
 );
 
+// No need to call `CounterDisplay.define()` here, the component is defined
+// automatically by usage in `CounterController`.
+// `CounterDisplay` definition is pure and tree-shakable!
+
 declare global {
   interface HTMLElementTagNameMap {
     'counter-display': InstanceType<typeof CounterDisplay>;
@@ -38,6 +42,7 @@ export const CounterController = defineSignalComponent(
   'counter-controller',
   (host) => {
     // Get a reference to the underlying `counter-display` element.
+    // Automatically defines `CounterDisplay` if it isn't already defined.
     const inner = host.query('counter-display').access(CounterDisplay).element;
 
     // Bind the button clicks to modifying the counter.
@@ -49,6 +54,8 @@ export const CounterController = defineSignalComponent(
     });
   },
 );
+
+CounterController.define();
 
 declare global {
   interface HTMLElementTagNameMap {
