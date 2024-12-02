@@ -4,6 +4,7 @@ import { PropsOf, hydrate, isHydrated } from './hydration.js';
 import { isCustomElement, isUpgraded } from './custom-elements.js';
 import { QueryAllResult, QueryResult, QueryRoot } from './query-root.js';
 import { Class } from './utils/types.js';
+import { defineIfSupported } from './utils/on-demand-definitions.js';
 
 /**
  * Represents a "dehydrated" reference to an element. The element is *not*
@@ -91,6 +92,10 @@ export class Dehydrated<out El extends Element> implements Queryable<El> {
             this.#native.tagName.toLowerCase()}\` requires an element class.`);
       }
 
+      // Implement on-demand definitions protocol by calling the function if
+      // present.
+      defineIfSupported(elementClass);
+
       if (!(this.#native instanceof elementClass)) {
         throw new Error(`Custom element \`${
             (this.#native as Element).tagName.toLowerCase()}\` does not extend \`${
@@ -130,6 +135,10 @@ export class Dehydrated<out El extends Element> implements Queryable<El> {
       ? [ props?: PropsOf<InstanceType<Clazz>> ]
       : [ props: PropsOf<InstanceType<Clazz>> ]
   ): ElementAccessor<InstanceType<Clazz>> {
+    // Implement on-demand definitions protocol by calling the function if
+    // present.
+    defineIfSupported(elementClass);
+
     hydrate(this.#native, elementClass, props);
     return ElementAccessor.from(this.#native);
   }

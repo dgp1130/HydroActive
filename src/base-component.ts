@@ -1,6 +1,7 @@
 import { ComponentAccessor } from './component-accessor.js';
 import { applyDefinition, ComponentDefinition, HydroActiveComponent } from './hydroactive-component.js';
 import { skewerCaseToPascalCase } from './utils/casing.js';
+import { createDefine, Defineable } from './utils/on-demand-definitions.js';
 import { Class } from './utils/types.js';
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
@@ -18,8 +19,11 @@ export type BaseHydrateLifecycle<CompDef extends ComponentDefinition> =
 export function defineBaseComponent<CompDef extends ComponentDefinition>(
   tagName: string,
   hydrate: BaseHydrateLifecycle<CompDef>,
-): Class<HydroActiveComponent & CompDef> {
+): Class<HydroActiveComponent & CompDef> & Defineable {
   const Component = class extends HydroActiveComponent {
+    // Implement the on-demand definitions community protocol.
+    static define = createDefine(tagName, this);
+
     public override hydrate(): void {
       // Hydrate this element.
       const compDef = hydrate(ComponentAccessor.fromComponent(this));
@@ -33,7 +37,6 @@ export function defineBaseComponent<CompDef extends ComponentDefinition>(
     value: skewerCaseToPascalCase(tagName),
   });
 
-  customElements.define(tagName, Component);
-
-  return Component as unknown as Class<HydroActiveComponent & CompDef>;
+  return Component as unknown as
+      Class<HydroActiveComponent & CompDef> & Defineable;
 }
