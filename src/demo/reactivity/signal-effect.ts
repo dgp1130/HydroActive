@@ -19,15 +19,12 @@ export const SignalEffect = defineSignalComponent('signal-effect', (host) => {
     // Update the count label in the effect. Calling `count()` inside the effect
     // creates a dependency on `count`. Anytime `count` changes in the future,
     // this effect will be automatically re-run.
-    //
-    // We use `ElementRef.prototype.native` here to get access to the underlying
-    // `Element` object wrapped by the `countLabel` `ElementRef`.
-    countLabel.element.textContent = count().toString();
+    countLabel.write(count(), Number);
 
     // Track each time the effect is executed and display it in the DOM. This is
     // the "side effect" of updating the count.
     updated++;
-    updatesLabel.element.textContent = updated.toString();
+    updatesLabel.write(updated, Number);
   });
 });
 
