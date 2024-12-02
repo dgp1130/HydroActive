@@ -159,6 +159,26 @@ describe('graph', () => {
       expect(consumer1.notifyListeners).toHaveBeenCalledOnceWith();
       expect(consumer2.notifyListeners).not.toHaveBeenCalled();
     });
+
+    it('ignores consumers added during notification', () => {
+      const producer = Producer.from(() => 1);
+
+      const consumer1 = Consumer.from();
+      const consumer2 = Consumer.from();
+
+      spyOn(consumer1, 'notifyListeners').and.callThrough();
+      spyOn(consumer2, 'notifyListeners').and.callThrough();
+
+      producer.addConsumer(consumer1);
+      consumer1.listen(() => {
+        producer.addConsumer(consumer2);
+      });
+
+      producer.notifyConsumers();
+
+      expect(consumer1.notifyListeners).toHaveBeenCalled();
+      expect(consumer2.notifyListeners).not.toHaveBeenCalled();
+    });
   });
 
   describe('Consumer', () => {

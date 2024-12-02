@@ -140,7 +140,11 @@ export class Producer<Value> {
    * {@link Producer} has changed.
    */
   public notifyConsumers(): void {
-    for (const consumer of this.#consumers) consumer.notifyListeners();
+    // Snapshot current consumers with `Array.from`, because they might change
+    // during notification callbacks.
+    for (const consumer of Array.from(this.#consumers)) {
+      consumer.notifyListeners();
+    }
   }
 }
 
