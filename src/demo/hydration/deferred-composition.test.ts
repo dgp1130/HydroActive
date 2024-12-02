@@ -37,7 +37,7 @@ describe('deferred-composition', () => {
       document.body.append(el);
 
       const firstChild = el.querySelector('#first')! as
-          DeferredCompositionChild;
+          InstanceType<typeof DeferredCompositionChild>;
       expect(isHydrated(firstChild)).toBeTrue();
 
       expect(firstChild.querySelector('#target')!.textContent!)
@@ -52,7 +52,7 @@ describe('deferred-composition', () => {
       hydrate(el, DeferredComposition);
 
       const secondChild = el.querySelector('#second')! as
-          DeferredCompositionChild;
+          InstanceType<typeof DeferredCompositionChild>;
       expect(isHydrated(secondChild)).toBeTrue();
 
       expect(secondChild.querySelector('#target')!.textContent!)
