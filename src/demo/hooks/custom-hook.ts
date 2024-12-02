@@ -13,6 +13,8 @@ export const CustomHook = defineSignalComponent('custom-hook', (host) => {
   bind(host.query('span').access(), host, Number, () => count());
 });
 
+CustomHook.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'custom-hook': InstanceType<typeof CustomHook>;

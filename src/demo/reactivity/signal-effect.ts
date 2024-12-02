@@ -28,6 +28,8 @@ export const SignalEffect = defineSignalComponent('signal-effect', (host) => {
   });
 });
 
+SignalEffect.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'signal-effect': InstanceType<typeof SignalEffect>;

@@ -5,6 +5,8 @@ export const DeferredComp = defineBaseComponent('deferred-comp', (host) => {
   host.query('span').access().write('HydroActive', String);
 });
 
+DeferredComp.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'deferred-comp': InstanceType<typeof DeferredComp>;

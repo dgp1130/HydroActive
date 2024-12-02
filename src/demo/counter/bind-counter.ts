@@ -38,3 +38,11 @@ export const BindCounter = defineSignalComponent('bind-counter', (host) => {
     };
   });
 });
+
+BindCounter.define();
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'bind-counter': InstanceType<typeof BindCounter>;
+  }
+}

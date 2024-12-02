@@ -18,6 +18,8 @@ export const DeferredCompositionChild = defineBaseComponent(
   },
 );
 
+DeferredCompositionChild.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'deferred-composition-child': InstanceType<typeof DeferredCompositionChild>;

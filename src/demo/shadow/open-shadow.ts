@@ -9,6 +9,8 @@ export const OpenShadow = defineBaseComponent('open-shadow', (host) => {
   host.query('div').access().write('I\'m not...', String);
 });
 
+OpenShadow.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'open-shadow': InstanceType<typeof OpenShadow>;

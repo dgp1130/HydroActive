@@ -19,6 +19,8 @@ export const ComputedValue = defineSignalComponent('computed-value', (host) => {
   });
 });
 
+ComputedValue.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'computed-value': InstanceType<typeof ComputedValue>;

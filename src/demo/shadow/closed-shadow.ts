@@ -9,6 +9,8 @@ export const ClosedShadow = defineBaseComponent('closed-shadow', (host) => {
   host.query('div').access().write('Da ba dee da ba di...', String);
 });
 
+ClosedShadow.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'closed-shadow': InstanceType<typeof ClosedShadow>;

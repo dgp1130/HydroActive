@@ -23,6 +23,8 @@ export const CachedValue = defineSignalComponent('cached-value', (host) => {
   bind(host.query('#pi-again').access(), host, String, () => pi());
 });
 
+CachedValue.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'cached-value': InstanceType<typeof CachedValue>;

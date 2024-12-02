@@ -16,6 +16,8 @@ export const ReadAttr = defineBaseComponent('read-attr', (host) => {
   host.query('span').access().write(username, String);
 });
 
+ReadAttr.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'read-attr': InstanceType<typeof ReadAttr>;

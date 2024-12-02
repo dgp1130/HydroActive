@@ -31,6 +31,8 @@ export const AutoCounter = defineSignalComponent('auto-counter', (host) => {
   });
 });
 
+AutoCounter.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'auto-counter': InstanceType<typeof AutoCounter>;

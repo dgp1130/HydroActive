@@ -18,6 +18,8 @@ export const ButtonCounter = defineSignalComponent('button-counter', (host) => {
   });
 });
 
+ButtonCounter.define();
+
 declare global {
   interface HTMLElementTagNameMap {
     'button-counter': InstanceType<typeof ButtonCounter>;
