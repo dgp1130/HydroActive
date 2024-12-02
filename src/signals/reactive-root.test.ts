@@ -18,11 +18,12 @@ describe('reactive-root', () => {
     });
 
     describe('effect', () => {
-      it('schedules the effect', () => {
+      it('schedules the effect with the default scheduler', () => {
         const connector = Connector.from(() => false);
         const tracker = StabilityTracker.from();
-        const scheduler = TestScheduler.from();
-        const root = ReactiveRootImpl.from(connector, tracker, scheduler);
+        const defaultScheduler = TestScheduler.from();
+        const root = ReactiveRootImpl.from(
+            connector, tracker, defaultScheduler);
 
         const effect = jasmine.createSpy<() => void>('effect');
 
@@ -34,7 +35,7 @@ describe('reactive-root', () => {
         expect(tracker.isStable()).toBeFalse();
         expect(effect).not.toHaveBeenCalled();
 
-        scheduler.flush();
+        defaultScheduler.flush();
         expect(effect).toHaveBeenCalledOnceWith();
       });
 
@@ -139,6 +140,26 @@ describe('reactive-root', () => {
         connector.connect();
         scheduler.flush();
         expect(effect).toHaveBeenCalledOnceWith();
+      });
+
+      it('uses a custom scheduler when provided', () => {
+        const connector = Connector.from(() => true);
+        const tracker = StabilityTracker.from();
+        const defaultScheduler = TestScheduler.from();
+        const root = ReactiveRootImpl.from(
+            connector, tracker, defaultScheduler);
+
+        const effect = jasmine.createSpy<() => void>('effect');
+        const customScheduler = TestScheduler.from();
+
+        root.effect(effect, customScheduler);
+        expect(effect).not.toHaveBeenCalled();
+
+        defaultScheduler.flush(); // Default scheduler does nothing.
+        expect(effect).not.toHaveBeenCalled();
+
+        customScheduler.flush(); // Custom scheduler triggers effect.
+        expect(effect).toHaveBeenCalled();
       });
     });
   });

@@ -2,7 +2,7 @@ import { ComponentAccessor } from './component-accessor.js';
 import { Connectable } from './connectable.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { QueryRoot } from './query-root.js';
-import { ReactiveRoot } from './signals.js';
+import { ReactiveRoot, Scheduler } from './signals.js';
 
 /**
  * Wraps a {@link HydroActiveComponent} in a convenient wrapper for querying and
@@ -38,7 +38,7 @@ export class SignalComponentAccessor<out Comp extends HydroActiveComponent>
     );
   }
 
-  public effect(callback: () => void): void {
-    this.#root.effect(callback);
+  public effect(callback: () => void, scheduler?: Scheduler): void {
+    this.#root.effect(callback, scheduler);
   }
 }

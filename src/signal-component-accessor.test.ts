@@ -41,6 +41,28 @@ describe('signal-component-accessor', () => {
         scheduler.flush();
         expect(effect).toHaveBeenCalledOnceWith();
       });
+
+      it('schedules an effect with the provided scheduler', () => {
+        const el = document.createElement('noop-component');
+        document.body.append(el);
+
+        const tracker = StabilityTracker.from();
+        const defaultScheduler = TestScheduler.from();
+        const root = ReactiveRootImpl.from(
+            el._connectable, tracker, defaultScheduler);
+
+        const effect = jasmine.createSpy<() => void>('effect');
+        const customScheduler = TestScheduler.from();
+
+        root.effect(effect, customScheduler);
+        expect(effect).not.toHaveBeenCalled();
+
+        defaultScheduler.flush(); // Default scheduler does nothing.
+        expect(effect).not.toHaveBeenCalled();
+
+        customScheduler.flush(); // Custom scheduler triggers effect.
+        expect(effect).toHaveBeenCalled();
+      });
     });
   });
 });

@@ -16,8 +16,10 @@ export interface ReactiveRoot {
    *
    * @param callback The callback to invoke which executes a signal-based side
    *     effect.
+   * @param scheduler A scheduler to use for invoking the effect callback. If no
+   *     scheduler is provided, a default is used.
    */
-  effect(callback: () => void): void;
+  effect(callback: () => void, scheduler?: Scheduler): void;
 }
 
 /**
