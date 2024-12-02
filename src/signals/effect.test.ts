@@ -1,3 +1,4 @@
+import { Action, CancelAction, Scheduler } from 'hydroactive/signals.js';
 import { effect } from './effect.js';
 import { StabilityTracker } from './schedulers/stability-tracker.js';
 import { TestScheduler } from './schedulers/test-scheduler.js';
@@ -139,6 +140,27 @@ describe('effect', () => {
       dispose();
     });
 
+    it('handles synchronous scheduling', () => {
+      const scheduler = new SyncScheduler();
+      const value = signal(1);
+      const action = jasmine.createSpy<() => void>('action')
+          .and.callFake(() => value());
+
+      const dispose = effect(action, scheduler);
+      expect(action).toHaveBeenCalledOnceWith();
+      action.calls.reset();
+
+      value.set(2);
+      expect(action).toHaveBeenCalledOnceWith();
+      action.calls.reset();
+
+      // Regression test: Dropped second+ post-init schedule operations.
+      value.set(3);
+      expect(action).toHaveBeenCalledOnceWith();
+
+      dispose();
+    });
+
     describe('dispose', () => {
       it('cleans up the effect', () => {
         const tracker = StabilityTracker.from();
@@ -197,3 +219,10 @@ describe('effect', () => {
     });
   });
 });
+
+class SyncScheduler implements Scheduler {
+  public schedule(action: Action): CancelAction {
+    action();
+    return () => {};
+  }
+}

@@ -30,22 +30,24 @@ export function effect(
   });
 
   let cancelNextCall: CancelAction | undefined;
+  let scheduled = false;
   consumer.listen(() => {
     // If already scheduled, nothing to do.
-    if (cancelNextCall) return;
+    // It might look like we could drop `scheduled` and use the presence of
+    // `cancelNextCall` to know whether an event is scheduled, but this would
+    // not work for a synchronous `Scheduler`.
+    if (scheduled) return;
 
+    scheduled = true;
     cancelNextCall = scheduler.schedule(() => {
-      cancelNextCall = undefined;
+      scheduled = false;
       consumer.record(callback);
     });
   });
 
   return () => {
     cancelInitialCall();
-    if (cancelNextCall) {
-      cancelNextCall();
-      cancelNextCall = undefined;
-    }
+    if (scheduled) cancelNextCall!();
     consumer.destroy();
   };
 }
