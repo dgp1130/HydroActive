@@ -7,6 +7,7 @@ export { ElementAccessor } from './element-accessor.js';
 export { type Queryable } from './queryable.js';
 export { QueryRoot } from './query-root.js';
 export { hydrate, isHydrated } from './hydration.js';
+export { type HydroActiveComponent } from './hydroactive-component.js';
 
 // Only export the `ComponentAccessor` object types because consumers should not
 // construct these objects directly as doing so would leak internal details
