@@ -1,8 +1,8 @@
-import { defineSignalComponent } from 'hydroactive';
+import { component } from 'hydroactive';
 import { signal } from 'hydroactive/signals.js';
 
 /** Creates a side effect from a signal. */
-export const SignalEffect = defineSignalComponent('signal-effect', (host) => {
+export const SignalEffect = component('signal-effect', (host) => {
   const countLabel = host.query('#count').access();
   const initial = countLabel.read(Number);
   const count = signal(initial);

@@ -6,20 +6,34 @@ import { ReactiveRootImpl } from './signals/reactive-root.js';
 import { skewerCaseToPascalCase } from './utils/casing.js';
 import { createDefine, Defineable } from './utils/on-demand-definitions.js';
 import { Class } from './utils/types.js';
+import type { baseComponent } from './base-component.js'; // For JSDoc link.
 
 /** The type of the lifecycle hook invoked when the component hydrates. */
 export type SignalHydrateLifecycle<CompDef extends ComponentDefinition> =
     (host: SignalComponentAccessor<HydroActiveComponent>) => CompDef | void;
 
 /**
- * Defines a signal component of the given tag name with the provided hydration
+ * Declares a signal component of the given tag name with the provided hydration
  * callback.
  *
- * @param tagName The tag name to use for the defined custom element.
+ * Signal components depend on signal APIs. This makes them more powerful than
+ * their {@link baseComponent} counterparts at the cost of a slightly larger
+ * overall bundle size.
+ *
+ * This does *not* define the element (doesn't call `customElements.define`) to
+ * preserve tree-shakability of the component. Call the static `.define` method
+ * on the returned class to define the custom element if necessary.
+ *
+ * ```typescript
+ * const MyElement = defineSignalComponent('my-element', () => {});
+ * MyElement.define();
+ * ```
+ *
+ * @param tagName The tag name to use for the custom element.
  * @param hydrate The function to trigger when the component hydrates.
- * @returns The defined custom element class.
+ * @returns The custom element class.
  */
-export function defineSignalComponent<CompDef extends ComponentDefinition>(
+export function signalComponent<CompDef extends ComponentDefinition>(
   tagName: string,
   hydrate: SignalHydrateLifecycle<CompDef>,
 ): Class<HydroActiveComponent & CompDef> & Defineable {

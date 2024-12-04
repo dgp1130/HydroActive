@@ -1,7 +1,7 @@
-import { defineBaseComponent } from 'hydroactive';
+import { baseComponent } from 'hydroactive';
 
 /** Hydrates by reading the speaker's name from the DOM and exposing it. */
-export const DeferredCompositionChild = defineBaseComponent(
+export const DeferredCompositionChild = baseComponent(
   'deferred-composition-child',
   (host) => {
     const speaker = host.query('span#subject').access().read(String);

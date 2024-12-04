@@ -1,4 +1,4 @@
-import { BaseHydrateLifecycle, defineBaseComponent } from './base-component.js';
+import { BaseHydrateLifecycle, baseComponent } from './base-component.js';
 import { parseHtml } from './testing.js';
 
 describe('base-component', () => {
@@ -6,13 +6,13 @@ describe('base-component', () => {
     for (const el of document.body.children) el.remove();
   });
 
-  describe('defineBaseComponent', () => {
+  describe('baseComponent', () => {
     it('upgrades already rendered components when defined', () => {
       const el = document.createElement('already-rendered');
       document.body.append(el);
 
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
-      const Comp = defineBaseComponent('already-rendered', hydrate);
+      const Comp = baseComponent('already-rendered', hydrate);
       Comp.define();
 
       expect(hydrate).toHaveBeenCalledTimes(1);
@@ -21,7 +21,7 @@ describe('base-component', () => {
     it('updates components rendered after definition', () => {
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
 
-      const Comp = defineBaseComponent('new-component', hydrate);
+      const Comp = baseComponent('new-component', hydrate);
       Comp.define();
       expect(hydrate).not.toHaveBeenCalled();
 
@@ -40,7 +40,7 @@ describe('base-component', () => {
         self = this;
       }
 
-      const Comp = defineBaseComponent('this-component', hydrate);
+      const Comp = baseComponent('this-component', hydrate);
       Comp.define();
 
       const comp = document.createElement('this-component');
@@ -51,7 +51,7 @@ describe('base-component', () => {
 
     it('invokes hydrate callback with a `ComponentAccessor` of the component host', () => {
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
-      const HostComponent = defineBaseComponent('host-component', hydrate);
+      const HostComponent = baseComponent('host-component', hydrate);
 
       const el = parseHtml(HostComponent, `
         <host-component>
@@ -71,7 +71,7 @@ describe('base-component', () => {
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate')
           .and.returnValue({ foo: 'bar' });
 
-      const CompWithDef = defineBaseComponent('comp-with-def', hydrate);
+      const CompWithDef = baseComponent('comp-with-def', hydrate);
 
       const el = parseHtml(CompWithDef, `<comp-with-def></comp-with-def>`);
       document.body.appendChild(el);
@@ -80,7 +80,7 @@ describe('base-component', () => {
     });
 
     it('sets the class name', () => {
-      const Comp = defineBaseComponent('foo-bar-baz', () => {});
+      const Comp = baseComponent('foo-bar-baz', () => {});
       expect(Comp.name).toBe('FooBarBaz');
     });
   });

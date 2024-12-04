@@ -1,4 +1,4 @@
-import { type SignalHydrateLifecycle, defineSignalComponent } from './signal-component.js';
+import { type SignalHydrateLifecycle, signalComponent } from './signal-component.js';
 import { HydroActiveComponent } from './hydroactive-component.js';
 import { SignalComponentAccessor } from './signal-component-accessor.js';
 import { ReactiveRootImpl } from './signals/reactive-root.js';
@@ -16,10 +16,10 @@ describe('signal-component', () => {
     }
   });
 
-  describe('defineSignalComponent', () => {
+  describe('signalComponent', () => {
     it('upgrades already rendered components when defined', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
-      const Comp = defineSignalComponent('already-rendered', hydrate);
+      const Comp = signalComponent('already-rendered', hydrate);
       Comp.define();
 
       expect(hydrate).toHaveBeenCalledTimes(1);
@@ -28,7 +28,7 @@ describe('signal-component', () => {
     it('upgrades components rendered after definition', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
 
-      const Comp = defineSignalComponent('new-component', hydrate);
+      const Comp = signalComponent('new-component', hydrate);
       Comp.define();
       expect(hydrate).not.toHaveBeenCalled();
 
@@ -47,7 +47,7 @@ describe('signal-component', () => {
         self = this;
       }
 
-      const Comp = defineSignalComponent('this-component', hydrate);
+      const Comp = signalComponent('this-component', hydrate);
       Comp.define();
 
       const comp = document.createElement('this-component');
@@ -58,7 +58,7 @@ describe('signal-component', () => {
 
     it('invokes hydrate callback with a `SignalComponentAccessor` of the component host', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
-      const Comp = defineSignalComponent('host-component', hydrate);
+      const Comp = signalComponent('host-component', hydrate);
       Comp.define();
 
       const comp =
@@ -75,7 +75,7 @@ describe('signal-component', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate')
           .and.returnValue({ foo: 'bar' });
 
-      const CompWithDef = defineSignalComponent(
+      const CompWithDef = signalComponent(
           'signal-comp-with-def', hydrate);
 
       const el = parseHtml(CompWithDef, `
@@ -87,7 +87,7 @@ describe('signal-component', () => {
     });
 
     it('sets the class name', () => {
-      const Comp = defineSignalComponent('foo-bar-baz', () => {});
+      const Comp = signalComponent('foo-bar-baz', () => {});
       expect(Comp.name).toBe('FooBarBaz');
     });
   });

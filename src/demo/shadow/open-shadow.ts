@@ -1,7 +1,7 @@
-import { defineBaseComponent } from 'hydroactive';
+import { baseComponent } from 'hydroactive';
 
 /** Accesses the shadow DOM with `host.shadow`. */
-export const OpenShadow = defineBaseComponent('open-shadow', (host) => {
+export const OpenShadow = baseComponent('open-shadow', (host) => {
   // Query the shadow DOM under `host.shadow`.
   host.shadow.query('div').access().write('I\'m red!', String);
 

@@ -9,7 +9,8 @@
         "hydroactive",
         "prerendered",
         "templating",
-        "webcomponents"
+        "webcomponents",
+        "shakability"
     ],
     "ignoreWords": [],
     "import": []

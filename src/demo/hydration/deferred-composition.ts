@@ -1,8 +1,8 @@
-import { defineBaseComponent } from 'hydroactive';
+import { baseComponent } from 'hydroactive';
 import { DeferredCompositionChild } from './deferred-composition-child.js';
 
 /** Demonstrates accessing and hydrating child components. */
-export const DeferredComposition = defineBaseComponent(
+export const DeferredComposition = baseComponent(
   'deferred-composition',
   (host) => {
     // `.access` asserts the component is already hydrated.

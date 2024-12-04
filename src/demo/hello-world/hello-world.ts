@@ -1,7 +1,7 @@
-import { defineBaseComponent } from 'hydroactive';
+import { baseComponent } from 'hydroactive';
 
 /** Says hello to HydroActive on hydration. */
-export const HelloWorld = defineBaseComponent('hello-world', (host) => {
+export const HelloWorld = baseComponent('hello-world', (host) => {
   host.query('span#name').access().write('HydroActive', String);
 });
 

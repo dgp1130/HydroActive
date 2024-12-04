@@ -1,4 +1,4 @@
-import { Dehydrated, ElementAccessor, defineSignalComponent } from 'hydroactive';
+import { Dehydrated, ElementAccessor, component } from 'hydroactive';
 import { bind } from 'hydroactive/signal-accessors.js';
 import { WriteableSignal, signal } from 'hydroactive/signals.js';
 
@@ -6,7 +6,7 @@ import { WriteableSignal, signal } from 'hydroactive/signals.js';
  * Automatically increments the count over time. Uses `bind` instead of `live`
  * to demonstrate the underlying primitives.
  */
-export const BindCounter = defineSignalComponent('bind-counter', (host) => {
+export const BindCounter = component('bind-counter', (host) => {
   // Queries the DOM for the `<span>` tag.
   const span: Dehydrated<HTMLSpanElement> = host.query('span');
 

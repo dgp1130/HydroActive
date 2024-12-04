@@ -1,7 +1,7 @@
-import { AttrAccessor, defineBaseComponent } from 'hydroactive';
+import { AttrAccessor, baseComponent } from 'hydroactive';
 
 /** Reads an attribute from the host element. */
-export const ReadAttr = defineBaseComponent('read-attr', (host) => {
+export const ReadAttr = baseComponent('read-attr', (host) => {
   // `host` is a `ComponentAccessor` of the host element (`read-attr`).
   // `ComponentAccessor` has an `attr` method which provides an `AttrAccessor`.
   const idAttr: AttrAccessor = host.attr('user-id');
