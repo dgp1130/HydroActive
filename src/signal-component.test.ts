@@ -17,9 +17,10 @@ describe('signal-component', () => {
   });
 
   describe('defineSignalComponent', () => {
-    it('upgrades already rendered components', testCase('already-rendered', () => {
+    it('upgrades already rendered components when defined', testCase('already-rendered', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
-      defineSignalComponent('already-rendered', hydrate);
+      const Comp = defineSignalComponent('already-rendered', hydrate);
+      Comp.define();
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     }));
@@ -27,7 +28,8 @@ describe('signal-component', () => {
     it('upgrades components rendered after definition', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
 
-      defineSignalComponent('new-component', hydrate);
+      const Comp = defineSignalComponent('new-component', hydrate);
+      Comp.define();
       expect(hydrate).not.toHaveBeenCalled();
 
       const comp = document.createElement('new-component');
@@ -45,7 +47,8 @@ describe('signal-component', () => {
         self = this;
       }
 
-      defineSignalComponent('this-component', hydrate);
+      const Comp = defineSignalComponent('this-component', hydrate);
+      Comp.define();
 
       const comp = document.createElement('this-component');
       document.body.appendChild(comp);
@@ -55,7 +58,8 @@ describe('signal-component', () => {
 
     it('invokes hydrate callback with a `SignalComponentAccessor` of the component host', () => {
       const hydrate = jasmine.createSpy<SignalHydrateLifecycle<any>>('hydrate');
-      defineSignalComponent('host-component', hydrate);
+      const Comp = defineSignalComponent('host-component', hydrate);
+      Comp.define();
 
       const comp =
           document.createElement('host-component') as HydroActiveComponent;

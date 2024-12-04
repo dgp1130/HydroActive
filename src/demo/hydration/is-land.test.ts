@@ -9,6 +9,7 @@ describe('is-land', () => {
     useTestCases();
 
     it('hydrates deferred children', testCase('deferred', async (island) => {
+      DeferredComp.define();
       const deferred = island.querySelector('deferred-comp')!;
       expect(isHydrated(deferred)).toBeFalse();
 

@@ -1,5 +1,7 @@
 /** @fileoverview Defines utilities related to parsing HTML for testing. */
 
+import { defineIfSupported } from '../utils/on-demand-definitions.js';
+
 /**
  * Parses the given HTML text and returns the root element. The result is
  * asserted and typed as an instance of `resultComponent`. Any rendered custom
@@ -25,6 +27,7 @@ export function parseHtml<Result extends typeof Element>(
   dependencies: typeof Element[] = [],
 ): InstanceType<Result> {
   const deps = dependencies.concat(resultComponent);
+  for (const dep of deps) defineIfSupported(dep);
 
   const doc = Document.parseHTMLUnsafe(html);
 

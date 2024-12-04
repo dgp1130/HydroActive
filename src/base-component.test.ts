@@ -7,12 +7,13 @@ describe('base-component', () => {
   });
 
   describe('defineBaseComponent', () => {
-    it('upgrades already rendered components', () => {
+    it('upgrades already rendered components when defined', () => {
       const el = document.createElement('already-rendered');
       document.body.append(el);
 
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
-      defineBaseComponent('already-rendered', hydrate);
+      const Comp = defineBaseComponent('already-rendered', hydrate);
+      Comp.define();
 
       expect(hydrate).toHaveBeenCalledTimes(1);
     });
@@ -20,7 +21,8 @@ describe('base-component', () => {
     it('updates components rendered after definition', () => {
       const hydrate = jasmine.createSpy<BaseHydrateLifecycle<any>>('hydrate');
 
-      defineBaseComponent('new-component', hydrate);
+      const Comp = defineBaseComponent('new-component', hydrate);
+      Comp.define();
       expect(hydrate).not.toHaveBeenCalled();
 
       const comp = document.createElement('new-component');
@@ -38,7 +40,8 @@ describe('base-component', () => {
         self = this;
       }
 
-      defineBaseComponent('this-component', hydrate);
+      const Comp = defineBaseComponent('this-component', hydrate);
+      Comp.define();
 
       const comp = document.createElement('this-component');
       document.body.appendChild(comp);
