@@ -1,5 +1,4 @@
-import { HydroActiveComponent, defineSignalComponent } from 'hydroactive';
-import { ComponentAccessor } from 'hydroactive/component-accessor.js';
+import { ComponentAccessor, HydroActiveComponent, defineSignalComponent } from 'hydroactive';
 import { bind } from 'hydroactive/signal-accessors.js';
 import { Signal, signal } from 'hydroactive/signals.js';
 
