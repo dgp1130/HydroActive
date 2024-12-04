@@ -66,15 +66,14 @@ It does this by providing an API to define custom elements with useful lifecycle
 convenient DOM APIs. One example would be:
 
 ```typescript
-import { ElementAccessor, defineComponent } from 'hydroactive';
+import { ElementAccessor, component } from 'hydroactive';
 import { WriteableSignal } from 'hydroactive/signals.js';
 
-// `defineComponent()` creates a web component class based on the given hydrate
-// function. The callback is invoked on hydration and provides `host` and `comp`
-// parameters with additional functionality to provide interactivity to the
-// pre-rendered component. Automatically calls `customElements.define` under the
-// hood.
-const MyCounter = defineComponent('my-counter', (host) => {
+// `component()` creates a web component class based on the given hydration
+// function. The callback is invoked on hydration and provides `host` parameter
+// with additional functionality to provide interactivity to the pre-rendered
+// component.
+const MyCounter = component('my-counter', (host) => {
     // Interacting with a site using HydroActive is a three-step process:
     // 1. Query it - `host.query` queries the DOM for the selector and asserts
     // it is found.
@@ -107,6 +106,9 @@ const MyCounter = defineComponent('my-counter', (host) => {
         count.set(count() + 1);
     });
 });
+
+// Define the custom element, upgrading any `<my-element>` tags on the page.
+MyCounter.define();
 
 // For TypeScript, don't forget to type `my-counter` tags as an instance of the
 // class.
