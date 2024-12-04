@@ -1,3 +1,5 @@
+import '@webcomponents/scoped-custom-element-registry';
+
 import { createDefine, defineIfSupported } from './on-demand-definitions.js';
 
 describe('on-demand-definitions', () => {
@@ -78,6 +80,48 @@ describe('on-demand-definitions', () => {
         is: 'on-demand--options',
       });
       expect(p).toBeInstanceOf(MyElement);
+    });
+
+    it('throws when given a tag name on the global registry', () => {
+      class MyElement extends HTMLElement {
+        static define = createDefine('on-demand--global-tag', this);
+      }
+
+      // Omitting registry throws.
+      expect(() => MyElement.define(undefined, 'on-demand--new-tag')).toThrow();
+      expect(customElements.get('on-demand--new-tag')).toBeNull();
+
+      // Explicitly providing default registry throws.
+      expect(() => MyElement.define(customElements, 'on-demand--new-tag'))
+          .toThrow();
+      expect(customElements.get('on-demand--new-tag')).toBeNull();
+    });
+
+    it('defines the element on a provided scoped registry', () => {
+      class MyElement extends HTMLElement {
+        static define = createDefine('on-demand--scoped', this);
+      }
+
+      const registry = new CustomElementRegistry();
+      MyElement.define(registry);
+
+      expect(registry.get('on-demand--scoped')).toBe(MyElement);
+      expect(customElements.get('on-demand--scoped')).toBeNull();
+    });
+
+    it('allows redefining the tag name in a scoped registry', () => {
+      class MyElement extends HTMLElement {
+        static define = createDefine('on-demand--custom-tag', this);
+      }
+
+      const registry = new CustomElementRegistry();
+      MyElement.define(registry, 'on-demand--different-tag');
+
+      expect(registry.get('on-demand--different-tag')).toBe(MyElement);
+      expect(registry.get('on-demand--custom-tag')).toBeNull();
+
+      expect(customElements.get('on-demand--different-tag')).toBeNull();
+      expect(customElements.get('on-demand--custom-tag')).toBeNull();
     });
   });
 });

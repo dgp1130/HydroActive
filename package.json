@@ -36,6 +36,7 @@
     "@types/jasmine": "^4.3.1",
     "@web/test-runner": "^0.15.3",
     "@web/test-runner-puppeteer": "^0.16.0",
+    "@webcomponents/scoped-custom-element-registry": "^0.0.9",
     "http-server": "^14.1.1",
     "jasmine-core": "^4.5.0",
     "typescript": "^5.5.4"

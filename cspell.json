@@ -8,7 +8,8 @@
         "Defineable",
         "hydroactive",
         "prerendered",
-        "templating"
+        "templating",
+        "webcomponents"
     ],
     "ignoreWords": [],
     "import": []
